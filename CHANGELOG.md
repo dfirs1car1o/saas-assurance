@@ -11,6 +11,14 @@ This project follows a simple changelog format and semantic versioning intent:
 
 ## [Unreleased]
 
+### Changed (2026-03-02 — GitHub Actions upgrades)
+- `actions/checkout` v4 → v6 (PR #6)
+- `actions/setup-python` v5 → v6 (PR #7)
+- `github/codeql-action` v3 → v4 (PR #8)
+
+### Fixed (2026-03-02 — lint)
+- `harness/tools.py` — shortened `org` property description strings to satisfy ruff E501 (line-length=120)
+
 ### Fixed (2026-03-01 — post-dry-run bugs)
 - `harness/loop.py` — added `load_dotenv(_REPO / ".env")` so `ANTHROPIC_API_KEY` is loaded before API client init
 - `harness/memory.py` — added HuggingFace embedder fallback when `OPENAI_API_KEY` is absent (Mem0 was defaulting to OpenAI)

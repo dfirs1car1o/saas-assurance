@@ -22,8 +22,9 @@ This session (continuation of Phase 3–5):
 | Phase 4 | ✅ DONE | PR #4 merged | report-gen DOCX/MD governance skill |
 | Phase 5 | ✅ DONE | PR #5 merged | architecture diagram auto-generation |
 | Bug fixes | ✅ DONE | pushed to main | load_dotenv, Mem0 embedder, unknown-org, task prompt |
+| Deps bump | ✅ DONE | PRs #6–8 merged | actions/checkout v6, setup-python v6, codeql-action v4 |
 
-**All phases done. Dry run working. CI: 9/9 green.**
+**All phases done. Dry run working. CI: 9/9 green. No open branches.**
 
 ---
 
