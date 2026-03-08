@@ -142,13 +142,79 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: pip install -e . && pip install pytest pytest-mock PyYAML click qdrant-client mem0ai responses
-      - name: Run tests (if any exist)
+      - run: pip install -e . && pip install pytest pytest-mock pytest-cov PyYAML click qdrant-client mem0ai responses
+      - name: Run tests with coverage
         env:
           QDRANT_IN_MEMORY: "1"
         run: |
           if [ -d tests/ ]; then
-            pytest tests/ -v
+            pytest tests/ -v \
+              --cov=skills --cov=scripts --cov=harness \
+              --cov-report=xml:coverage.xml \
+              --cov-report=term-missing \
+              --cov-fail-under=60
           else
             echo "No tests directory yet — skipping"
           fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 30
+
+  docker-smoke:
+    name: docker compose smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - name: Set vm.max_map_count for OpenSearch
+        run: sudo sysctl -w vm.max_map_count=262144
+
+      - name: Start OpenSearch stack
+        run: docker compose up -d opensearch dashboards
+
+      - name: Wait for OpenSearch to be green
+        timeout-minutes: 3
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9200/_cluster/health | grep -qv '"status":"red"'; then
+              echo "OpenSearch is healthy"; break
+            fi
+            echo "Waiting for OpenSearch... ($i/30)"; sleep 6
+          done
+
+      - name: Wait for Dashboards to be green
+        timeout-minutes: 2
+        run: |
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:5601/api/status | grep -q '"state":"green"'; then
+              echo "Dashboards is healthy"; break
+            fi
+            echo "Waiting for Dashboards... ($i/20)"; sleep 6
+          done
+
+      - name: Verify OpenSearch cluster health endpoint
+        run: |
+          curl -sf http://localhost:9200/_cluster/health | python3 - <<'PYEOF'
+          import sys, json
+          d = json.load(sys.stdin)
+          assert d["status"] != "red", f"cluster red: {d}"
+          print("Cluster status:", d["status"])
+          PYEOF
+
+      - name: Verify Dashboards API
+        run: |
+          curl -sf http://localhost:5601/api/status | python3 - <<'PYEOF'
+          import sys, json
+          d = json.load(sys.stdin)
+          assert d.get("status", {}).get("overall", {}).get("state") == "green" or d.get("name"), "dashboards not ready"
+          print("Dashboards OK")
+          PYEOF
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
