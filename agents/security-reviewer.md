@@ -60,15 +60,23 @@ For every workflow file, check:
 
 4. **SOQL injection** — any string that builds a SOQL query using user-supplied values without parameterization is HIGH. The Salesforce REST API does not support prepared statements — the fix is explicit allowlist validation of any user-supplied field or value.
 
-5. **Credential logging** — any `print()`, `logging.*`, or `click.echo()` that could expose SF_PASSWORD, SF_SECURITY_TOKEN, or ANTHROPIC_API_KEY. Check exception handlers — stack traces can include request objects containing auth headers.
+5. **Credential logging** — any `print()`, `logging.*`, or `click.echo()` that could expose SF_PASSWORD, SF_SECURITY_TOKEN, OPENAI_API_KEY, WD_CLIENT_SECRET, or OPENSEARCH_ADMIN_PASSWORD. Check exception handlers — stack traces can include request objects containing auth headers.
 
 ### `harness/**/*.py`
 
 1. **`sys.exit()` outside CLI entrypoints** — `sys.exit()` in the loop body (not in `run()` or `cli()`) indicates control flow leak. The correct pattern is to raise a Python exception and let the CLI handler catch it.
 
-2. **Tool input validation** — `block.input` from the Anthropic API is attacker-influenced if the model has been jailbroken. Validate that file paths in tool inputs stay within `docs/oscal-salesforce-poc/generated/` before passing to subprocess.
+2. **Tool input validation** — `block.input` from the OpenAI API is attacker-influenced if the model has been jailbroken. Validate that file paths in tool inputs stay within `docs/oscal-salesforce-poc/generated/` before passing to subprocess.
 
-3. **API key logging** — verify that `ANTHROPIC_API_KEY` and Salesforce credentials are never echoed to stdout (only masked fragments to stderr are acceptable).
+3. **API key logging** — verify that `OPENAI_API_KEY`, Salesforce credentials, Workday OAuth secrets, and `OPENSEARCH_ADMIN_PASSWORD` are never echoed to stdout (only masked fragments to stderr are acceptable).
+
+### `config/opensearch/` + `docker-compose.yml`
+
+1. **Security plugin disabled** — `DISABLE_SECURITY_PLUGIN=true` is acceptable for dev only. Flag any occurrence in a config labelled `prod` or `production` as HIGH.
+2. **Admin password in compose** — `OPENSEARCH_INITIAL_ADMIN_PASSWORD` should reference `${OPENSEARCH_ADMIN_PASSWORD}` env var, not a hardcoded value. Flag hardcoded passwords as CRITICAL.
+3. **NDJSON scripts** — `scripts/export_to_opensearch.py` must not log credentials or index raw API response objects. Check that `http_auth` is read from environment only.
+4. **curl in dashboard-init** — verify curl commands use `http://` (not `https://`) when `DISABLE_SECURITY_PLUGIN=true`, and vice versa. Mismatched scheme causes silent init failure.
+5. **Volume paths** — `docker-compose.yml` volume bind mounts must not expose `.env` or `*.pem` files to the container. Only `docs/oscal-salesforce-poc/generated/` and `config/opensearch/` should be mounted.
 
 ### `agents/**/*.md` (system prompts)
 

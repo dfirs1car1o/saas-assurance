@@ -6,12 +6,20 @@ SaaS Security multi-agent AI system for OSCAL and CSA SSCF assessments across Sa
 
 ## What This Is
 
-A read-only, fully automated assessment pipeline that:
+A six-phase, read-only security assessment pipeline powered by multi-agent AI. Each phase produces a structured artifact that feeds the next.
 
-1. Connects to SaaS platforms (Salesforce and Workday) and extracts security-relevant configuration
-2. Maps findings to platform OSCAL catalogs → CSA SSCF domains → CCM v4.1 → SOX/HIPAA/SOC2 regulatory crosswalk
-3. Generates structured evidence artifacts (JSON, Markdown, DOCX) for governance review
-4. Validates AI-assisted outputs against NIST AI RMF 1.0 with blocking gate logic before delivery
+```
+Phase 1 — Collect      sfdc-connect / workday-connect    →  sfdc_raw.json / workday_raw.json
+Phase 2 — Assess       oscal-assess + oscal_gap_map       →  gap_analysis.json + backlog.json
+Phase 3 — Score        sscf-benchmark                     →  sscf_report.json (RED/AMBER/GREEN)
+Phase 4 — Gate         nist-reviewer (NIST AI RMF 1.0)    →  nist_review.json (clear/flag/block)
+Phase 5 — Report       report-gen (app-owner + security)  →  Markdown + DOCX governance packages
+Phase 6 — Monitor      export_to_opensearch + dashboards  →  OpenSearch trending + 3 dashboards
+```
+
+**Platform support:** Salesforce (45 SBS controls) · Workday (30 WSCC controls)
+**Framework chain:** Platform control → SSCF domain → CCM v4.1 → SOX / HIPAA / SOC2 / ISO 27001 / NIST 800-53 / PCI DSS / GDPR
+**AI governance:** Every output passes through a NIST AI RMF gate before delivery — distinguishes live collection from stubs, requires human acknowledgment on block verdicts
 
 This system **never writes to any SaaS org**. All evidence stays in `docs/oscal-salesforce-poc/generated/`.
 

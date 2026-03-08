@@ -14,6 +14,7 @@ This file is the canonical reference for all agents in this system. Each agent h
 | security-reviewer | agents/security-reviewer.md | gpt-5.3-chat-latest | AppSec + DevSecOps review of CI/CD, workflows, and skill CLIs |
 | sfdc-expert | agents/sfdc-expert.md | gpt-5.3-chat-latest | Apex + deep Salesforce admin specialist (on-call) |
 | workday-expert | agents/workday-expert.md | gpt-5.3-chat-latest | Workday HCM/Finance API specialist (on-call) — SOAP/RaaS/REST, WSCC catalog, ISSG permissions |
+| container-expert | agents/container-expert.md | gpt-5.3-chat-latest | Docker Compose, OpenSearch 2.x, NDJSON dashboards, JVM tuning, stack troubleshooting |
 | repo-reviewer | agents/repo-reviewer.md | gpt-5.3-chat-latest | Periodic audit: personal data, stale docs, strategic alignment |
 
 > Models are set by env vars: `LLM_MODEL_ORCHESTRATOR`, `LLM_MODEL_ANALYST`, `LLM_MODEL_REPORTER` (default: `gpt-5.3-chat-latest`). Azure OpenAI Government supported via `AZURE_OPENAI_API_KEY` + `AZURE_OPENAI_ENDPOINT`.
@@ -27,7 +28,7 @@ This file is the canonical reference for all agents in this system. Each agent h
 | sscf-benchmark | skills/sscf_benchmark/ | Scores findings by CSA SSCF domain (RED/AMBER/GREEN) |
 | nist-review | skills/nist_review/ | NIST AI RMF 1.0 gate (govern/map/measure/manage); issues block/flag/pass |
 | report-gen | skills/report_gen/ | Generates audience-specific Markdown + DOCX governance reports |
-| workday-connect | skills/workday_connect/ | Workday HCM/Finance collector — blueprint complete, implementation Phase E |
+| workday-connect | skills/workday_connect/ | Workday HCM/Finance collector — OAuth 2.0, 30 WSCC controls, SOAP/RaaS/REST/manual, fully implemented |
 
 ## Context Modes
 
@@ -39,11 +40,13 @@ This file is the canonical reference for all agents in this system. Each agent h
 
 ## Model Assignment Rationale
 
-- Orchestrator uses Opus: it makes routing decisions with incomplete information and assembles final multi-part outputs.
-- Collector and Assessor use Sonnet: API interaction, structured data extraction, and control mapping are mid-complexity tasks.
-- Reporter uses Haiku: templated output generation from structured data is low-complexity and high-volume.
-- NIST Reviewer uses Sonnet: regulatory framework review requires depth but not Opus-level synthesis.
-- Security Reviewer uses Sonnet: adversarial security analysis requires depth; no tool calls needed (text-only).
+All agents use `gpt-5.3-chat-latest` by default. Override per-role via env vars:
+- `LLM_MODEL_ORCHESTRATOR` — routing decisions and multi-step assembly (use highest-capability model)
+- `LLM_MODEL_ANALYST` — collector, assessor, nist-reviewer, sfdc-expert, workday-expert (mid-complexity structured tasks)
+- `LLM_MODEL_REPORTER` — reporter, container-expert (templated output; lower complexity)
+
+Security Reviewer runs as a Claude Code subagent (text-only, no tool calls).
+Azure OpenAI Government (FedRAMP/IL5): set `AZURE_OPENAI_API_KEY` + `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_VERSION`.
 
 ## Agent Loop Model
 
@@ -72,4 +75,6 @@ The orchestrator can be scheduled to run proactively:
 - Any NIST AI RMF gap identified by nist-reviewer blocks output until human acknowledges.
 - Any CRITICAL or HIGH finding from security-reviewer on a workflow or skill change blocks merge.
 - If orchestrator cannot determine org target, it asks human before calling sfdc-connect.
-- If any finding has `needs_expert_review=true`, invoke sfdc-expert before Assessor passes findings to gap mapping.
+- If any Salesforce finding has `needs_expert_review=true`, invoke sfdc-expert before Assessor passes findings to gap mapping.
+- If any Workday finding has `needs_expert_review=true` or `PERMISSION_DENIED` on a critical control, invoke workday-expert before marking `not_applicable`.
+- If Docker/OpenSearch stack issues arise (OOM, yellow cluster, dashboard import failure), invoke container-expert.
