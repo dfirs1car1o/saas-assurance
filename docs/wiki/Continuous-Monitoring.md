@@ -155,7 +155,7 @@ Uncomment `.github/workflows/scheduled-assessment.yml` and set secrets:
 ### Local cron
 ```bash
 # Run every Monday at 8am
-0 8 * * 1 cd /path/to/saas-sec-agents && \
+0 8 * * 1 cd /path/to/saas-posture && \
   docker compose run --rm agent \
     agent-loop run --platform workday --org acme --approve-critical && \
   docker compose run --rm agent \

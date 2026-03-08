@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gen_diagram.py — Generate reference architecture diagram for saas-sec-agents.
+gen_diagram.py — Generate reference architecture diagram for saas-posture.
 
 Outputs: docs/architecture.png
 

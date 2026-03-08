@@ -1,5 +1,5 @@
 [project]
-name = "saas-sec-agents"
+name = "saas-posture"
 version = "0.2.0"
 description = "SaaS Security multi-agent AI system for OSCAL/SSCF assessments"
 requires-python = ">=3.11"

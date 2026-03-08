@@ -54,14 +54,14 @@ pandoc --version    # pandoc 3.x
 ## Step 3 — Clone the Repo
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-sec-agents.git
-cd saas-sec-agents
+git clone git@github.com:dfirs1car1o/saas-posture.git
+cd saas-posture
 ```
 
 Or use HTTPS if you haven't set up SSH keys:
 ```bash
-git clone https://github.com/dfirs1car1o/saas-sec-agents.git
-cd saas-sec-agents
+git clone https://github.com/dfirs1car1o/saas-posture.git
+cd saas-posture
 ```
 
 ---
@@ -179,9 +179,9 @@ critical_fails: 0
 ────────────────────────────────────────────────────────────
 📁  RESULTS
 ────────────────────────────────────────────────────────────
-  Gap analysis  →  /Users/yourname/saas-sec-agents/docs/oscal-salesforce-poc/generated/test-org/gap_analysis.json
-  Backlog       →  /Users/yourname/saas-sec-agents/docs/oscal-salesforce-poc/generated/test-org/backlog.json
-  SSCF report   →  /Users/yourname/saas-sec-agents/docs/oscal-salesforce-poc/generated/test-org/sscf_report.json
+  Gap analysis  →  /Users/yourname/saas-posture/docs/oscal-salesforce-poc/generated/test-org/gap_analysis.json
+  Backlog       →  /Users/yourname/saas-posture/docs/oscal-salesforce-poc/generated/test-org/backlog.json
+  SSCF report   →  /Users/yourname/saas-posture/docs/oscal-salesforce-poc/generated/test-org/sscf_report.json
   App owner MD  →  .../test-org_remediation_report.md
   Security MD   →  .../test-org_security_assessment.md
   Security DOCX →  .../test-org_security_assessment.docx

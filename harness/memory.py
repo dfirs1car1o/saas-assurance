@@ -23,7 +23,7 @@ import click
 if TYPE_CHECKING:
     pass
 
-COLLECTION = "saas-sec-agents"
+COLLECTION = "saas-posture"
 _MEMORY_LIMIT = 5  # max prior assessment summaries to surface per org
 
 

@@ -1,8 +1,8 @@
-# saas-sec-agents
+# saas-posture
 
 SaaS Security multi-agent AI system for OSCAL and CSA SSCF assessments across Salesforce and Workday. Produces governance-grade evidence packages for application owners and business security review cycles.
 
-> **New here?** Start with the **[Wiki →](https://github.com/dfirs1car1o/saas-sec-agents/wiki)** for full onboarding instructions, platform-specific setup guides (macOS, Linux, Windows), pipeline walkthroughs, and a complete skill and agent reference.
+> **New here?** Start with the **[Wiki →](https://github.com/dfirs1car1o/saas-posture/wiki)** for full onboarding instructions, platform-specific setup guides (macOS, Linux, Windows), pipeline walkthroughs, and a complete skill and agent reference.
 
 ## What This Is
 
@@ -20,8 +20,8 @@ This system **never writes to any SaaS org**. All evidence stays in `docs/oscal-
 No Docker required. Runs fully from the command line with Python 3.11+.
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-sec-agents.git
-cd saas-sec-agents
+git clone git@github.com:dfirs1car1o/saas-posture.git
+cd saas-posture
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 cp .env.example .env   # fill in credentials

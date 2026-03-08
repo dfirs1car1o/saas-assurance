@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: |
-  Expert AppSec and DevSecOps reviewer for the saas-sec-agents CI/CD pipeline and
+  Expert AppSec and DevSecOps reviewer for the saas-posture CI/CD pipeline and
   repo structure. Invoked by the orchestrator when workflow files, security tooling,
   or skill CLIs change. Text analysis only — no tool calls.
 model: claude-sonnet-4-6

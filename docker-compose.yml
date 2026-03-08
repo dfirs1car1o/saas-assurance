@@ -1,10 +1,10 @@
-# saas-sec-agents — full platform stack
+# saas-posture — full platform stack
 #
 # Services:
 #   opensearch      — document store (Apache 2.0)
 #   dashboards      — OpenSearch Dashboards UI at http://localhost:5601
 #   dashboard-init  — one-shot: imports index patterns + saved dashboards on first start
-#   agent           — saas-sec-agents CLI (runs on demand, not as a daemon)
+#   agent           — saas-posture CLI (runs on demand, not as a daemon)
 #
 # Usage:
 #   docker compose up -d                          # start opensearch + dashboards

@@ -217,7 +217,7 @@ This project follows a simple changelog format and semantic versioning intent:
 
 ### Changed
 - `pyproject.toml`: removed Azure/FastAPI deps, added anthropic + simple-salesforce + click
-- `README.md`: full rewrite for saas-sec-agents identity and architecture
+- `README.md`: full rewrite for saas-posture identity and architecture
 - `.github/workflows/security-checks.yml`: replaced Terraform checks with bandit + pip-audit + gitleaks
 - `.github/workflows/pr-inline-review.yml`: replaced tflint with ruff + bandit inline annotations
 - `CODEOWNERS`: updated with agents/, mission.md, skills/, config/, generated/ ownership

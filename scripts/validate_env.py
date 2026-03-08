@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-validate_env.py — Pre-flight system requirements check for saas-sec-agents.
+validate_env.py — Pre-flight system requirements check for saas-posture.
 
 Run this before any assessment or agent workflow. Exits 0 only if all HARD
 requirements pass. Prints a clear PASS / WARN / FAIL per check.
@@ -480,7 +480,7 @@ def print_summary(suite: CheckSuite, ci_mode: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Pre-flight check for saas-sec-agents local environment.",
+        description="Pre-flight check for saas-posture local environment.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -526,7 +526,7 @@ Examples:
     if args.json:
         _real_stdout, sys.stdout = sys.stdout, sys.stderr
 
-    print(header("saas-sec-agents — Environment Pre-flight Check"))
+    print(header("saas-posture — Environment Pre-flight Check"))
     print(f"  Repo root: {repo_root}")
     print(f"  Python:    {sys.executable}")
 

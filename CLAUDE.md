@@ -8,7 +8,7 @@ A multi-agent AI system that connects to Salesforce orgs, runs OSCAL and CSA SSC
 
 Model: claude-opus-4-6 (orchestrator), claude-sonnet-4-6 (collector/assessor/nist-reviewer), claude-haiku-4-5 (reporter)
 Harness: Claude Code CLI (claude-code)
-Source: /Users/jerijuar/saas-sec-agents
+Source: /Users/jerijuar/saas-posture
 Session: starts fresh — read mission.md first, always
 
 ## How To Navigate This Repo

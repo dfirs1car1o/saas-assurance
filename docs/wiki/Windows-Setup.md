@@ -63,7 +63,7 @@ git --version
 2. Press **Ctrl+Shift+P** → type **"Git: Clone"** → Enter
 3. Paste the repo URL:
    ```
-   https://github.com/dfirs1car1o/saas-sec-agents.git
+   https://github.com/dfirs1car1o/saas-posture.git
    ```
 4. Choose a folder (e.g., `C:\Users\YourName\Projects\`)
 5. VS Code will ask **"Open cloned repository?"** — click **Yes**
@@ -76,7 +76,7 @@ In VS Code: **Terminal → New Terminal** (or **Ctrl+`**)
 
 This opens a PowerShell terminal at the repo root. All commands below run here.
 
-> **Tip:** If you see `PS C:\Users\YourName\Projects\saas-sec-agents>` you're in the right place.
+> **Tip:** If you see `PS C:\Users\YourName\Projects\saas-posture>` you're in the right place.
 
 ---
 

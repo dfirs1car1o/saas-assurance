@@ -43,14 +43,14 @@ pandoc --version
 ## Step 2 — Clone the Repo
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-sec-agents.git
-cd saas-sec-agents
+git clone git@github.com:dfirs1car1o/saas-posture.git
+cd saas-posture
 ```
 
 Or use HTTPS:
 ```bash
-git clone https://github.com/dfirs1car1o/saas-sec-agents.git
-cd saas-sec-agents
+git clone https://github.com/dfirs1car1o/saas-posture.git
+cd saas-posture
 ```
 
 ---
@@ -64,7 +64,7 @@ source .venv/bin/activate
 
 Verify you're in the venv:
 ```bash
-which python3   # should show /path/to/saas-sec-agents/.venv/bin/python3
+which python3   # should show /path/to/saas-posture/.venv/bin/python3
 ```
 
 To auto-activate when entering the directory, add to `~/.bashrc` or `~/.zshrc`:
@@ -171,9 +171,9 @@ critical_fails: 0
 ────────────────────────────────────────────────────────────
 📁  RESULTS
 ────────────────────────────────────────────────────────────
-  Gap analysis  →  /home/yourname/saas-sec-agents/docs/oscal-salesforce-poc/generated/test-org/gap_analysis.json
-  Backlog       →  /home/yourname/saas-sec-agents/docs/oscal-salesforce-poc/generated/test-org/backlog.json
-  SSCF report   →  /home/yourname/saas-sec-agents/docs/oscal-salesforce-poc/generated/test-org/sscf_report.json
+  Gap analysis  →  /home/yourname/saas-posture/docs/oscal-salesforce-poc/generated/test-org/gap_analysis.json
+  Backlog       →  /home/yourname/saas-posture/docs/oscal-salesforce-poc/generated/test-org/backlog.json
+  SSCF report   →  /home/yourname/saas-posture/docs/oscal-salesforce-poc/generated/test-org/sscf_report.json
   App owner MD  →  .../test-org_remediation_report.md
   Security MD   →  .../test-org_security_assessment.md
   Security DOCX →  .../test-org_security_assessment.docx
@@ -221,14 +221,14 @@ For headless environments (CI, remote servers), skip the venv auto-activate step
 
 ```bash
 # Example CI install
-python3.11 -m venv /opt/saas-sec-agents/.venv
-/opt/saas-sec-agents/.venv/bin/pip install -e .
-/opt/saas-sec-agents/.venv/bin/agent-loop run --org my-org --env prod --approve-critical
+python3.11 -m venv /opt/saas-posture/.venv
+/opt/saas-posture/.venv/bin/pip install -e .
+/opt/saas-posture/.venv/bin/agent-loop run --org my-org --env prod --approve-critical
 ```
 
 For CI environments where you don't want LLM API calls, use mock mode:
 ```bash
-/opt/saas-sec-agents/.venv/bin/pytest tests/ -v   # 12/12 offline tests
+/opt/saas-posture/.venv/bin/pytest tests/ -v   # 12/12 offline tests
 ```
 
 ---

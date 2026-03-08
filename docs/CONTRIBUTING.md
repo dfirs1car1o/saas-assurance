@@ -61,8 +61,8 @@ That's it. No Docker, no Node.js, no container runtime required.
 
 ```bash
 # 1. Clone
-git clone git@github.com:dfirs1car1o/saas-sec-agents.git
-cd saas-sec-agents
+git clone git@github.com:dfirs1car1o/saas-posture.git
+cd saas-posture
 
 # 2. Install Python dependencies (plain pip — no Docker, no Node)
 pip install -e .
@@ -118,7 +118,7 @@ QDRANT_IN_MEMORY=1
 ## Project Structure
 
 ```
-saas-sec-agents/
+saas-posture/
 ├── mission.md                  ← Agent identity + authorized scope. Read this first.
 ├── AGENTS.md                   ← Master agent roster and routing logic
 ├── CLAUDE.md                   ← Claude Code session instructions
