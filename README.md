@@ -1,8 +1,14 @@
 # saas-posture
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/dfirs1car1o/saas-posture/actions/workflows/ci.yml/badge.svg)](https://github.com/dfirs1car1o/saas-posture/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+
 SaaS Security multi-agent AI system for OSCAL and CSA SSCF assessments across Salesforce and Workday. Produces governance-grade evidence packages for application owners and business security review cycles.
 
 > **New here?** Start with the **[Wiki →](https://github.com/dfirs1car1o/saas-posture/wiki)** for full onboarding instructions, platform-specific setup guides (macOS, Linux, Windows), pipeline walkthroughs, and a complete skill and agent reference.
+
+![Architecture](docs/architecture.png)
 
 ## What This Is
 
@@ -54,8 +60,10 @@ python3 scripts/workday_dry_run_demo.py --org acme-workday --env dev
 **Generate a report without an API key (mock/test mode):**
 ```bash
 python3 -m skills.report_gen.report_gen generate \
-  --backlog docs/oscal-salesforce-poc/generated/<org>/<date>/workday_backlog.json \
-  --audience security --out /tmp/report.md --mock-llm
+  --backlog docs/oscal-salesforce-poc/generated/<org>/<date>/backlog.json \
+  --audience security \
+  --out $(pwd)/docs/oscal-salesforce-poc/generated/<org>/<date>/report_security.md \
+  --mock-llm
 ```
 
 ## Optional: Containerized Stack + Continuous Monitoring
