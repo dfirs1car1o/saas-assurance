@@ -80,13 +80,13 @@ jobs:
           echo "=== Salesforce dry-run complete ==="
           REPORT="$OUT/sscf_report.json"
           python3 -c "
-import json, sys
-with open(sys.argv[1]) as f:
-    r = json.load(f)
-score = r.get('overall_score', 0)
-status = r.get('overall_status', '?').upper()
-print(f'Overall score: {score:.1%} ({status})')
-" "$REPORT"
+          import json, sys
+          with open(sys.argv[1]) as f:
+              r = json.load(f)
+          score = r.get('overall_score', 0)
+          status = r.get('overall_status', '?').upper()
+          print(f'Overall score: {score:.1%} ({status})')
+          " "$REPORT"
 
       - name: Upload Salesforce dry-run artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
@@ -121,13 +121,13 @@ print(f'Overall score: {score:.1%} ({status})')
           OUT="docs/oscal-salesforce-poc/generated/ci-dry-run-workday/$TODAY"
           if [ -f "$OUT/sscf_report.json" ]; then
             python3 -c "
-import json, sys
-with open(sys.argv[1]) as f:
-    r = json.load(f)
-score = r.get('overall_score', 0)
-status = r.get('overall_status', '?').upper()
-print(f'Overall score: {score:.1%} ({status})')
-" "$OUT/sscf_report.json"
+            import json, sys
+            with open(sys.argv[1]) as f:
+                r = json.load(f)
+            score = r.get('overall_score', 0)
+            status = r.get('overall_status', '?').upper()
+            print(f'Overall score: {score:.1%} ({status})')
+            " "$OUT/sscf_report.json"
           fi
 
       - name: Upload Workday dry-run artifacts
