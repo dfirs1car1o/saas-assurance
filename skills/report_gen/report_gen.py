@@ -8,6 +8,7 @@ Document structure (all sections except LLM narrative are Python-rendered):
   OSCAL Framework Provenance    — catalog → profile → component → CCM chain  [HARNESS]
   Domain Posture                — ASCII bar chart of SSCF domain scores      [HARNESS]
   CCM v4.1 Regulatory Crosswalk — per-CCM-control regulatory citations       [HARNESS]
+  ISO 27001:2022 SoA            — 93-control Statement of Applicability      [HARNESS]
   Immediate Actions             — top-10 critical/fail findings              [HARNESS]
   Executive Summary + Analysis  — LLM narrative                              [LLM]
   Full Control Matrix           — sorted findings table (all controls)       [HARNESS]
@@ -199,8 +200,15 @@ _OSCAL_CHAIN: dict[str, list[dict[str, str]]] = {
             "file": "`config/ccm/ccm_v4.1_oscal_ref.yaml`",
         },
         {
+            "layer": "Regulatory Standard",
+            "document": "ISO/IEC 27001:2022 Annex A",
+            "version": "2022",
+            "scope": "29 of 93 Annex A controls directly mapped via SSCF layer · SoA auto-generated",
+            "file": "`config/iso27001/sscf_to_iso27001_mapping.yaml`",
+        },
+        {
             "layer": "Regulatory Crosswalk",
-            "document": "SOX · HIPAA · SOC 2 TSC · ISO 27001 · NIST 800-53 · PCI DSS · GDPR",
+            "document": "SOX · HIPAA · SOC 2 TSC · ISO 27001 (via CCM) · NIST 800-53 · PCI DSS · GDPR",
             "version": "—",
             "scope": "Via CCM v4.1 domain mappings",
             "file": "Embedded in CCM reference",
@@ -243,8 +251,15 @@ _OSCAL_CHAIN: dict[str, list[dict[str, str]]] = {
             "file": "`config/ccm/ccm_v4.1_oscal_ref.yaml`",
         },
         {
+            "layer": "Regulatory Standard",
+            "document": "ISO/IEC 27001:2022 Annex A",
+            "version": "2022",
+            "scope": "29 of 93 Annex A controls directly mapped via SSCF layer · SoA auto-generated",
+            "file": "`config/iso27001/sscf_to_iso27001_mapping.yaml`",
+        },
+        {
             "layer": "Regulatory Crosswalk",
-            "document": "SOX · HIPAA · SOC 2 TSC · ISO 27001 · NIST 800-53 · PCI DSS · GDPR",
+            "document": "SOX · HIPAA · SOC 2 TSC · ISO 27001 (via CCM) · NIST 800-53 · PCI DSS · GDPR",
             "version": "—",
             "scope": "Via CCM v4.1 domain mappings",
             "file": "Embedded in CCM reference",
@@ -384,12 +399,205 @@ def _render_domain_chart(sscf: dict) -> str:
     return "\n".join(lines)
 
 
+def _render_iso27001_soa(backlog: dict, catalog_path: Path | None = None) -> str:
+    """Render ISO/IEC 27001:2022 Annex A Statement of Applicability (SoA).
+
+    Shows all 93 Annex A controls with applicability decisions, assessment status,
+    and implementation verdict — the core document an ISO 27001 auditor needs.
+
+    Controls touched by assessment findings derive their status from those findings.
+    Remaining controls default to not_assessed_by_api using the catalog's defaults.
+    """
+    import yaml  # local import
+
+    # ── Build lookup: ISO control ID → list of backlog items referencing it ──
+    iso_to_items: dict[str, list[dict]] = {}
+    for item in backlog.get("mapped_items", []):
+        for ctrl in item.get("iso27001_controls", []):
+            iso_id = ctrl.get("id", "")
+            if iso_id:
+                iso_to_items.setdefault(iso_id, []).append(
+                    {
+                        "status": item.get("status", ""),
+                        "severity": item.get("severity", ""),
+                        "sscf_id": (item.get("sscf_control_ids") or [item.get("sbs_control_id", "")])[0],
+                        "sbs_title": item.get("sbs_title", ""),
+                        "evidence_ref": item.get("evidence_ref", ""),
+                        "owner": item.get("owner", ""),
+                        "applicability": ctrl.get("applicability", "applicable"),
+                    }
+                )
+
+    if not iso_to_items and not catalog_path:
+        return ""  # no ISO data and no catalog — skip section silently
+
+    # ── Derive per-ISO-control verdict from mapped findings ───────────────────
+    _STA_PRIORITY = {"fail": 0, "partial": 1, "pass": 2}
+    _IMPL_LABEL = {"fail": "Planned — Remediation Required", "partial": "Partially Implemented", "pass": "Implemented"}
+    _STA_ICON2 = {"fail": "❌", "partial": "⚠️", "pass": "✅", "not_assessed": "—"}
+
+    def _worst_status(items: list[dict]) -> str:
+        statuses = [i["status"] for i in items if i["status"] in _STA_PRIORITY]
+        if not statuses:
+            return "not_assessed"
+        return min(statuses, key=lambda s: _STA_PRIORITY[s])
+
+    # ── Load catalog for complete 93-control listing ──────────────────────────
+    catalog_controls: list[dict] = []
+    if catalog_path and catalog_path.exists():
+        try:
+            raw = yaml.safe_load(catalog_path.read_text())
+            catalog_controls = raw.get("controls", [])
+        except Exception:
+            pass
+
+    # If no catalog, build synthetic entries from touched controls only
+    if not catalog_controls:
+        seen_ids: set[str] = set()
+        for iso_id, items in iso_to_items.items():
+            if iso_id not in seen_ids:
+                seen_ids.add(iso_id)
+                ctrl = items[0]  # take first for theme/applicability
+                catalog_controls.append(
+                    {
+                        "id": iso_id,
+                        "title": "—",
+                        "theme": "—",
+                        "default_applicability": ctrl.get("applicability", "applicable"),
+                        "default_reason": "",
+                    }
+                )
+
+    # ── Build SoA rows ────────────────────────────────────────────────────────
+    rows_assessed: list[dict] = []
+    rows_not_assessed: list[dict] = []
+
+    for ctrl in catalog_controls:
+        iso_id = ctrl.get("id", "")
+        title = ctrl.get("title", "—")
+        theme = ctrl.get("theme", "—")
+        default_appl = ctrl.get("default_applicability", "not_assessed_by_api")
+        default_reason = ctrl.get("default_reason", "")
+
+        if iso_id in iso_to_items:
+            items = iso_to_items[iso_id]
+            status = _worst_status(items)
+            appl = items[0].get("applicability", "applicable")
+            sscf_refs = ", ".join(sorted({i["sscf_id"] for i in items if i["sscf_id"]}))
+            owner = items[0].get("owner", "Security Team")
+            evidence = items[0].get("evidence_ref", "—") or "—"
+            impl_label = _IMPL_LABEL.get(status, "Not Assessed")
+            status_icon = _STA_ICON2.get(status, "—")
+            rows_assessed.append(
+                {
+                    "id": iso_id,
+                    "title": title,
+                    "theme": theme,
+                    "applicability": appl,
+                    "status": status,
+                    "status_icon": status_icon,
+                    "implementation": impl_label,
+                    "owner": owner,
+                    "evidence": evidence[:60] + "…" if len(evidence) > 60 else evidence,
+                    "sscf": sscf_refs,
+                }
+            )
+        else:
+            rows_not_assessed.append(
+                {
+                    "id": iso_id,
+                    "title": title,
+                    "theme": theme,
+                    "applicability": default_appl,
+                    "reason": default_reason,
+                }
+            )
+
+    # Sort assessed rows: fail first, then by clause number
+    def _clause_key(row: dict) -> tuple:
+        parts = row["id"].split(".")
+        return tuple(int(p) for p in parts if p.isdigit())
+
+    rows_assessed.sort(key=lambda r: (_STA_PRIORITY.get(r["status"], 9), _clause_key(r)))
+    rows_not_assessed.sort(key=_clause_key)
+
+    # ── Counts for summary ────────────────────────────────────────────────────
+    fail_count = sum(1 for r in rows_assessed if r["status"] == "fail")
+    partial_count = sum(1 for r in rows_assessed if r["status"] == "partial")
+    pass_count = sum(1 for r in rows_assessed if r["status"] == "pass")
+    not_assessed_count = len(rows_not_assessed)
+
+    # ── Assessment scope statement ────────────────────────────────────────────
+    scope_note = (
+        "> **Assessment Scope:** This SoA covers ISO/IEC 27001:2022 Annex A controls "
+        "assessable via SaaS platform APIs (Salesforce and/or Workday). "
+        "Organizational process controls (5.x), HR/people controls (6.x), physical controls (7.x), "
+        "and technological controls outside the API collection scope (8.x) are declared "
+        "`not_assessed_by_api` — they require manual review, vendor attestation, or process interviews. "
+        "Do not interpret `not_assessed_by_api` as `not applicable` without a formal risk acceptance decision."
+    )
+
+    lines = [
+        "## ISO/IEC 27001:2022 Statement of Applicability (SoA)",
+        "",
+        scope_note,
+        "",
+        f"**Assessed (API-collected):** {len(rows_assessed)} controls "
+        f"({pass_count} ✅ pass · {partial_count} ⚠️ partial · {fail_count} ❌ fail)  ",
+        f"**Not assessed by API:** {not_assessed_count} controls — manual review required  ",
+        f"**Total Annex A controls:** {len(catalog_controls) or len(rows_assessed) + not_assessed_count}",
+        "",
+    ]
+
+    if rows_assessed:
+        lines += [
+            "### Assessed Controls",
+            "",
+            "| Annex A | Title | Theme | Applicability | Status | Implementation | SSCF Ref | Owner | Evidence |",
+            "|---------|-------|-------|---------------|--------|----------------|----------|-------|----------|",
+        ]
+        for r in rows_assessed:
+            appl_label = "Applicable" if r["applicability"] == "applicable" else "Applicable — Manual"
+            lines.append(
+                f"| **{r['id']}** | {r['title']} | {r['theme']} | {appl_label} "
+                f"| {r['status_icon']} {r['status'].capitalize()} "
+                f"| {r['implementation']} | {r['sscf']} | {r['owner']} | {r['evidence']} |"
+            )
+        lines.append("")
+
+    if rows_not_assessed:
+        lines += [
+            "### Not Assessed via API",
+            "",
+            "> Controls below are within scope but require manual review, vendor attestation, "
+            "or process interviews. Evidence must be collected separately before an ISO 27001 "
+            "audit can claim these controls as implemented.",
+            "",
+            "| Annex A | Title | Theme | Applicability | Reason |",
+            "|---------|-------|-------|---------------|--------|",
+        ]
+        for r in rows_not_assessed:
+            reason = r["reason"][:90] + "…" if len(r["reason"]) > 90 else r["reason"]
+            lines.append(f"| **{r['id']}** | {r['title']} | {r['theme']} | Not Assessed by API | {reason} |")
+        lines.append("")
+
+    lines.append(
+        "*Direct mapping via SSCF v1.0 control layer — "
+        "`config/iso27001/sscf_to_iso27001_mapping.yaml`. "
+        "ISO 27001:2022 Annex A published 2022-10-25 (ISO/IEC 27001:2022).*"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_ccm_crosswalk(backlog: dict) -> str:
     """Render CCM v4.1 regulatory crosswalk for controls with fail/partial findings.
 
     Loads config/sscf/sscf_to_ccm_mapping.yaml, intersects with SSCF control IDs
     referenced by failing findings, and renders a table per CCM control showing
     which regulatory frameworks apply (SOX, HIPAA, SOC2, ISO 27001, PCI DSS, GDPR).
+    ISO 27001 references here are via the CCM bridge — see the ISO 27001:2022 SoA
+    section above for direct Annex A control mappings.
     """
     import yaml  # local import — not all environments have pyyaml at module load
 
@@ -466,8 +674,8 @@ def _render_ccm_crosswalk(backlog: dict) -> str:
         "Each column shows the regulatory reference that applies via the CCM crosswalk "
         "(SOX ITGC, HIPAA §164, SOC 2 TSC, ISO 27001:2022, PCI DSS v4, GDPR).",
         "",
-        "| CCM ID | Domain | Title | SSCF Controls | SOX | HIPAA | SOC2 | ISO 27001 | PCI DSS | GDPR |",
-        "|--------|--------|-------|---------------|-----|-------|------|-----------|---------|------|",
+        "| CCM ID | Domain | Title | SSCF Controls | SOX | HIPAA | SOC2 | ISO 27001 (via CCM) | PCI DSS | GDPR |",
+        "|--------|--------|-------|---------------|-----|-------|------|---------------------|---------|------|",
     ]
     for r in rows:
         lines.append(
@@ -883,6 +1091,12 @@ def cli() -> None:
 @click.option("--dry-run", is_flag=True, help="Print plan without writing files.")
 @click.option("--mock-llm", is_flag=True, help="Use deterministic template output (no API call). For testing.")
 @click.option("--drift-report", "drift_report", default=None, help="Path to drift_report.json from drift_check.py.")
+@click.option(
+    "--iso27001-catalog",
+    "iso27001_catalog",
+    default=None,
+    help="Path to iso27001_2022_annex_a_catalog.yaml for full 93-control SoA. Auto-detected if omitted.",
+)
 def generate(
     backlog: str,
     audience: str,
@@ -895,6 +1109,7 @@ def generate(
     dry_run: bool,
     mock_llm: bool,
     drift_report: str | None,
+    iso27001_catalog: str | None,
 ) -> None:
     """Generate an executive governance report (Markdown + DOCX for security audience).
 
@@ -923,6 +1138,12 @@ def generate(
     nist_data = _load_json(nist_review) if nist_review else None
     drift_data = _load_json(drift_report) if drift_report else None
 
+    # Resolve ISO 27001 catalog path — explicit arg → repo default → None (partial SoA)
+    _default_catalog = _REPO / "config" / "iso27001" / "iso27001_2022_annex_a_catalog.yaml"
+    iso_catalog_path: Path | None = (
+        Path(iso27001_catalog) if iso27001_catalog else (_default_catalog if _default_catalog.exists() else None)
+    )
+
     # ── NIST gate banner ─────────────────────────────────────────────────────
     banner = ""
     nist_section = ""
@@ -941,6 +1162,7 @@ def generate(
     provenance = _render_oscal_provenance(backlog_data, platform)
     domain_chart = _render_domain_chart(sscf_data) if sscf_data else ""
     ccm_crosswalk = _render_ccm_crosswalk(backlog_data) if audience == "security" else ""
+    iso_soa = _render_iso27001_soa(backlog_data, iso_catalog_path) if audience == "security" else ""
     drift_section = _render_drift_section(drift_data) if drift_data else ""
     priority = _render_priority_findings(backlog_data)
     full_matrix = _render_full_matrix(backlog_data)
@@ -962,6 +1184,7 @@ def generate(
             provenance,
             domain_chart,
             ccm_crosswalk,
+            iso_soa,
             priority,
             llm_narrative,
             full_matrix,
