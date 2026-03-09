@@ -478,6 +478,72 @@ def _render_ccm_crosswalk(backlog: dict) -> str:
     return "\n".join(lines)
 
 
+def _render_drift_section(drift: dict[str, Any]) -> str:
+    """Changes Since Last Assessment — rendered from drift_report.json."""
+    summary = drift.get("summary", {})
+    direction = summary.get("net_direction", "stable").lower()
+    delta = summary.get("pass_rate_delta", 0.0)
+    baseline_date = drift.get("baseline_date", "prior run")
+    current_date = drift.get("current_date", "this run")
+
+    _DIR_ICON = {"improving": "📈", "regressing": "📉", "stable": "➡️"}
+    dir_icon = _DIR_ICON.get(direction, "➡️")
+
+    delta_str = f"+{delta:.1%}" if delta >= 0 else f"{delta:.1%}"
+
+    lines = [
+        "## Changes Since Last Assessment",
+        "",
+        f"**Comparison:** {baseline_date} → {current_date}  ",
+        f"**Net direction:** {dir_icon} {direction.upper()}  ",
+        f"**Pass rate delta:** {delta_str}",
+        "",
+        "| Category | Count |",
+        "|---|---|",
+        f"| 🔴 Regressions (new failures) | {summary.get('regression', 0)} |",
+        f"| 🟡 Improvements (partial fix) | {summary.get('improvement', 0)} |",
+        f"| 🟢 Resolved (fully remediated) | {summary.get('resolved', 0)} |",
+        f"| 🆕 New findings | {summary.get('new_finding', 0)} |",
+        f"| ⚠️ Severity escalations | {summary.get('severity_change', 0)} |",
+        "",
+    ]
+
+    changes = drift.get("changes", [])
+    regressions = [c for c in changes if c.get("change_type") == "regression"]
+    resolved = [c for c in changes if c.get("change_type") == "resolved"]
+
+    if regressions:
+        lines += [
+            "### 🔴 Regressions — Immediate Attention Required",
+            "",
+            "| Control | Severity | Change | Note |",
+            "|---|---|---|---|",
+        ]
+        for r in regressions:
+            cid = r.get("control_id", "?")
+            sev = r.get("current_severity", r.get("baseline_severity", "?"))
+            change = f"{r.get('baseline_status', '?')} → {r.get('current_status', '?')}"
+            note = r.get("note", "—")
+            lines.append(f"| `{cid}` | {sev} | {change} | {note} |")
+        lines.append("")
+
+    if resolved:
+        lines += [
+            "### 🟢 Resolved — Remediation Confirmed",
+            "",
+            "| Control | Prior Status | Note |",
+            "|---|---|---|",
+        ]
+        for r in resolved:
+            cid = r.get("control_id", "?")
+            prior = r.get("baseline_status", "?")
+            note = r.get("note", "—")
+            lines.append(f"| `{cid}` | {prior} | {note} |")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def _render_priority_findings(backlog: dict, n: int = 10) -> str:
     """Top-N findings sorted critical/fail first."""
     items = backlog.get("mapped_items", [])
@@ -816,6 +882,7 @@ def cli() -> None:
 )
 @click.option("--dry-run", is_flag=True, help="Print plan without writing files.")
 @click.option("--mock-llm", is_flag=True, help="Use deterministic template output (no API call). For testing.")
+@click.option("--drift-report", "drift_report", default=None, help="Path to drift_report.json from drift_check.py.")
 def generate(
     backlog: str,
     audience: str,
@@ -827,6 +894,7 @@ def generate(
     platform: str | None,
     dry_run: bool,
     mock_llm: bool,
+    drift_report: str | None,
 ) -> None:
     """Generate an executive governance report (Markdown + DOCX for security audience).
 
@@ -842,7 +910,7 @@ def generate(
 
     org = org_alias or "unknown-org"
     report_title = title or f"Salesforce Security Governance Assessment — {org}"
-    model = os.getenv("LLM_MODEL_REPORTER", "gpt-4o-mini")
+    model = os.getenv("LLM_MODEL_REPORTER", "gpt-5.3-chat-latest")
 
     if dry_run:
         click.echo(f"report-gen [DRY-RUN]: would write {out_path}", err=True)
@@ -853,6 +921,7 @@ def generate(
     backlog_data = _load_json(backlog)
     sscf_data = _load_json(sscf_benchmark) if sscf_benchmark else None
     nist_data = _load_json(nist_review) if nist_review else None
+    drift_data = _load_json(drift_report) if drift_report else None
 
     # ── NIST gate banner ─────────────────────────────────────────────────────
     banner = ""
@@ -872,6 +941,7 @@ def generate(
     provenance = _render_oscal_provenance(backlog_data, platform)
     domain_chart = _render_domain_chart(sscf_data) if sscf_data else ""
     ccm_crosswalk = _render_ccm_crosswalk(backlog_data) if audience == "security" else ""
+    drift_section = _render_drift_section(drift_data) if drift_data else ""
     priority = _render_priority_findings(backlog_data)
     full_matrix = _render_full_matrix(backlog_data)
     poam = _render_poam(backlog_data) if audience == "security" else ""
@@ -887,6 +957,7 @@ def generate(
         p
         for p in [
             banner,
+            drift_section,
             scorecard,
             provenance,
             domain_chart,

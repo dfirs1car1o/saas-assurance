@@ -1,0 +1,137 @@
+name: scheduled-assessment
+
+on:
+  schedule:
+    # Every Sunday at 02:00 UTC
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to run (salesforce, workday, both)"
+        required: false
+        default: "both"
+
+permissions:
+  contents: read
+
+jobs:
+  salesforce-dry-run:
+    name: Salesforce dry-run assessment
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.platform == 'salesforce' || github.event.inputs.platform == 'both' }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Run Salesforce dry-run
+        env:
+          QDRANT_IN_MEMORY: "1"
+          MEMORY_ENABLED: "0"
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          OUT=docs/oscal-salesforce-poc/generated/ci-dry-run-sfdc/$TODAY
+
+          # Phase 1: collect (dry-run)
+          python -m skills.sfdc_connect.sfdc_connect collect \
+            --scope all --org ci-dry-run-sfdc --dry-run \
+            --out $OUT/sfdc_raw.json
+
+          # Phase 2: assess
+          python -m skills.oscal_assess.oscal_assess assess \
+            --collector-output $OUT/sfdc_raw.json \
+            --org ci-dry-run-sfdc --out $OUT/gap_analysis.json
+
+          # Phase 2b: gap map
+          python scripts/oscal_gap_map.py \
+            --gap-analysis $OUT/gap_analysis.json \
+            --org ci-dry-run-sfdc \
+            --out-json $OUT/backlog.json
+
+          # Phase 3: benchmark
+          python -m skills.sscf_benchmark.sscf_benchmark benchmark \
+            --backlog $OUT/backlog.json \
+            --org ci-dry-run-sfdc \
+            --out $OUT/sscf_report.json
+
+          # Phase 4: NIST review (dry-run)
+          python -m skills.nist_review.nist_review assess \
+            --gap-analysis $OUT/gap_analysis.json \
+            --backlog $OUT/backlog.json \
+            --platform salesforce \
+            --out $OUT/nist_review.json \
+            --dry-run
+
+          # Phase 5: report (mock LLM — no API spend)
+          python -m skills.report_gen.report_gen generate \
+            --backlog $OUT/backlog.json \
+            --sscf-benchmark $OUT/sscf_report.json \
+            --nist-review $OUT/nist_review.json \
+            --audience security \
+            --org-alias ci-dry-run-sfdc \
+            --mock-llm \
+            --out $OUT/ci-dry-run-sfdc_security_assessment.md
+
+          echo "=== Salesforce dry-run complete ==="
+          python3 -c "
+          import json
+          with open('$OUT/sscf_report.json') as f:
+              r = json.load(f)
+          score = r.get('overall_score', 0)
+          status = r.get('overall_status', '?').upper()
+          print(f'Overall score: {score:.1%} ({status})')
+          "
+
+      - name: Upload Salesforce dry-run artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: sfdc-dry-run-${{ github.run_id }}
+          path: docs/oscal-salesforce-poc/generated/ci-dry-run-sfdc/
+          retention-days: 30
+
+  workday-dry-run:
+    name: Workday dry-run assessment
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.platform == 'workday' || github.event.inputs.platform == 'both' }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Run Workday dry-run
+        env:
+          QDRANT_IN_MEMORY: "1"
+          MEMORY_ENABLED: "0"
+        run: |
+          python3 scripts/workday_dry_run_demo.py --org ci-dry-run-workday --env dev
+
+          echo "=== Workday dry-run complete ==="
+          TODAY=$(date +%Y-%m-%d)
+          OUT=docs/oscal-salesforce-poc/generated/ci-dry-run-workday/$TODAY
+          if [ -f "$OUT/sscf_report.json" ]; then
+            python3 -c "
+          import json
+          with open('$OUT/sscf_report.json') as f:
+              r = json.load(f)
+          score = r.get('overall_score', 0)
+          status = r.get('overall_status', '?').upper()
+          print(f'Overall score: {score:.1%} ({status})')
+            "
+          fi
+
+      - name: Upload Workday dry-run artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: workday-dry-run-${{ github.run_id }}
+          path: docs/oscal-salesforce-poc/generated/ci-dry-run-workday/
+          retention-days: 30

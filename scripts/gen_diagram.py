@@ -32,11 +32,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from diagrams import Cluster, Diagram, Edge
+from diagrams.azure.identity import ActiveDirectory
 from diagrams.generic.storage import Storage
 from diagrams.onprem.compute import Server
 from diagrams.programming.flowchart import Document, MultipleDocuments
 from diagrams.programming.language import Python
-from diagrams.saas.identity import Okta
 
 _OUT = Path(__file__).resolve().parents[1] / "docs" / "architecture"
 
@@ -63,7 +63,7 @@ def main() -> None:
     ):
         # ── Inputs ───────────────────────────────────────────────────────────
         with Cluster("SaaS Platforms  (read-only)"):
-            sfdc = Okta("Salesforce Org")
+            sfdc = ActiveDirectory("Salesforce Org\n(Entra ID SSO)")
             workday = Server("Workday Tenant\n(HCM / Finance)")
 
         # ── OSCAL Config Layer ────────────────────────────────────────────────
@@ -81,7 +81,7 @@ def main() -> None:
                 collector = Server("Collector\ngpt-5.3-chat-latest")
                 assessor = Server("Assessor\ngpt-5.3-chat-latest")
                 nist_reviewer = Server("NIST Reviewer\ngpt-5.3-chat-latest")
-                reporter = Server("Reporter\ngpt-4o-mini")
+                reporter = Server("Reporter\ngpt-5.3-chat-latest")
                 security_reviewer = Server("Security Reviewer\ngpt-5.3-chat-latest")
                 sfdc_expert = Server("SFDC Expert\ngpt-5.3-chat-latest")
                 wd_expert = Server("Workday Expert\ngpt-5.3-chat-latest")

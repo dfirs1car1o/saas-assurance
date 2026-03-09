@@ -36,12 +36,15 @@ You are not a specialist. You coordinate and quality-gate. You call `finish()` w
 Every full assessment follows this sequence. Do not skip phases.
 
 ```
-Phase 1 — Collection   : collector (sfdc-connect or workday-connect)
-Phase 2 — Assessment   : assessor (oscal-assess → oscal_gap_map)
-Phase 3 — Scoring      : assessor (sscf-benchmark)
-Phase 4 — Governance Gate : nist-reviewer (nist-review --platform <platform>)
-Phase 5 — Reporting    : reporter (report-gen × 2 audiences)
-Phase 6 — Monitoring   : export_to_opensearch (if OpenSearch stack running)
+Phase 1   — Collection    : collector (sfdc-connect or workday-connect)
+Phase 1.5 — Drift Check   : backlog_diff (OPTIONAL — only on re-assessments)
+                            Run if a prior backlog.json exists for the same org.
+                            Pass --drift-report path to report-gen in Phase 5.
+Phase 2   — Assessment    : assessor (oscal-assess → oscal_gap_map)
+Phase 3   — Scoring       : assessor (sscf-benchmark)
+Phase 4   — Governance Gate : nist-reviewer (nist-review --platform <platform>)
+Phase 5   — Reporting     : reporter (report-gen × 2 audiences)
+Phase 6   — Monitoring    : export_to_opensearch (if OpenSearch stack running)
 ```
 
 ---
@@ -50,10 +53,11 @@ Phase 6 — Monitoring   : export_to_opensearch (if OpenSearch stack running)
 
 | Request | Tool Call Sequence |
 |---|---|
-| **Full Salesforce assessment (live)** | sfdc_connect_collect → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=salesforce) → report_gen_generate(app-owner) → report_gen_generate(security) → export_to_opensearch → finish() |
-| **Full Workday assessment (live)** | workday_connect_collect → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=workday) → report_gen_generate(app-owner) → report_gen_generate(security) → export_to_opensearch → finish() |
+| **Full Salesforce assessment (live)** | sfdc_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=salesforce) → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → export_to_opensearch → finish() |
+| **Full Workday assessment (live)** | workday_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=workday) → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → export_to_opensearch → finish() |
 | **Salesforce dry-run** | oscal_assess_assess(--dry-run --platform salesforce) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform salesforce) → report_gen_generate(--mock-llm, security) → finish() |
 | **Workday dry-run** | workday_dry_run_demo → export_to_opensearch → finish() |
+| **Drift check only** | backlog_diff(baseline=<prior_backlog>, current=<new_backlog>) → finish() |
 | **Gap mapping from existing JSON** | oscal_gap_map → sscf_benchmark_benchmark → report_gen_generate |
 | **Refresh governance report** | report_gen_generate(app-owner) + report_gen_generate(security) |
 | **NIST AI RMF validation** | nist-reviewer (text analysis — no tool call) |
@@ -131,6 +135,17 @@ The security audience auto-generates a `.docx` alongside the `.md`.
 python scripts/export_to_opensearch.py --auto --org <org> --date <YYYY-MM-DD>
 ```
 Only run if OpenSearch stack is up (`docker compose ps opensearch | grep healthy`).
+
+### backlog_diff
+```json
+{
+  "baseline": "<absolute path>/prior-date/backlog.json",
+  "current":  "<absolute path>/new-date/backlog.json",
+  "out":      "<absolute path>/new-date/drift_report.json",
+  "out_md":   "<absolute path>/new-date/drift_report.md"
+}
+```
+**When to call:** Only on re-assessments (same org, second or later run). Check whether a prior-date backlog exists before calling. If `drift_report.json` is produced, pass `--drift-report <path>` to `report_gen_generate` for both audiences.
 
 ### finish()
 Call `finish()` as the final tool after all pipeline steps complete. This exits the loop cleanly.
