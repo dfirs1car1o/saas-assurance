@@ -34,6 +34,8 @@ REQUIRED_ENV = REQUIRED_ENV_SOAP  # backward-compat alias
 JWT_EXPIRY_SECONDS = 300  # Salesforce max: 5 min
 JWT_REQUEST_TIMEOUT = 30  # seconds
 
+_TOOLING_QUERY = "tooling/query"
+
 
 # ---------------------------------------------------------------------------
 # Auth helpers
@@ -216,7 +218,7 @@ def collect_auth(sf: Any) -> dict:
     # Session settings via Tooling API — use Metadata blob (field names vary by API version)
     try:
         tooling_result = sf.restful(
-            "tooling/query",
+            _TOOLING_QUERY,
             params={"q": "SELECT Metadata FROM SecuritySettings LIMIT 1"},
         )
         data["session_settings"] = tooling_result
@@ -226,7 +228,7 @@ def collect_auth(sf: Any) -> dict:
     # MFA enforcement via Tooling API (Identity Verification setting)
     try:
         mfa_result = sf.restful(
-            "tooling/query",
+            _TOOLING_QUERY,
             params={
                 "q": "SELECT MultiFactorAuthenticationForUserUI, MultiFactorAuthenticationForUserUIBlock"
                 " FROM OrganizationSettings LIMIT 1"
@@ -331,7 +333,7 @@ def collect_integrations(sf: Any) -> dict:
         _rss_query = (
             "SELECT Id, SiteName, EndpointUrl, IsActive, DisableProtocolSecurity FROM RemoteProxy ORDER BY SiteName"
         )
-        tooling_result = sf.restful("tooling/query", params={"q": _rss_query})
+        tooling_result = sf.restful(_TOOLING_QUERY, params={"q": _rss_query})
         data["remote_site_settings"] = tooling_result
     except Exception as exc:
         data["remote_site_settings"] = {

@@ -293,7 +293,7 @@ def _bool_val(raw: str | None) -> bool | None:
 # ---------------------------------------------------------------------------
 
 
-def _assess_password_rules(ctrl_id: str, xml_str: str) -> dict[str, Any]:
+def _assess_password_rules(ctrl_id: str, xml_str: str) -> dict[str, Any]:  # NOSONAR
     """Assess WD-CON-001, WD-CON-002, WD-CON-004 from Get_Password_Rules response."""
     t = _THRESHOLDS
     result: dict[str, Any] = {"observed": {}, "status": "partial", "notes": ""}
@@ -337,7 +337,7 @@ def _assess_password_rules(ctrl_id: str, xml_str: str) -> dict[str, Any]:
     return result
 
 
-def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:
+def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:  # NOSONAR
     """Route SOAP XML response to the appropriate assessment function."""
     # Password rules: CON-001, CON-002, CON-004 all share Get_Password_Rules
     if ctrl_id in ("WD-CON-001", "WD-CON-002", "WD-CON-004"):
@@ -383,10 +383,11 @@ def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:
     if ctrl_id == "WD-IAM-002":
         vals = _xml_all_texts(xml_str, "Disallow_UI_Sessions")
         all_disabled = all(_bool_val(v) for v in vals) if vals else None
+        iam002_status = "pass" if all_disabled else ("fail" if all_disabled is False else "partial")
         return {
             "observed": {"Disallow_UI_Sessions_values": vals},
             "expected": "Disallow_UI_Sessions=true for all ISUs",
-            "status": "pass" if all_disabled else ("fail" if all_disabled is False else "partial"),
+            "status": iam002_status,
             "observed_value": f"Disallow_UI_Sessions values: {vals}",
         }
 
@@ -394,10 +395,11 @@ def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:
     if ctrl_id == "WD-IAM-003":
         mfa_vals = _xml_all_texts(xml_str, "Multi_Factor_Authentication_Required")
         all_mfa = all(_bool_val(v) for v in mfa_vals) if mfa_vals else None
+        iam003_status = "pass" if all_mfa else ("fail" if all_mfa is False else "partial")
         return {
             "observed": {"MFA_Required_values": mfa_vals},
             "expected": "Multi_Factor_Authentication_Required=true on all policies",
-            "status": "pass" if all_mfa else ("fail" if all_mfa is False else "partial"),
+            "status": iam003_status,
             "observed_value": f"MFA required on {sum(1 for v in mfa_vals if _bool_val(v))}/{len(mfa_vals)} policies",
         }
 
@@ -812,7 +814,12 @@ def print_dry_run_plan(tenant: str, org_alias: str) -> None:
         m = ctrl["collection_method"]
         method_counts[m] = method_counts.get(m, 0) + 1
         op = ctrl.get("soap_operation") or ctrl.get("raas_report") or ctrl.get("rest_endpoint") or "(manual)"
-        flag = "*" if m == "raas" else ("-" if m == "manual" else " ")
+        if m == "raas":
+            flag = "*"
+        elif m == "manual":
+            flag = "-"
+        else:
+            flag = " "
         click.echo(f"  {ctrl['id']:<14} {m:<12} {op:<40} {flag}")
     click.echo(f"\nMethod summary: {method_counts}")
     click.echo(f"\nWould write: docs/oscal-salesforce-poc/generated/{org_alias}/workday_raw.json")

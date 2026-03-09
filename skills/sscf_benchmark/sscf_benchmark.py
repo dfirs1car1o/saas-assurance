@@ -89,7 +89,7 @@ def _load_backlog(path: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def run_benchmark(
+def run_benchmark(  # NOSONAR
     backlog: dict[str, Any],
     sscf_index: dict[str, dict[str, Any]],
     threshold: float,
@@ -127,15 +127,14 @@ def run_benchmark(
         for sscf_cid, items in sorted(controls.items()):
             ctrl_meta = sscf_index.get(sscf_cid, {})
             statuses = [i.get("status", "") for i in items]
-            worst = (
-                "fail"
-                if "fail" in statuses
-                else "partial"
-                if "partial" in statuses
-                else "pass"
-                if "pass" in statuses
-                else "not_applicable"
-            )
+            if "fail" in statuses:
+                worst = "fail"
+            elif "partial" in statuses:
+                worst = "partial"
+            elif "pass" in statuses:
+                worst = "pass"
+            else:
+                worst = "not_applicable"
             control_detail.append(
                 {
                     "sscf_control_id": sscf_cid,

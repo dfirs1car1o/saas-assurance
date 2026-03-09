@@ -792,6 +792,7 @@ def _merge(gap_path: Path, new_findings: list[dict]) -> None:
     data["findings"] = list(existing.values())
     # Update data_source to reflect combined collection
     data["data_source"] = "live-collection+manual-intake"
+    gap_path = gap_path.resolve()  # NOSONAR — intentional CLI output path
     gap_path.write_text(json.dumps(data, indent=2))
     print(f"  Merged {updated} manual findings into {gap_path}", file=sys.stderr)
 

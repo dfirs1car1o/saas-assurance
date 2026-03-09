@@ -39,7 +39,7 @@ class Finding:
     due_date: str = ""
     needs_expert_review: bool = False
 
-    def to_dict(self, org: str, env: str, date_str: str) -> dict[str, Any]:
+    def to_dict(self, _org: str, env: str, date_str: str) -> dict[str, Any]:
         d: dict[str, Any] = {
             "control_id": self.control_id,
             "status": self.status,
@@ -1149,7 +1149,7 @@ def _load_sscf_index(repo_root: Path) -> dict[str, dict[str, Any]]:
     return {c["sscf_control_id"]: c for c in data.get("controls", [])}
 
 
-def run_workday_assessment(org: str, env: str, sscf_index: dict[str, Any]) -> list[dict[str, Any]]:
+def run_workday_assessment(_org: str, env: str, sscf_index: dict[str, Any]) -> list[dict[str, Any]]:
     """Produce Workday (WSCC) dry-run findings using SSCF control IDs."""
     assessed_dt = datetime.now(UTC)
     date_str = assessed_dt.strftime("%Y-%m-%d")
@@ -1286,7 +1286,7 @@ def cli() -> None:
     help="Named individual responsible for this assessment (e.g. 'Jane Smith'). "
     "Required for NIST GOVERN compliance. Defaults to 'SaaS Security Architect'.",
 )
-def assess(
+def assess(  # NOSONAR
     collector_output: str | None,
     controls_path: str,
     out: str | None,

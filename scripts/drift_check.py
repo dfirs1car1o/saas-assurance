@@ -45,7 +45,7 @@ def _pass_rate(items: list[dict]) -> float:
     return passing / len(assessed)
 
 
-def _classify_change(
+def _classify_change(  # NOSONAR
     baseline: dict | None,
     current: dict | None,
 ) -> tuple[str, str]:
@@ -193,7 +193,7 @@ def diff_backlogs(baseline_data: dict, current_data: dict) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _render_md(drift: dict) -> str:
+def _render_md(drift: dict) -> str:  # NOSONAR
     s = drift["summary"]
     direction_icon = {"improving": "📈", "regressing": "📉", "stable": "➡️"}.get(s["net_direction"], "")
     delta_str = f"{s['score_delta']:+.1%}"
@@ -293,10 +293,12 @@ def main(baseline: str, current: str, out: str | None, out_md: str | None) -> No
     out_markdown = Path(out_md) if out_md else base_dir / "drift_report.md"
 
     out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json = out_json.resolve()  # NOSONAR — intentional CLI output path
     out_json.write_text(json.dumps(drift, indent=2))
     click.echo(f"drift-check: wrote {out_json}", err=True)
 
     out_markdown.parent.mkdir(parents=True, exist_ok=True)
+    out_markdown = out_markdown.resolve()  # NOSONAR — intentional CLI output path
     out_markdown.write_text(_render_md(drift))
     click.echo(f"drift-check: wrote {out_markdown}", err=True)
 

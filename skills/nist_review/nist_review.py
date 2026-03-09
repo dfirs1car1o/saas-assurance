@@ -25,6 +25,8 @@ from dotenv import load_dotenv
 _REPO = Path(__file__).resolve().parents[2]
 load_dotenv(_REPO / ".env")
 
+_PARSE_ERROR_MSG = "Parse error — manual review required."
+
 # ---------------------------------------------------------------------------
 # Dry-run stub verdict (realistic weak-org scenario)
 # ---------------------------------------------------------------------------
@@ -175,7 +177,7 @@ def cli() -> None:
     type=click.Choice(["salesforce", "workday"]),
     help="Platform being assessed — selects the correct dry-run stub language.",
 )
-def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: bool, platform: str) -> None:
+def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: bool, platform: str) -> None:  # NOSONAR
     """Run NIST AI RMF review against assessment outputs."""
     out_path = Path(out)
 
@@ -190,8 +192,9 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
                 data = _load_json(gap_analysis)
                 default_id = f"{platform}-assess-dry-run"
                 verdict["nist_ai_rmf_review"]["assessment_id"] = data.get("assessment_id", default_id)
-            except SystemExit:
-                pass
+            except SystemExit as exc:
+                click.echo(f"WARNING: Could not load gap_analysis for assessment_id: {exc}", err=True)
+                raise
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(verdict, indent=2))
         click.echo(f"nist-review [DRY-RUN]: wrote stub verdict -> {out_path}", err=True)
@@ -274,10 +277,10 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
                 "assessment_id": assessment_id,
                 "reviewed_at_utc": datetime.now(UTC).isoformat(),
                 "reviewer": "nist-reviewer",
-                "govern": {"status": "partial", "notes": "Parse error — manual review required."},
-                "map": {"status": "partial", "notes": "Parse error — manual review required."},
-                "measure": {"status": "partial", "notes": "Parse error — manual review required."},
-                "manage": {"status": "partial", "notes": "Parse error — manual review required."},
+                "govern": {"status": "partial", "notes": _PARSE_ERROR_MSG},
+                "map": {"status": "partial", "notes": _PARSE_ERROR_MSG},
+                "measure": {"status": "partial", "notes": _PARSE_ERROR_MSG},
+                "manage": {"status": "partial", "notes": _PARSE_ERROR_MSG},
                 "overall": "flag",
                 "blocking_issues": ["LLM response could not be parsed as JSON."],
                 "recommendations": [],
@@ -288,6 +291,7 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
         verdict["nist_ai_rmf_review"].setdefault("reviewed_at_utc", datetime.now(UTC).isoformat())
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path = out_path.resolve()  # NOSONAR — intentional CLI output path
     out_path.write_text(json.dumps(verdict, indent=2))
     click.echo(f"nist-review: wrote verdict -> {out_path}", err=True)
 

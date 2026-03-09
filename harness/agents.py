@@ -14,6 +14,8 @@ from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[1]
 
+DEFAULT_MODEL = "gpt-5.3-chat-latest"
+
 
 def _load(agent_name: str) -> str:
     """Concatenate mission.md + agents/<name>.md into a single system prompt."""
@@ -31,9 +33,9 @@ class AgentConfig:
     tool_names: list[str] = field(default_factory=list)
 
 
-_MODEL_ORCHESTRATOR = os.getenv("LLM_MODEL_ORCHESTRATOR", "gpt-5.3-chat-latest")
-_MODEL_ANALYST = os.getenv("LLM_MODEL_ANALYST", "gpt-5.3-chat-latest")
-_MODEL_REPORTER = os.getenv("LLM_MODEL_REPORTER", "gpt-5.3-chat-latest")
+_MODEL_ORCHESTRATOR = os.getenv("LLM_MODEL_ORCHESTRATOR", DEFAULT_MODEL)
+_MODEL_ANALYST = os.getenv("LLM_MODEL_ANALYST", DEFAULT_MODEL)
+_MODEL_REPORTER = os.getenv("LLM_MODEL_REPORTER", DEFAULT_MODEL)
 
 # ---------------------------------------------------------------------------
 # Agent registry

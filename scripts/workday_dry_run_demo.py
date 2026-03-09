@@ -20,6 +20,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[1]
+_SECURITY_TEAM = "Security Team"
 
 # ---------------------------------------------------------------------------
 # Mock findings — realistic Workday org with common security gaps
@@ -441,7 +442,7 @@ def build_workday_raw(org: str, env: str) -> dict:
         "assessment_time_utc": now,
         "environment": env,
         "assessor": "workday-connect v0.1.0 (dry-run)",
-        "assessment_owner": "Security Team",
+        "assessment_owner": _SECURITY_TEAM,
         "data_source": "workday-connect dry-run demo data",
         "ai_generated_findings_notice": (
             "Findings are simulated dry-run demo data. "
@@ -469,13 +470,19 @@ def to_backlog(raw: dict) -> dict:
         severity = f.get("severity", "moderate")
         status = f.get("status", "partial")
         due = _due(severity) if status == "fail" else ""
+        if status in ("pass", "fail"):
+            mapping_confidence = "high"
+        elif status == "partial":
+            mapping_confidence = "medium"
+        else:
+            mapping_confidence = "low"
         item = {
             "legacy_control_id": f["control_id"],
             "sbs_control_id": f["control_id"],
             "sbs_title": f.get("title", f["control_id"]),
             "status": status,
             "severity": severity,
-            "owner": "Security Team",
+            "owner": _SECURITY_TEAM,
             "due_date": due,
             "remediation": (
                 MOCK_FINDINGS[
@@ -485,9 +492,7 @@ def to_backlog(raw: dict) -> dict:
             ),
             "evidence_ref": f.get("evidence_source", ""),
             "mapping_notes": "Direct Workday catalog mapping.",
-            "mapping_confidence": (
-                "high" if status in ("pass", "fail") else ("medium" if status == "partial" else "low")
-            ),
+            "mapping_confidence": mapping_confidence,
             "sscf_mappings": f.get("sscf_mappings", []),
             "sscf_control_ids": sscf_ids,
         }
@@ -499,7 +504,7 @@ def to_backlog(raw: dict) -> dict:
 
     return {
         "assessment_id": raw["assessment_id"],
-        "assessment_owner": raw.get("assessment_owner", "Security Team"),
+        "assessment_owner": raw.get("assessment_owner", _SECURITY_TEAM),
         "generated_at_utc": now,
         "catalog_version": "wscc-0.2.0",
         "framework": "CSA_SSCF",

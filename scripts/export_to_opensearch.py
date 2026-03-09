@@ -127,7 +127,12 @@ def _build_finding_docs(backlog: dict[str, Any]) -> list[dict[str, Any]]:
     docs = []
     for item in items:
         status = item.get("status", "")
-        poam_status = "Closed" if status == "pass" else ("Open" if status == "fail" else "In Progress")
+        if status == "pass":
+            poam_status = "Closed"
+        elif status == "fail":
+            poam_status = "Open"
+        else:
+            poam_status = "In Progress"
         if status == "not_applicable":
             poam_status = "N/A"
 

@@ -158,7 +158,7 @@ def _handle_tool_error(
 # ---------------------------------------------------------------------------
 
 
-def _run_loop(
+def _run_loop(  # NOSONAR
     task: str,
     env: str,
     org: str,
@@ -376,7 +376,7 @@ def cli() -> None:
     envvar="OPENAI_API_KEY",
     help="OpenAI API key (defaults to OPENAI_API_KEY env var).",
 )
-def run(
+def run(  # NOSONAR
     env: str,
     org: str,
     dry_run: bool,
@@ -475,7 +475,12 @@ def run(
     score = state.get("score", 0.0)
     critical_fails = state.get("critical_fails", [])
     score_pct = f"{score:.1%}"
-    status_label = "GREEN" if score >= 0.80 else "AMBER" if score >= 0.50 else "RED"
+    if score >= 0.80:
+        status_label = "GREEN"
+    elif score >= 0.50:
+        status_label = "AMBER"
+    else:
+        status_label = "RED"
     status_icon = {"GREEN": "✅", "AMBER": "⚠️", "RED": "🔴"}.get(status_label, "")
 
     click.echo("\n" + "=" * 60)

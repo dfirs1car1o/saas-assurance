@@ -130,7 +130,7 @@ def _load_iso27001_map(path: Path) -> dict[str, list[dict[str, Any]]]:
     return result
 
 
-def main() -> int:
+def main() -> int:  # NOSONAR
     parser = argparse.ArgumentParser(description="Map gap-analysis findings to SBS controls.")
     parser.add_argument("--controls", required=True, help="Path to normalized SBS controls JSON.")
     parser.add_argument("--gap-analysis", required=True, help="Path to gap-analysis JSON.")

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 import click
 
 if TYPE_CHECKING:
-    pass
+    pass  # intentional: no type-only imports needed at this time
 
 COLLECTION = "saas-posture"
 _MEMORY_LIMIT = 5  # max prior assessment summaries to surface per org

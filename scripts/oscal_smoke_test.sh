@@ -8,11 +8,11 @@ echo "== OSCAL Smoke Test =="
 echo "Repo: $ROOT"
 
 if ! python3 -c "import yaml" >/dev/null 2>&1; then
-  echo "ERROR: PyYAML is required for OSCAL scripts."
-  echo "Install in a venv and retry:"
-  echo "  python3 -m venv .venv"
-  echo "  source .venv/bin/activate"
-  echo "  pip install PyYAML"
+  echo "ERROR: PyYAML is required for OSCAL scripts." >&2
+  echo "Install in a venv and retry:" >&2
+  echo "  python3 -m venv .venv" >&2
+  echo "  source .venv/bin/activate" >&2
+  echo "  pip install PyYAML" >&2
   exit 1
 fi
 

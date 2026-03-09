@@ -29,23 +29,35 @@ from typing import Any
 
 _OUT = Path(__file__).resolve().parents[1] / "config" / "opensearch" / "dashboards.ndjson"
 
+# ── Duplicate-string constants (S1192) ────────────────────────────────────────
+_FINDINGS_INDEX = "sscf-findings-*"
+_RUNS_INDEX = "sscf-runs-*"
+_FAIL_PARTIAL_QUERY = "status : fail OR status : partial"
+_OPEN_ITEMS_LABEL = "Open Items"
+_SFDC_FILTER = "platform : salesforce"
+_SBS_TITLE_KW = "sbs_title.keyword"
+_SFDC_FAIL_PARTIAL = "platform : salesforce AND (status : fail OR status : partial)"
+_WD_FILTER = "platform : workday"
+_WD_FAIL_PARTIAL = "platform : workday AND (status : fail OR status : partial)"
+_KIBANA_INDEX_KEY = "kibanaSavedObjectMeta.searchSourceJSON.index"
+
 
 def _j(obj: Any) -> str:
     return json.dumps(obj, separators=(",", ":"))
 
 
-def _src(query: str = "", index_id: str = "sscf-findings-*") -> str:
+def _src(query: str = "", _index_id: str = _FINDINGS_INDEX) -> str:
     return _j(
         {
             "query": {"language": "kuery", "query": query},
             "filter": [],
-            "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
+            "indexRefName": _KIBANA_INDEX_KEY,
         }
     )
 
 
 def _viz(
-    id_: str, title: str, vis_state: dict, query: str = "", index_id: str = "sscf-findings-*", desc: str = ""
+    id_: str, title: str, vis_state: dict, query: str = "", index_id: str = _FINDINGS_INDEX, desc: str = ""
 ) -> dict:
     vis_state["title"] = title
     return {
@@ -59,9 +71,7 @@ def _viz(
             "version": 1,
             "kibanaSavedObjectMeta": {"searchSourceJSON": _src(query, index_id)},
         },
-        "references": [
-            {"name": "kibanaSavedObjectMeta.searchSourceJSON.index", "type": "index-pattern", "id": index_id}
-        ],
+        "references": [{"name": _KIBANA_INDEX_KEY, "type": "index-pattern", "id": index_id}],
     }
 
 
@@ -110,7 +120,7 @@ def score_tile(id_: str, title: str, subtext: str, platform: str) -> dict:
             ],
         },
         query=f"platform : {platform}",
-        index_id="sscf-runs-*",
+        index_id=_RUNS_INDEX,
         desc=f"Latest average overall score for {platform}",
     )
 
@@ -150,7 +160,7 @@ def count_tile(id_: str, title: str, subtext: str, query: str) -> dict:
 
 
 def donut_pie(
-    id_: str, title: str, field: str, query: str = "", index_id: str = "sscf-findings-*", desc: str = ""
+    id_: str, title: str, field: str, query: str = "", index_id: str = _FINDINGS_INDEX, desc: str = ""
 ) -> dict:
     return _viz(
         id_,
@@ -195,7 +205,7 @@ def hbar(
     term_field: str,
     query: str = "",
     split_field: str | None = None,
-    index_id: str = "sscf-findings-*",
+    index_id: str = _FINDINGS_INDEX,
     desc: str = "",
 ) -> dict:
     """Horizontal bar (terms on Y-axis) — good for long control names."""
@@ -300,7 +310,7 @@ def vbar(
     term_field: str,
     query: str = "",
     split_field: str | None = None,
-    index_id: str = "sscf-findings-*",
+    index_id: str = _FINDINGS_INDEX,
     desc: str = "",
 ) -> dict:
     """Vertical bar — good for domain/severity breakdowns."""
@@ -398,7 +408,7 @@ def vbar(
 
 
 def line_trend(
-    id_: str, title: str, query: str = "", index_id: str = "sscf-runs-*", split_field: str | None = None
+    id_: str, title: str, query: str = "", index_id: str = _RUNS_INDEX, split_field: str | None = None
 ) -> dict:
     """Score trend line chart."""
     aggs: list[dict] = [
@@ -500,7 +510,7 @@ def agg_table(
     title: str,
     buckets: list[tuple[str, str, int]],
     query: str = "",
-    index_id: str = "sscf-findings-*",
+    index_id: str = _FINDINGS_INDEX,
     desc: str = "",
 ) -> dict:
     aggs: list[dict] = [
@@ -547,7 +557,7 @@ def agg_table(
 
 
 def saved_search(
-    id_: str, title: str, columns: list[str], query: str = "", index_id: str = "sscf-findings-*", desc: str = ""
+    id_: str, title: str, columns: list[str], query: str = "", index_id: str = _FINDINGS_INDEX, desc: str = ""
 ) -> dict:
     return {
         "type": "search",
@@ -626,8 +636,8 @@ ALL_COLS = ["org", "platform"] + DETAIL_COLS
 
 OBJECTS: list[dict] = [
     # ── Index patterns ────────────────────────────────────────────────────────
-    index_pattern("sscf-runs-*", "sscf-runs-*", "generated_at_utc"),
-    index_pattern("sscf-findings-*", "sscf-findings-*", "generated_at_utc"),
+    index_pattern(_RUNS_INDEX, _RUNS_INDEX, "generated_at_utc"),
+    index_pattern(_FINDINGS_INDEX, _FINDINGS_INDEX, "generated_at_utc"),
     # ── Shared: score tiles (already platform-filtered at query level) ─────────
     score_tile("viz-sfdc-score", "Salesforce Score", "Salesforce", "salesforce"),
     score_tile("viz-wd-score", "Workday Score", "Workday", "workday"),
@@ -638,7 +648,7 @@ OBJECTS: list[dict] = [
         "viz-combined-domain-bar",
         "All Platforms — Findings by Domain",
         "domain",
-        query="status : fail OR status : partial",
+        query=_FAIL_PARTIAL_QUERY,
         split_field="platform",
         desc="Fail/partial findings per domain, split by platform",
     ),
@@ -649,7 +659,7 @@ OBJECTS: list[dict] = [
         split_field="platform",
         desc="Severity distribution split by platform",
     ),
-    count_tile("viz-combined-open-poam", "Open POA&M (All Platforms)", "Open Items", query="poam_status : Open"),
+    count_tile("viz-combined-open-poam", "Open POA&M (All Platforms)", _OPEN_ITEMS_LABEL, query="poam_status : Open"),
     # ── Salesforce-specific ───────────────────────────────────────────────────
     count_tile("viz-sfdc-pass-count", "Controls Passing", "Passing", query="platform : salesforce AND status : pass"),
     count_tile("viz-sfdc-fail-count", "Controls Failing", "Failing", query="platform : salesforce AND status : fail"),
@@ -660,20 +670,23 @@ OBJECTS: list[dict] = [
         query="platform : salesforce AND status : fail AND severity : critical",
     ),
     count_tile(
-        "viz-sfdc-open-poam", "Open POA&M Items", "Open Items", query="platform : salesforce AND poam_status : Open"
+        "viz-sfdc-open-poam",
+        "Open POA&M Items",
+        _OPEN_ITEMS_LABEL,
+        query="platform : salesforce AND poam_status : Open",
     ),
     donut_pie(
         "viz-sfdc-status-pie",
         "Salesforce — Control Status",
         "status",
-        query="platform : salesforce",
+        query=_SFDC_FILTER,
         desc="Pass / Fail / Partial / Not Applicable distribution",
     ),
     hbar(
         "viz-sfdc-top-failing-bar",
         "Salesforce — Top Failing Controls",
-        "sbs_title.keyword",
-        query="platform : salesforce AND (status : fail OR status : partial)",
+        _SBS_TITLE_KW,
+        query=_SFDC_FAIL_PARTIAL,
         split_field="severity",
         desc="Top 10 fail/partial Salesforce controls by full title, colored by severity",
     ),
@@ -681,7 +694,7 @@ OBJECTS: list[dict] = [
         "viz-sfdc-domain-bar",
         "Salesforce — Risk by Domain",
         "domain",
-        query="platform : salesforce AND (status : fail OR status : partial)",
+        query=_SFDC_FAIL_PARTIAL,
         split_field="status",
         desc="Fail/partial findings per SSCF domain, stacked by status",
     ),
@@ -689,7 +702,7 @@ OBJECTS: list[dict] = [
         "viz-sfdc-severity-bar",
         "Salesforce — Findings by Severity",
         "severity",
-        query="platform : salesforce",
+        query=_SFDC_FILTER,
         split_field="status",
         desc="Severity distribution stacked by control status",
     ),
@@ -697,21 +710,20 @@ OBJECTS: list[dict] = [
         "viz-sfdc-owner-bar",
         "Salesforce — Open Items by Owner",
         "owner",
-        query="platform : salesforce AND (status : fail OR status : partial)",
+        query=_SFDC_FAIL_PARTIAL,
         desc="Which owner/team carries the most open remediation items",
     ),
-    line_trend("viz-sfdc-score-trend", "Salesforce — Score Over Time", query="platform : salesforce"),
+    line_trend("viz-sfdc-score-trend", "Salesforce — Score Over Time", query=_SFDC_FILTER),
     agg_table(
         "viz-sfdc-critical-table",
         "Salesforce — Critical & High Failures",
         buckets=[
             ("severity", "Severity", 5),
             ("control_id", "Control ID", 10),
-            ("sbs_title.keyword", "Description", 1),
+            (_SBS_TITLE_KW, "Description", 1),
             ("domain", "Domain", 1),
         ],
-        query="platform : salesforce AND (status : fail OR status : partial)"
-        " AND (severity : critical OR severity : high)",
+        query=_SFDC_FAIL_PARTIAL + " AND (severity : critical OR severity : high)",
     ),
     agg_table(
         "viz-sfdc-poam-table",
@@ -728,19 +740,24 @@ OBJECTS: list[dict] = [
         "Critical",
         query="platform : workday AND status : fail AND severity : critical",
     ),
-    count_tile("viz-wd-open-poam", "Open POA&M Items", "Open Items", query="platform : workday AND poam_status : Open"),
+    count_tile(
+        "viz-wd-open-poam",
+        "Open POA&M Items",
+        _OPEN_ITEMS_LABEL,
+        query="platform : workday AND poam_status : Open",
+    ),
     donut_pie(
         "viz-wd-status-pie",
         "Workday — Control Status",
         "status",
-        query="platform : workday",
+        query=_WD_FILTER,
         desc="Pass / Fail / Partial / Not Applicable distribution",
     ),
     hbar(
         "viz-wd-top-failing-bar",
         "Workday — Top Failing Controls",
-        "sbs_title.keyword",
-        query="platform : workday AND (status : fail OR status : partial)",
+        _SBS_TITLE_KW,
+        query=_WD_FAIL_PARTIAL,
         split_field="severity",
         desc="Top 10 fail/partial Workday controls by full title, colored by severity",
     ),
@@ -748,7 +765,7 @@ OBJECTS: list[dict] = [
         "viz-wd-domain-bar",
         "Workday — Risk by Domain",
         "domain",
-        query="platform : workday AND (status : fail OR status : partial)",
+        query=_WD_FAIL_PARTIAL,
         split_field="status",
         desc="Fail/partial findings per SSCF domain, stacked by status",
     ),
@@ -756,7 +773,7 @@ OBJECTS: list[dict] = [
         "viz-wd-severity-bar",
         "Workday — Findings by Severity",
         "severity",
-        query="platform : workday",
+        query=_WD_FILTER,
         split_field="status",
         desc="Severity distribution stacked by control status",
     ),
@@ -764,20 +781,20 @@ OBJECTS: list[dict] = [
         "viz-wd-owner-bar",
         "Workday — Open Items by Owner",
         "owner",
-        query="platform : workday AND (status : fail OR status : partial)",
+        query=_WD_FAIL_PARTIAL,
         desc="Which owner/team carries the most open Workday remediation items",
     ),
-    line_trend("viz-wd-score-trend", "Workday — Score Over Time", query="platform : workday"),
+    line_trend("viz-wd-score-trend", "Workday — Score Over Time", query=_WD_FILTER),
     agg_table(
         "viz-wd-critical-table",
         "Workday — Critical & High Failures",
         buckets=[
             ("severity", "Severity", 5),
             ("control_id", "Control ID", 10),
-            ("sbs_title.keyword", "Description", 1),
+            (_SBS_TITLE_KW, "Description", 1),
             ("domain", "Domain", 1),
         ],
-        query="platform : workday AND (status : fail OR status : partial) AND (severity : critical OR severity : high)",
+        query=_WD_FAIL_PARTIAL + " AND (severity : critical OR severity : high)",
     ),
     agg_table(
         "viz-wd-poam-table",
@@ -790,21 +807,21 @@ OBJECTS: list[dict] = [
         "search-sfdc-failing",
         "Salesforce — Failing Controls (Document View)",
         DETAIL_COLS,
-        query="platform : salesforce AND (status : fail OR status : partial)",
+        query=_SFDC_FAIL_PARTIAL,
         desc="Row-level Salesforce fail/partial findings",
     ),
     saved_search(
         "search-wd-failing",
         "Workday — Failing Controls (Document View)",
         DETAIL_COLS,
-        query="platform : workday AND (status : fail OR status : partial)",
+        query=_WD_FAIL_PARTIAL,
         desc="Row-level Workday fail/partial findings",
     ),
     saved_search(
         "search-all-failing",
         "All Platforms — Failing Controls (Document View)",
         ALL_COLS,
-        query="status : fail OR status : partial",
+        query=_FAIL_PARTIAL_QUERY,
         desc="All fail/partial findings across every platform",
     ),
     # ── Partials detail searches (with remediation description) ───────────────
@@ -840,8 +857,8 @@ OBJECTS: list[dict] = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def _platform_dashboard(
-    plat: str,
+def _platform_dashboard(  # NOSONAR
+    _plat: str,
     score_id: str,
     pass_id: str,
     fail_id: str,
@@ -1006,8 +1023,8 @@ OBJECTS.append(
     hbar(
         "viz-combined-top-failing-bar",
         "All Platforms — Top Failing Controls",
-        "sbs_title.keyword",
-        query="status : fail OR status : partial",
+        _SBS_TITLE_KW,
+        query=_FAIL_PARTIAL_QUERY,
         split_field="platform",
         desc="Top 10 fail/partial controls across all platforms, colored by platform",
     ),

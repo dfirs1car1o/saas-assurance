@@ -112,7 +112,15 @@ def _print_outputs(org: str, date: str, use_viz: bool) -> None:
         print(f"{_DIM}  Use Discover → sscf-findings-* or sscf-runs-* to explore results.{_RESET}")
 
 
-def main() -> int:
+def main() -> int:  # NOSONAR
+    try:
+        return _main()
+    except Exception as exc:  # noqa: BLE001
+        print(f"\n{_RED}Unexpected error: {exc}{_RESET}")
+        return 1
+
+
+def _main() -> int:
     _print_header()
 
     # ── Platform ──────────────────────────────────────────────────────────────

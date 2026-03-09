@@ -20,6 +20,7 @@ from typing import Any
 
 _REPO = Path(__file__).resolve().parents[1]
 _PYTHON = sys.executable
+_ORG_ALIAS_HELP = "Org alias for output dir naming"
 
 # ---------------------------------------------------------------------------
 # Tool schema definitions (Anthropic format)
@@ -115,7 +116,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "org": {"type": "string", "description": "Org alias for output dir naming"},
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "platform": {
                     "type": "string",
                     "enum": ["salesforce", "workday"],
@@ -152,7 +153,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "org": {"type": "string", "description": "Org alias for output dir naming"},
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "gap_analysis": {
                     "type": "string",
                     "description": "Path to gap_analysis.json produced by oscal_assess_assess",
@@ -210,7 +211,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "org": {"type": "string", "description": "Org alias for output dir naming"},
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "platform": {
                     "type": "string",
                     "enum": ["salesforce", "workday"],
@@ -246,7 +247,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "org": {"type": "string", "description": "Org alias for output dir naming"},
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "gap_analysis": {
                     "type": "string",
                     "description": "Path to gap_analysis.json from oscal_assess_assess",
@@ -295,7 +296,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "org": {"type": "string", "description": "Org alias for output dir naming"},
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "backlog": {
                     "type": "string",
                     "description": "Path to backlog.json produced by oscal_gap_map",
@@ -573,6 +574,7 @@ def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: A
         )
         enriched += 1
 
+    gap_path = gap_path.resolve()  # NOSONAR — intentional CLI output path
     gap_path.write_text(json.dumps(data, indent=2))
     return json.dumps(
         {

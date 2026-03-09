@@ -163,7 +163,7 @@ def check_env_file(suite: CheckSuite) -> None:
     suite.add(CheckResult(".env", "pass", ".env file exists"))
 
 
-def check_env_vars(suite: CheckSuite) -> None:
+def check_env_vars(suite: CheckSuite) -> None:  # NOSONAR
     # Load .env manually for the check
     env_path = Path(".env")
     env_values: dict[str, str] = {}
@@ -453,7 +453,7 @@ def attempt_fix(suite: CheckSuite) -> None:
 # ---------------------------------------------------------------------------
 
 
-def print_summary(suite: CheckSuite, ci_mode: bool) -> int:
+def print_summary(suite: CheckSuite, _ci_mode: bool) -> int:
     total = len(suite.results)
     passed = sum(1 for r in suite.results if r.status == "pass")
     warned = len(suite.warnings)

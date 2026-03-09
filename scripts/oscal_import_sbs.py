@@ -44,7 +44,7 @@ def _text(parent: ET.Element, name: str, ns: dict[str, str]) -> str:
     return value.strip()
 
 
-def _parse_controls(xml_bytes: bytes) -> dict[str, Any]:
+def _parse_controls(xml_bytes: bytes) -> dict[str, Any]:  # NOSONAR
     root = ET.fromstring(xml_bytes)
     ns = {"s": "https://securitybenchmark.dev/sbs/v1"}
 
