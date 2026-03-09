@@ -93,6 +93,32 @@ The dry-run stub is defined in `skills/sfdc_connect/sfdc_connect.py` and produce
 
 ---
 
+## Workday Dry Run (No Credentials Needed)
+
+```bash
+python3 scripts/workday_dry_run_demo.py --org acme-workday --env dev
+```
+
+Runs the complete Workday pipeline (all 30 WSCC controls) using realistic stub data — no live Workday tenant required. Produces identical output structure to a live run:
+
+```
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/workday_raw.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/gap_analysis.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/backlog.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/sscf_report.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/nist_review.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_remediation_report.md
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_security_assessment.md
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_security_assessment.docx
+```
+
+Or via agent-loop:
+```bash
+agent-loop run --platform workday --dry-run --env dev --org acme-workday
+```
+
+---
+
 ## Smoke Tests (No LLM Needed)
 
 To test just the pipeline logic without any API calls:
@@ -101,13 +127,21 @@ To test just the pipeline logic without any API calls:
 pytest tests/ -v
 ```
 
-This runs:
-- `tests/test_pipeline_smoke.py` — 3 tests covering dry-run assess, gap map, benchmark
-- `tests/test_report_gen.py` — 3 tests covering app-owner MD, security MD, DOCX
-- `tests/test_harness_dry_run.py` — 3 tests covering loop tool dispatch, error handler, API key handling
-- `tests/test_sfdc_connect_jwt.py` — 3 tests covering JWT auth resolution and env validation
+This runs 33 tests across 5 suites — all pass without any environment variables or API keys:
 
-**All 12 tests pass without any environment variables or API keys.**
+| Test file | Tests | What it covers |
+|---|---|---|
+| `tests/test_pipeline_smoke.py` | 3 | Dry-run assess, gap map, benchmark |
+| `tests/test_report_gen.py` | 3 | App-owner MD, security MD, DOCX generation |
+| `tests/test_harness_dry_run.py` | 3 | Loop tool dispatch, error handler, API key handling |
+| `tests/test_sfdc_connect_jwt.py` | 3 | JWT auth resolution and env validation |
+| `tests/test_workday_connect.py` | 21 | OAuth flow, 30 controls, SOAP/RaaS/REST, graceful degradation |
+| `tests/test_drift_and_ccm.py` | 10 | Drift classification, CCM crosswalk rendering |
+
+**Run with coverage:**
+```bash
+pytest tests/ -v --cov=skills --cov=scripts --cov=harness --cov-report=term-missing
+```
 
 ---
 

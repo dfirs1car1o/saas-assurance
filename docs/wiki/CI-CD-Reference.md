@@ -17,7 +17,8 @@ All actions are pinned to full commit SHAs for supply chain security.
 | `pip-audit` | `pip-audit --desc on` | All PRs + push to main | Any installed package has a known CVE |
 | `validate-env` | `validate_env.py --ci` | All PRs + push to main | Missing required repo files or Python packages |
 | `license-check` | `pip-licenses` | All PRs + push to main | GPL/AGPL/LGPL dependency detected (not in allowlist) |
-| `pytest` | `pytest tests/ -v` | All PRs + push to main | Any test fails (12 tests total) |
+| `pytest` | `pytest tests/ -v --cov=... --cov-fail-under=60` | All PRs + push to main | Any test fails or coverage drops below 60% (33 tests total) |
+| `docker-smoke` | `docker compose up/down` | All PRs + push to main | OpenSearch or Dashboards fail to reach healthy state |
 
 **Fix `ruff` failures:**
 ```bash
@@ -111,13 +112,19 @@ Scans `skills/` and `scripts/` only (agents/, docs/, config/ are excluded).
 
 ---
 
-### `sbom.yml` — Software Bill of Materials
+### `sbom.yml` — Software Bill of Materials + Vulnerability Scan
 
 | Job | Tool | Trigger | What it does |
 |---|---|---|---|
 | `Generate CycloneDX SBOM` | `cyclonedx-py` | Push to main only | Generates `docs/sbom.cdx.json` and uploads SBOM as 90-day CI artifact |
+| `Grype vulnerability scan` | `grype --fail-on high` | Push to main only | Scans SBOM for CVEs; fails on HIGH or CRITICAL findings |
 
-The SBOM is uploaded as a CI artifact (90-day retention). No auto-commit to main. No action needed from contributors.
+The SBOM is uploaded as a CI artifact (90-day retention). Grype scan results are uploaded alongside it. No auto-commit to main.
+
+**Fix grype failures:**
+- Run `grype sbom:docs/sbom.cdx.json` locally to see the full CVE list
+- Update the affected dependency in `pyproject.toml`, then re-run `pip install -e .`
+- If the CVE has no fix yet, open a GitHub issue to track it and consider a temporary allowlist in CI
 
 ---
 
@@ -171,12 +178,14 @@ CodeRabbit runs automatically — no setup required for contributors. Reviews ap
 □ pip-audit — no CVEs
 □ validate-env — all non-credential checks pass
 □ license-check — no unapproved copyleft
-□ pytest — 12/12 pass
+□ pytest — 33/33 pass + coverage ≥ 60%
+□ docker-smoke — OpenSearch + Dashboards healthy
 □ Bandit SAST — no HIGH findings
 □ Secret scan (gitleaks) — no credentials found
 □ zizmor — no HIGH workflow findings
 □ actionlint — no syntax errors
 □ CodeQL — no injection/traversal patterns
+□ SBOM + grype — no HIGH/CRITICAL CVEs in dependencies
 □ Dependency Review — no new HIGH/CRITICAL CVEs (if pyproject.toml changed)
 □ CodeRabbit Pro — review addressed
 □ 1 PR review — required by branch protection

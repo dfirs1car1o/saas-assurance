@@ -191,7 +191,22 @@ report-gen generate \
     --out my-org_security_assessment.md   # also writes .docx
 ```
 
-**Output:** `{org}_security_assessment.md` + `{org}_security_assessment.docx` — SSCF domain bar chart, full control matrix, NIST AI RMF governance review, executive summary, and risk analysis.
+**Output:** `{org}_security_assessment.md` + `{org}_security_assessment.docx` — SSCF domain bar chart, CCM v4.1 regulatory crosswalk (SOX/HIPAA/SOC2/ISO 27001/PCI DSS/GDPR), full control matrix, NIST AI RMF governance review, executive summary, and risk analysis.
+
+---
+
+## Stage 1 (Workday): Workday Collection (`workday-connect`)
+
+For Workday assessments, replace Stage 1 with:
+
+```bash
+workday-connect collect --org my-tenant --env dev --out workday_raw.json
+# or dry-run (no live tenant needed):
+python3 scripts/workday_dry_run_demo.py --org my-tenant --env dev
+```
+
+Collects 30 WSCC controls across IAM, CON, LOG, DSP, GOV, CKM domains via SOAP/RaaS/REST.
+All subsequent stages (oscal-assess → report-gen) run identically with `--platform workday`.
 
 ---
 
@@ -200,14 +215,20 @@ report-gen generate \
 All 7 stages above run automatically via `agent-loop`. The `gpt-5.3-chat-latest` orchestrator decides the sequence, passes outputs between tools, and enforces quality gates.
 
 ```bash
-# Full live run
+# Full live run — Salesforce
 agent-loop run --env prod --org mycompany --approve-critical
 
-# Dry-run (no Salesforce, no real API spend on tools)
+# Full live run — Workday
+agent-loop run --platform workday --env prod --org my-tenant --approve-critical
+
+# Dry-run — Salesforce
 agent-loop run --dry-run --env dev --org test-org
+
+# Dry-run — Workday (no credentials needed)
+agent-loop run --platform workday --dry-run --env dev --org acme-workday
 ```
 
-**Turn budget:** 12 turns max. Typical full pipeline: 7–9 turns.
+**Turn budget:** 14 turns max. Typical full pipeline: 7–9 turns.
 
 **Quality gates the orchestrator enforces:**
 1. `critical/fail` findings require `--approve-critical` to proceed on live runs

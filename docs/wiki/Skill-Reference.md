@@ -196,15 +196,17 @@ report-gen generate --backlog backlog.json --audience security --out report.md -
 
 ```
 [Gate banner]                  ← ⛔ block / 🚩 flag if NIST verdict requires it
-Executive Scorecard            ← overall score + severity × status matrix  [HARNESS]
-OSCAL Framework Provenance     ← catalog → profile → component → CCM chain [HARNESS]
-Domain Posture (ASCII chart)   ← bar chart of SSCF domain scores           [HARNESS]
-Immediate Actions (Top 10)     ← sorted critical/fail findings             [HARNESS]
-Executive Summary + Analysis   ← LLM narrative only                        [LLM]
-Full Control Matrix            ← complete sorted findings table             [HARNESS]
-Plan of Action & Milestones    ← POAM-IDs, owners, due dates, status       [HARNESS]
-Not Assessed Controls          ← out-of-scope appendix for auditors        [HARNESS]
-NIST AI RMF Governance Review  ← function table + blockers + recs          [HARNESS]
+Executive Scorecard            ← overall score + severity × status matrix   [HARNESS]
+OSCAL Framework Provenance     ← catalog → profile → component → CCM chain  [HARNESS]
+Domain Posture (ASCII chart)   ← bar chart of SSCF domain scores            [HARNESS]
+CCM v4.1 Regulatory Crosswalk  ← fail/partial → SOX/HIPAA/SOC2/ISO/PCI/GDPR[HARNESS]
+                                  (security audience only)
+Immediate Actions (Top 10)     ← sorted critical/fail findings              [HARNESS]
+Executive Summary + Analysis   ← LLM narrative only                         [LLM]
+Full Control Matrix            ← complete sorted findings table              [HARNESS]
+Plan of Action & Milestones    ← POAM-IDs, owners, due dates, status        [HARNESS]
+Not Assessed Controls          ← out-of-scope appendix for auditors         [HARNESS]
+NIST AI RMF Governance Review  ← function table + blockers + recs           [HARNESS]
 ```
 
 ### DOCX Generation
@@ -289,11 +291,12 @@ Emits a realistic weak-org stub verdict: GOVERN=pass, MAP=partial, MEASURE=pass,
 
 ---
 
-## workday-connect (Blueprint — Phase E)
+## workday-connect
 
-**File:** `skills/workday_connect/workday_connect.py` (not yet implemented)
-**Spec:** `skills/workday_connect/BLUEPRINT.md`
-**Purpose:** Authenticates to a Workday HCM/Finance tenant and collects security-relevant configuration across 30 controls.
+**Binary:** `workday-connect`
+**File:** `skills/workday_connect/workday_connect.py`
+**Spec:** `skills/workday_connect/SKILL.md`
+**Purpose:** Authenticates to a Workday HCM/Finance tenant and collects security-relevant configuration across 30 WSCC controls (OAuth 2.0, SOAP/RaaS/REST, 21 automated tests).
 
 ### Auth
 
@@ -335,6 +338,38 @@ Stub files: `tests/workday_mocks/` — one JSON file per SOAP operation, REST en
 ### Output
 
 `docs/oscal-salesforce-poc/generated/workday_raw.json` — `baseline_assessment_schema.json` v2 compliant, `"platform": "workday"`.
+
+---
+
+## drift_check.py (Script)
+
+**File:** `scripts/drift_check.py`
+**Not installed as a CLI binary** — run directly with `python3`.
+
+```bash
+python3 scripts/drift_check.py \
+    --baseline docs/.../generated/<org>/<date1>/backlog.json \
+    --current  docs/.../generated/<org>/<date2>/backlog.json \
+    --out      drift_report.json \
+    --out-md   drift_report.md
+```
+
+Compares two `backlog.json` snapshots and classifies every control change:
+
+| Change type | Meaning |
+|---|---|
+| `regression` | Was pass/not_applicable → now fail/partial |
+| `improvement` | Was fail → now partial (partially remediated) |
+| `resolved` | Was fail/partial → now pass (fully remediated) |
+| `new_finding` | Not present in baseline; appears in current |
+| `unchanged` | Same status in both snapshots |
+| `severity_change` | Status unchanged but severity changed |
+
+**Outputs:**
+- `drift_report.json` — structured report with `pass_rate_delta`, `net_direction` (improving/regressing/stable), per-control change list
+- `drift_report.md` — Markdown tables with change icons (🔴 regression, 🟢 resolved, 🟡 improvement)
+
+The orchestrator can call this via the `backlog_diff` tool (defined in `harness/tools.py`).
 
 ---
 

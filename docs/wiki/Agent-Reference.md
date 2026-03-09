@@ -1,6 +1,6 @@
 # Agent Reference
 
-All 7 agents in the system. Each has a definition file in `agents/` with YAML frontmatter and a full role description.
+All 9 agents in the system. Each has a definition file in `agents/` with YAML frontmatter and a full role description.
 
 ---
 
@@ -31,7 +31,9 @@ All 7 agents in the system. Each has a definition file in `agents/` with YAML fr
 
 | Request | Sequence |
 |---|---|
-| Full org assessment | sfdc-connect → oscal-assess → gap_map → sscf-benchmark → nist-review → report-gen × 2 |
+| Full Salesforce assessment | sfdc-connect → oscal-assess → gap_map → sscf-benchmark → nist-review → report-gen × 2 |
+| Full Workday assessment | workday-connect → oscal-assess → gap_map → sscf-benchmark → nist-review → report-gen × 2 |
+| Drift detection (re-assessment) | drift_check → (optional report section) |
 | Gap map from existing JSON | gap_map → sscf-benchmark → report-gen |
 | Report refresh | report-gen × 2 |
 | NIST AI RMF validation | nist-reviewer (text) |
@@ -39,6 +41,8 @@ All 7 agents in the system. Each has a definition file in `agents/` with YAML fr
 | New skill added | security-reviewer (text) → review subprocess dispatcher |
 | Control research | assessor context, no tools |
 | Apex / complex SFDC question | sfdc-expert (on-call) |
+| Workday SOAP/RaaS question | workday-expert (on-call) |
+| Docker / OpenSearch issue | container-expert (on-call) |
 
 ---
 
@@ -77,13 +81,13 @@ All 7 agents in the system. Each has a definition file in `agents/` with YAML fr
 | Field | Value |
 |---|---|
 | **File** | `agents/reporter.md` |
-| **Model** | `gpt-4o-mini` |
+| **Model** | `gpt-5.3-chat-latest` |
 | **Tools** | `report-gen` |
 | **Invoked by** | Orchestrator (after assessor completes) |
 
 **Role:** Generates governance outputs. Two runs per assessment: once for `app-owner` (Markdown), once for `security` (Markdown + DOCX).
 
-**Why gpt-4o-mini?** Report generation is narrative output from structured data — low complexity, high volume. gpt-4o-mini is the fastest and most cost-efficient model for this task.
+**Security report includes:** CCM v4.1 regulatory crosswalk table (SOX/HIPAA/SOC2/ISO 27001/PCI DSS/GDPR) for all fail/partial findings — inserted between Domain Posture chart and Immediate Actions.
 
 ---
 
@@ -150,6 +154,36 @@ All 7 agents in the system. Each has a definition file in `agents/` with YAML fr
 **Role:** On-call Salesforce specialist. Handles complex questions that the assessor cannot resolve through CLI tools — Apex code review, Flow/Process Builder security issues, SOQL injection patterns, and Connected App scope analysis. See `apex-scripts/README.md` for Apex security patterns.
 
 **Outputs:** Plain-text analysis and Apex code snippets (never executed — for human review only).
+
+---
+
+## Workday Expert
+
+| Field | Value |
+|---|---|
+| **File** | `agents/workday-expert.md` |
+| **Model** | `gpt-5.3-chat-latest` |
+| **Tools** | None (text analysis + code generation only) |
+| **Invoked by** | Orchestrator when Workday SOAP/RaaS calls fail or controls need clarification |
+
+**Role:** On-call Workday HCM/Finance specialist. Handles complex Workday questions — SOAP WWS operations, RaaS report configuration, security group membership APIs, ISSG policies, and OAuth 2.0 troubleshooting.
+
+**Outputs:** Plain-text analysis and Workday SOAP/REST snippets (never executed — for human review only).
+
+---
+
+## Container Expert
+
+| Field | Value |
+|---|---|
+| **File** | `agents/container-expert.md` |
+| **Model** | `gpt-5.3-chat-latest` |
+| **Tools** | None (text analysis + config generation only) |
+| **Invoked by** | Orchestrator for Docker Compose, OpenSearch, or dashboard issues |
+
+**Role:** Specialist for the optional containerized monitoring stack. Handles Docker Compose configuration, OpenSearch 2.x cluster tuning, JVM heap sizing, NDJSON dashboard imports, and `vm.max_map_count` issues on Linux.
+
+**Outputs:** Docker Compose YAML, OpenSearch configuration, troubleshooting guidance.
 
 ---
 
