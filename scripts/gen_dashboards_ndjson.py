@@ -696,7 +696,7 @@ OBJECTS: list[dict] = [
     hbar(
         "viz-sfdc-owner-bar",
         "Salesforce — Open Items by Owner",
-        "owner.keyword",
+        "owner",
         query="platform : salesforce AND (status : fail OR status : partial)",
         desc="Which owner/team carries the most open remediation items",
     ),
@@ -763,7 +763,7 @@ OBJECTS: list[dict] = [
     hbar(
         "viz-wd-owner-bar",
         "Workday — Open Items by Owner",
-        "owner.keyword",
+        "owner",
         query="platform : workday AND (status : fail OR status : partial)",
         desc="Which owner/team carries the most open Workday remediation items",
     ),
