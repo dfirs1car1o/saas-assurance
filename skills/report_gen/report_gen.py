@@ -753,17 +753,25 @@ def _render_drift_section(drift: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _render_priority_findings(backlog: dict, n: int = 10) -> str:
-    """Top-N findings sorted critical/fail first."""
+def _render_priority_findings(backlog: dict, n: int = 10) -> str:  # noqa: ARG001
+    """All assessed controls sorted by severity (critical → high → moderate → low), then by status."""
     items = backlog.get("mapped_items", [])
-    actionable = [i for i in items if i.get("status") in ("fail", "partial")]
-    sorted_items = _sorted_findings(actionable)[:n]
+    assessed = [i for i in items if i.get("status") != "not_applicable"]
+
+    # Sort by severity first, then status within each severity band
+    sorted_items = sorted(
+        assessed,
+        key=lambda x: (
+            _SEV_ORDER.get(x.get("severity", ""), 9),
+            _STA_ORDER.get(x.get("status", ""), 9),
+        ),
+    )
 
     if not sorted_items:
         return ""
 
     lines = [
-        f"## Immediate Actions — Top {len(sorted_items)} Priority Findings",
+        f"## Assessed Controls — {len(sorted_items)} Controls by Severity",
         "",
         "| # | Control | Description | Severity | Status | Required Action | Due Date |",
         "|---|---------|-------------|----------|--------|----------------|----------|",
