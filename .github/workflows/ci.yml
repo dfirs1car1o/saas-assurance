@@ -165,6 +165,12 @@ jobs:
           path: coverage.xml
           retention-days: 30
 
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   docker-smoke:
     name: docker compose smoke test
     runs-on: ubuntu-latest
