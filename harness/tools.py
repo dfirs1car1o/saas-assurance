@@ -574,8 +574,8 @@ def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: A
         )
         enriched += 1
 
-    gap_path = gap_path.resolve()  # NOSONAR — intentional CLI output path
-    gap_path.write_text(json.dumps(data, indent=2))
+    gap_path = gap_path.resolve()
+    gap_path.write_text(json.dumps(data, indent=2))  # NOSONAR — intentional CLI output path
     return json.dumps(
         {
             "status": "ok",

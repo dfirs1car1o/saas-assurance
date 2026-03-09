@@ -37,6 +37,7 @@ import click
 from dotenv import load_dotenv
 
 _REPO = Path(__file__).resolve().parents[2]
+_DOCX_SUFFIX = ".docx"
 load_dotenv(_REPO / ".env")
 
 # ---------------------------------------------------------------------------
@@ -1323,12 +1324,12 @@ def generate(  # NOSONAR
     markdown = "\n\n".join(main_parts)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path = out_path.resolve()  # NOSONAR — intentional CLI output path
-    out_path.write_text(markdown)
+    out_path = out_path.resolve()
+    out_path.write_text(markdown)  # NOSONAR — intentional CLI output path, not a web input
     click.echo(f"report-gen: wrote {out_path}", err=True)
 
     if audience == "security":
-        docx_path = out_path.with_suffix(".docx")
+        docx_path = out_path.with_suffix(_DOCX_SUFFIX)
         _run_pandoc(out_path, docx_path)
         if docx_path.exists():
             click.echo(f"report-gen: wrote {docx_path}", err=True)
@@ -1347,11 +1348,11 @@ def generate(  # NOSONAR
         annex_md = "\n\n".join(annex_parts)
 
         annex_md_path = out_path.with_name(out_path.stem + "_annex.md")
-        annex_md_path = annex_md_path.resolve()  # NOSONAR — intentional CLI output path
-        annex_md_path.write_text(annex_md)
+        annex_md_path = annex_md_path.resolve()
+        annex_md_path.write_text(annex_md)  # NOSONAR — intentional CLI output path
         click.echo(f"report-gen: wrote {annex_md_path}", err=True)
 
-        annex_docx_path = annex_md_path.with_suffix(".docx")
+        annex_docx_path = annex_md_path.with_suffix(_DOCX_SUFFIX)
         _run_pandoc(annex_md_path, annex_docx_path)
         if annex_docx_path.exists():
             click.echo(f"report-gen: wrote {annex_docx_path}", err=True)
@@ -1360,11 +1361,11 @@ def generate(  # NOSONAR
         methodology = _render_evidence_methodology(backlog_data)
         if methodology:
             method_md_path = out_path.with_name(out_path.stem + "_evidence_methodology.md")
-            method_md_path = method_md_path.resolve()  # NOSONAR — intentional CLI output path
-            method_md_path.write_text(methodology)
+            method_md_path = method_md_path.resolve()
+            method_md_path.write_text(methodology)  # NOSONAR — intentional CLI output path
             click.echo(f"report-gen: wrote {method_md_path}", err=True)
 
-            method_docx_path = method_md_path.with_suffix(".docx")
+            method_docx_path = method_md_path.with_suffix(_DOCX_SUFFIX)
             _run_pandoc(method_md_path, method_docx_path)
             if method_docx_path.exists():
                 click.echo(f"report-gen: wrote {method_docx_path}", err=True)

@@ -383,7 +383,12 @@ def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:  # NOSONA
     if ctrl_id == "WD-IAM-002":
         vals = _xml_all_texts(xml_str, "Disallow_UI_Sessions")
         all_disabled = all(_bool_val(v) for v in vals) if vals else None
-        iam002_status = "pass" if all_disabled else ("fail" if all_disabled is False else "partial")
+        if all_disabled:
+            iam002_status = "pass"
+        elif all_disabled is False:
+            iam002_status = "fail"
+        else:
+            iam002_status = "partial"
         return {
             "observed": {"Disallow_UI_Sessions_values": vals},
             "expected": "Disallow_UI_Sessions=true for all ISUs",
@@ -395,7 +400,12 @@ def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:  # NOSONA
     if ctrl_id == "WD-IAM-003":
         mfa_vals = _xml_all_texts(xml_str, "Multi_Factor_Authentication_Required")
         all_mfa = all(_bool_val(v) for v in mfa_vals) if mfa_vals else None
-        iam003_status = "pass" if all_mfa else ("fail" if all_mfa is False else "partial")
+        if all_mfa:
+            iam003_status = "pass"
+        elif all_mfa is False:
+            iam003_status = "fail"
+        else:
+            iam003_status = "partial"
         return {
             "observed": {"MFA_Required_values": mfa_vals},
             "expected": "Multi_Factor_Authentication_Required=true on all policies",

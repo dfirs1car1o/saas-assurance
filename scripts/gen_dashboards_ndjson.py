@@ -858,7 +858,7 @@ OBJECTS: list[dict] = [
 
 
 def _platform_dashboard(  # NOSONAR
-    _plat: str,
+    plat: str,  # NOSONAR — kept for caller readability; not used in body
     score_id: str,
     pass_id: str,
     fail_id: str,
@@ -1041,9 +1041,7 @@ main_dash = dashboard_obj(
 
 OBJECTS += [sfdc_dash, wd_dash, main_dash]
 
-# ─────────────────────────────────────────────────────────────────────────────
 # WRITE
-# ─────────────────────────────────────────────────────────────────────────────
 _OUT.parent.mkdir(parents=True, exist_ok=True)
 lines = [json.dumps(obj, separators=(",", ":")) for obj in OBJECTS]
 _OUT.write_text("\n".join(lines) + "\n")

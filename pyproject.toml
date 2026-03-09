@@ -51,3 +51,10 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.coverage.run]
+relative_files = true
+source = ["skills", "harness"]
+
+[tool.coverage.report]
+omit = ["*/__init__.py", "*/tests/*"]

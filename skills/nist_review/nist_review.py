@@ -291,8 +291,8 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
         verdict["nist_ai_rmf_review"].setdefault("reviewed_at_utc", datetime.now(UTC).isoformat())
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path = out_path.resolve()  # NOSONAR — intentional CLI output path
-    out_path.write_text(json.dumps(verdict, indent=2))
+    out_path = out_path.resolve()
+    out_path.write_text(json.dumps(verdict, indent=2))  # NOSONAR — intentional CLI output path
     click.echo(f"nist-review: wrote verdict -> {out_path}", err=True)
 
 

@@ -120,7 +120,7 @@ def main() -> int:  # NOSONAR
         return 1
 
 
-def _main() -> int:
+def _main() -> int:  # NOSONAR — S3516/S3776: interactive CLI; success always returns 0
     _print_header()
 
     # ── Platform ──────────────────────────────────────────────────────────────

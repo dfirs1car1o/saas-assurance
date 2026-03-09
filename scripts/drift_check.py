@@ -293,13 +293,13 @@ def main(baseline: str, current: str, out: str | None, out_md: str | None) -> No
     out_markdown = Path(out_md) if out_md else base_dir / "drift_report.md"
 
     out_json.parent.mkdir(parents=True, exist_ok=True)
-    out_json = out_json.resolve()  # NOSONAR — intentional CLI output path
-    out_json.write_text(json.dumps(drift, indent=2))
+    out_json = out_json.resolve()
+    out_json.write_text(json.dumps(drift, indent=2))  # NOSONAR — intentional CLI output path
     click.echo(f"drift-check: wrote {out_json}", err=True)
 
     out_markdown.parent.mkdir(parents=True, exist_ok=True)
-    out_markdown = out_markdown.resolve()  # NOSONAR — intentional CLI output path
-    out_markdown.write_text(_render_md(drift))
+    out_markdown = out_markdown.resolve()
+    out_markdown.write_text(_render_md(drift))  # NOSONAR — intentional CLI output path
     click.echo(f"drift-check: wrote {out_markdown}", err=True)
 
     s = drift["summary"]
