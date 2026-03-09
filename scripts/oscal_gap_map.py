@@ -233,24 +233,26 @@ def main() -> int:
                 )
                 continue
 
-            mapped_items.append(
-                {
-                    "legacy_control_id": legacy_control_id,
-                    "sbs_control_id": sbs_control_id,
-                    "sbs_title": sbs.get("title", ""),
-                    "status": finding.get("status", ""),
-                    "severity": finding.get("severity", ""),
-                    "owner": finding.get("owner", ""),
-                    "due_date": finding.get("due_date", ""),
-                    "remediation": finding.get("remediation", ""),
-                    "evidence_ref": finding.get("evidence_ref", ""),
-                    "mapping_notes": "Direct collector mapping (SBS control ID emitted by collector).",
-                    "mapping_confidence": _confidence_from_status(finding.get("status", "")),
-                    "sscf_mappings": sscf_overrides.get(sbs_control_id)
-                    or sscf_defaults_by_category.get(sbs.get("category", ""))
-                    or [],
-                }
-            )
+            item: dict[str, Any] = {
+                "legacy_control_id": legacy_control_id,
+                "sbs_control_id": sbs_control_id,
+                "sbs_title": sbs.get("title", ""),
+                "status": finding.get("status", ""),
+                "severity": finding.get("severity", ""),
+                "owner": finding.get("owner", ""),
+                "due_date": finding.get("due_date", ""),
+                "remediation": finding.get("remediation", ""),
+                "evidence_ref": finding.get("evidence_ref", ""),
+                "observed_value": finding.get("observed_value", ""),
+                "mapping_notes": "Direct collector mapping (SBS control ID emitted by collector).",
+                "mapping_confidence": _confidence_from_status(finding.get("status", "")),
+                "sscf_mappings": sscf_overrides.get(sbs_control_id)
+                or sscf_defaults_by_category.get(sbs.get("category", ""))
+                or [],
+            }
+            if finding.get("needs_expert_review"):
+                item["needs_expert_review"] = True
+            mapped_items.append(item)
             continue
 
         map_row = map_by_legacy.get(legacy_control_id)

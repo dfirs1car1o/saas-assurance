@@ -783,11 +783,21 @@ def _render_priority_findings(backlog: dict, n: int = 10) -> str:  # noqa: ARG00
         sta = item.get("status", "?")
         sev_icon = _SEV_ICON.get(sev, "")
         sta_icon = _STA_ICON.get(sta, "")
-        action = item.get("remediation") or item.get("sbs_title") or "See control catalog"
-        action = action[:70] + "…" if len(action) > 70 else action
         due = item.get("due_date") or "—"
         sev_str = f"{sev_icon} {sev.capitalize()}"
         sta_str = f"{sta_icon} {sta.capitalize()}"
+
+        if sta == "pass":
+            action = "No action required"
+            due = "—"
+        elif item.get("needs_expert_review"):
+            raw = item.get("remediation") or "Manual review required"
+            raw = raw[:55] + "…" if len(raw) > 55 else raw
+            action = f"⚠️ Expert review pending — {raw}"
+        else:
+            raw = item.get("remediation") or item.get("sbs_title") or "See control catalog"
+            action = raw[:70] + "…" if len(raw) > 70 else raw
+
         lines.append(f"| {idx} | `{cid}` | {desc} | {sev_str} | {sta_str} | {action} | {due} |")
 
     lines.append("")

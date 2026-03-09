@@ -97,9 +97,8 @@ def test_app_owner_md(tmp_path: Path) -> None:
 
     content = out.read_text()
     assert "## Executive Scorecard" in content, "Missing Executive Scorecard section"
-    assert "## Immediate Actions" in content, "Missing Immediate Actions section"
+    assert "Assessed Controls" in content, "Missing Assessed Controls section"
     assert "## What Happens Next" in content, "Missing What Happens Next section"
-    assert "## Full Control Matrix" in content, "Missing Full Control Matrix"
     # Must contain at least one table row (pipe character)
     assert "|" in content, "No table found in output"
 
@@ -139,7 +138,11 @@ def test_security_md(tmp_path: Path) -> None:
     content = out.read_text()
     assert "## Executive Scorecard" in content, "Missing Executive Scorecard section"
     assert "## Domain Posture" in content, "Missing Domain Posture section"
-    assert "## Full Control Matrix" in content, "Missing Full Control Matrix section"
+    # Full Control Matrix is now in the annex document
+    annex = out.with_name(out.stem + "_annex.md")
+    assert annex.exists(), "Annex Markdown not written"
+    annex_content = annex.read_text()
+    assert "## Full Control Matrix" in annex_content, "Missing Full Control Matrix in annex"
     assert "## Executive Summary" in content, "Missing Executive Summary section"
     assert "## Risk Analysis" in content, "Missing Risk Analysis section"
     # Domain chart must have real domain rows

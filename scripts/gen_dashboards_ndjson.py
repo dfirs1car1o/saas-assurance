@@ -807,6 +807,23 @@ OBJECTS: list[dict] = [
         query="status : fail OR status : partial",
         desc="All fail/partial findings across every platform",
     ),
+    # ── Partials detail searches (with remediation description) ───────────────
+    saved_search(
+        "search-sfdc-partials",
+        "Salesforce — Partial Controls (Expert Review Required)",
+        ["control_id", "sbs_title", "domain", "severity", "remediation", "owner", "due_date"],
+        query="platform : salesforce AND status : partial",
+        desc="Partial Salesforce controls — shows the reason/description for why each control "
+        "is partial and what expert review or additional steps are required",
+    ),
+    saved_search(
+        "search-wd-partials",
+        "Workday — Partial Controls (Expert Review Required)",
+        ["control_id", "sbs_title", "domain", "severity", "remediation", "owner", "due_date"],
+        query="platform : workday AND status : partial",
+        desc="Partial Workday controls — shows the reason/description for why each control "
+        "is partial and what expert review or additional steps are required",
+    ),
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -839,6 +856,7 @@ def _platform_dashboard(
     crit_table_id: str,
     poam_table_id: str,
     search_id: str,
+    partials_search_id: str,
     dash_id: str,
     dash_title: str,
     dash_desc: str,
@@ -862,8 +880,10 @@ def _platform_dashboard(
         # Row 4
         panel(12, 0, 65, 28, 18, crit_table_id),
         panel(13, 28, 65, 20, 18, poam_table_id),
-        # Row 5
+        # Row 5 — full failing document view
         panel(14, 0, 83, 48, 22, search_id, obj_type="search"),
+        # Row 6 — partial controls with expert review descriptions
+        panel(15, 0, 105, 48, 22, partials_search_id, obj_type="search"),
     ]
     refs = [
         ref("panel_1", "visualization", score_id),
@@ -880,6 +900,7 @@ def _platform_dashboard(
         ref("panel_12", "visualization", crit_table_id),
         ref("panel_13", "visualization", poam_table_id),
         ref("panel_14", "search", search_id),
+        ref("panel_15", "search", partials_search_id),
     ]
     return dashboard_obj(dash_id, dash_title, dash_desc, panels, refs)
 
@@ -900,6 +921,7 @@ sfdc_dash = _platform_dashboard(
     crit_table_id="viz-sfdc-critical-table",
     poam_table_id="viz-sfdc-poam-table",
     search_id="search-sfdc-failing",
+    partials_search_id="search-sfdc-partials",
     dash_id="sfdc-dashboard",
     dash_title="Salesforce Security Posture",
     dash_desc="Salesforce OSCAL/SBS assessment — platform-filtered score, domain risk, "
@@ -922,6 +944,7 @@ wd_dash = _platform_dashboard(
     crit_table_id="viz-wd-critical-table",
     poam_table_id="viz-wd-poam-table",
     search_id="search-wd-failing",
+    partials_search_id="search-wd-partials",
     dash_id="workday-dashboard",
     dash_title="Workday Security Posture",
     dash_desc="Workday HCM/Finance OSCAL/WSCC assessment — platform-filtered score, domain risk, "

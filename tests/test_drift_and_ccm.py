@@ -311,5 +311,8 @@ class TestCCMCrosswalk:
             cwd=REPO,
         )
         assert result.returncode == 0, f"report-gen failed:\n{result.stderr}"
-        content = out.read_text()
+        # CCM crosswalk is now in the annex document, not the main report
+        annex = out.with_name(out.stem + "_annex.md")
+        assert annex.exists(), "Annex document not written"
+        content = annex.read_text()
         assert "## CCM v4.1 Regulatory Crosswalk" in content
