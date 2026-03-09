@@ -846,7 +846,6 @@ def _platform_dashboard(
     pass_id: str,
     fail_id: str,
     crit_count_id: str,
-    poam_count_id: str,
     top_failing_id: str,
     status_pie_id: str,
     domain_id: str,
@@ -862,7 +861,7 @@ def _platform_dashboard(
     dash_desc: str,
 ) -> dict:
     panels = [
-        # Row 0 — scores + pass/fail/critical counts (POA&M count moved to bottom)
+        # Row 0 — score + pass / fail / critical
         panel(1, 0, 0, 16, 10, score_id),
         panel(2, 16, 0, 11, 10, pass_id),
         panel(3, 27, 0, 11, 10, fail_id),
@@ -876,15 +875,14 @@ def _platform_dashboard(
         # Row 3
         panel(9, 0, 50, 24, 15, owner_id),
         panel(10, 24, 50, 24, 15, trend_id),
-        # Row 4 — critical table (full width now that POA&M is at bottom)
-        panel(11, 0, 65, 48, 18, crit_table_id),
-        # Row 5 — full failing document view
-        panel(12, 0, 83, 48, 22, search_id, obj_type="search"),
-        # Row 6 — partial controls with expert review descriptions
-        panel(13, 0, 105, 48, 22, partials_search_id, obj_type="search"),
-        # Row 7 — POA&M (count tile + detail table)
-        panel(14, 0, 127, 8, 22, poam_count_id),
-        panel(15, 8, 127, 40, 22, poam_table_id),
+        # Row 4 — critical & high table (full width)
+        panel(11, 0, 65, 48, 20, crit_table_id),
+        # Row 5 — POA&M table (full width)
+        panel(12, 0, 85, 48, 20, poam_table_id),
+        # Row 6 — all failing controls document view (full width)
+        panel(13, 0, 105, 48, 25, search_id, obj_type="search"),
+        # Row 7 — partial controls, expert review required (full width)
+        panel(14, 0, 130, 48, 25, partials_search_id, obj_type="search"),
     ]
     refs = [
         ref("panel_1", "visualization", score_id),
@@ -898,10 +896,9 @@ def _platform_dashboard(
         ref("panel_9", "visualization", owner_id),
         ref("panel_10", "visualization", trend_id),
         ref("panel_11", "visualization", crit_table_id),
-        ref("panel_12", "search", search_id),
-        ref("panel_13", "search", partials_search_id),
-        ref("panel_14", "visualization", poam_count_id),
-        ref("panel_15", "visualization", poam_table_id),
+        ref("panel_12", "visualization", poam_table_id),
+        ref("panel_13", "search", search_id),
+        ref("panel_14", "search", partials_search_id),
     ]
     return dashboard_obj(dash_id, dash_title, dash_desc, panels, refs)
 
@@ -912,7 +909,6 @@ sfdc_dash = _platform_dashboard(
     pass_id="viz-sfdc-pass-count",
     fail_id="viz-sfdc-fail-count",
     crit_count_id="viz-sfdc-critical-count",
-    poam_count_id="viz-sfdc-open-poam",
     top_failing_id="viz-sfdc-top-failing-bar",
     status_pie_id="viz-sfdc-status-pie",
     domain_id="viz-sfdc-domain-bar",
@@ -935,7 +931,6 @@ wd_dash = _platform_dashboard(
     pass_id="viz-wd-pass-count",
     fail_id="viz-wd-fail-count",
     crit_count_id="viz-wd-critical-count",
-    poam_count_id="viz-wd-open-poam",
     top_failing_id="viz-wd-top-failing-bar",
     status_pie_id="viz-wd-status-pie",
     domain_id="viz-wd-domain-bar",

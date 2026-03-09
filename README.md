@@ -86,15 +86,17 @@ Three pre-built dashboards are imported automatically on first start — no manu
 | **Salesforce Security Posture** | `/app/dashboards#/view/sfdc-dashboard` | Salesforce-only findings, SBS quarterly review |
 | **Workday Security Posture** | `/app/dashboards#/view/workday-dashboard` | Workday-only findings, WSCC compliance review |
 
-Each platform dashboard (Salesforce / Workday) contains **14 panels**, all platform-filtered:
+Each platform dashboard (Salesforce / Workday) contains **13 panels**, all platform-filtered:
 
 ```
-Row 1  Score tile (RED/AMBER/GREEN)  ·  Pass count  ·  Fail count  ·  Critical failures  ·  Open POA&M
+Row 1  Score tile (RED/AMBER/GREEN)  ·  Pass count  ·  Fail count  ·  Critical failures
 Row 2  Top Failing Controls (horizontal bar, colored by severity)  ·  Control Status donut
 Row 3  Risk by Domain (stacked bar, fail/partial only)  ·  Findings by Severity (stacked by status)
 Row 4  Open Items by Owner (accountability bar)  ·  Score Over Time (trend line)
-Row 5  Critical & High failures table  ·  POA&M open items table
-Row 6  Full document table — every fail/partial finding, sortable by any column
+Row 5  Critical & High failures table — full width
+Row 6  POA&M open items table — full width
+Row 7  Failing Controls — full-width document search, sortable
+Row 8  Partial Controls — full-width document search with remediation notes (expert review queue)
 ```
 
 After each assessment, export results to populate the dashboards:
@@ -157,21 +159,33 @@ All tools are CLI-based Python scripts. Each supports `--help` and `--dry-run`.
 
 ### Report Structure
 
-Reports are assembled from deterministic Python-rendered sections (no hallucination risk) plus a focused LLM narrative:
+The security audience generates **three companion documents** — each audience gets only what they need:
 
+**Main assessment** (`report_security.md` / `.docx`):
 ```
 [Gate banner]                  ← ⛔ block / 🚩 flag if NIST verdict requires it
+Companion document reference   ← links to annex + methodology files
 Executive Scorecard            ← overall score + severity × status matrix
 Domain Posture (ASCII chart)   ← bar chart of all SSCF domain scores
+All Assessed Controls          ← every control, sorted critical→low, with action + due date
+Executive Summary + Analysis   ← LLM narrative (risk + remediation)
+Not Assessed Controls          ← out-of-scope appendix for auditors
+NIST AI RMF Governance Review  ← govern/map/measure/manage function table + blockers
+```
+
+**Annex** (`report_security_annex.md` / `.docx`) — for governance/audit teams:
+```
+Full Control Matrix            ← complete sorted findings table
+Plan of Action & Milestones    ← POAM-IDs, owners, due dates, Open/In Progress
 OSCAL Framework Provenance     ← catalog → profile → component → ISO 27001 → CCM chain
 CCM v4.1 Regulatory Crosswalk  ← fail/partial findings → SOX/HIPAA/SOC2/PCI/GDPR
 ISO 27001:2022 SoA             ← full Statement of Applicability (all 93 Annex A controls)
-Immediate Actions              ← top-10 critical/fail findings, sorted by severity
-Executive Summary + Analysis   ← LLM narrative (2 sections only)
-Full Control Matrix            ← complete sorted findings table
-Plan of Action & Milestones    ← POAM-IDs, owners, due dates, Open/In Progress
-Not Assessed Controls          ← out-of-scope appendix for auditors
-NIST AI RMF Governance Review  ← govern/map/measure/manage function table + blockers
+```
+
+**Evidence Methodology** (`report_security_methodology.md`) — for auditors verifying collection:
+```
+Per-control API queries        ← exact SOQL/REST endpoint used to assess each control
+Collection method              ← API type (REST / Tooling / Metadata / SOAP)
 ```
 
 ## Control Frameworks
@@ -203,7 +217,7 @@ contexts/                 ← System prompts for assess/review/research modes
 docs/
   architecture.png        ← Auto-generated reference architecture diagram
   oscal-salesforce-poc/   ← Generated evidence, deliverables, runbooks
-  wiki/                   ← Full wiki (14 pages; mirrors GitHub wiki)
+  wiki/                   ← Full wiki (18 pages; mirrors GitHub wiki)
 harness/                  ← agent-loop CLI (loop.py, tools.py, agents.py, memory.py)
 hooks/                    ← Session lifecycle scripts (start/end/compact)
 mission.md                ← Agent identity and authorized scope
@@ -223,6 +237,8 @@ tests/                    ← pytest suite (43 tests, fully offline with --mock-
 ## Authentication
 
 Two Salesforce auth methods are supported. JWT is preferred for production.
+
+> **New setup?** See [`docs/wiki/API-Credential-Setup.md`](docs/wiki/API-Credential-Setup.md) for step-by-step instructions on obtaining Salesforce JWT / SOAP credentials, Workday OAuth 2.0 client credentials, and OpenAI API keys — including permission sets and secrets rotation guidance.
 
 **JWT Bearer (preferred):**
 ```bash
@@ -266,7 +282,7 @@ source .venv/bin/activate
 ruff check skills/ harness/    # lint
 bandit -r skills/ harness/     # SAST
 pip-audit                      # dependency CVEs
-pytest tests/ -v               # 33 tests (offline, no API key needed)
+pytest tests/ -v               # 43 tests (offline, no API key needed)
 ```
 
 CI stack: ruff · bandit · pip-audit · gitleaks · pytest · CodeQL · CodeRabbit Pro · dependency-review.

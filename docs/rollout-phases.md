@@ -43,7 +43,6 @@ Move from stubs to real model providers with Key Vault-backed secrets.
 ### Configuration Steps
 1. Add Key Vault secrets:
    - `OPENAI_API_KEY` (or Azure OpenAI credentials)
-   - `ANTHROPIC_API_KEY`
    - `GEMINI_API_KEY`
 2. Add managed identity permissions for orchestrator to read only required secrets.
 3. Add provider selection policy in orchestrator:

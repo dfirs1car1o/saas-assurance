@@ -28,7 +28,7 @@
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  ORCHESTRATOR — claude-opus-4-6                                     │
+│  ORCHESTRATOR — gpt-5.3-chat-latest                                     │
 │  File: agents/orchestrator.md                                       │
 │                                                                      │
 │  • Reads mission.md and AGENTS.md at session start                  │
@@ -40,7 +40,7 @@
        │ routes to
        ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  COLLECTOR — claude-sonnet-4-6                                      │
+│  COLLECTOR — gpt-5.3-chat-latest                                      │
 │  File: agents/collector.md                                          │
 │  Skill: skills/sfdc_connect/sfdc_connect.py                        │
 │                                                                      │
@@ -54,7 +54,7 @@
        │ evidence JSON
        ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  ASSESSOR — claude-sonnet-4-6                                       │
+│  ASSESSOR — gpt-5.3-chat-latest                                       │
 │  File: agents/assessor.md                                           │
 │  Skills: skills/oscal-assess/, skills/sscf-benchmark/              │
 │                                                                      │
@@ -68,7 +68,7 @@
        │ findings JSON
        ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  NIST REVIEWER — claude-sonnet-4-6          ← AI AUDITING LAYER    │
+│  NIST REVIEWER — gpt-5.3-chat-latest          ← AI AUDITING LAYER    │
 │  File: agents/nist-reviewer.md                                      │
 │                                                                      │
 │  Validates outputs against NIST AI RMF 1.0 before delivery:        │
@@ -83,7 +83,7 @@
        │ validated findings
        ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  REPORTER — claude-haiku-4-5                                        │
+│  REPORTER — gpt-5.3-chat-latest                                        │
 │  File: agents/reporter.md                                           │
 │  Skill: skills/report-gen/                                          │
 │                                                                      │
@@ -99,7 +99,7 @@
 │                                                                      │
 │  (parallel, on CI/CD or skill changes)                              │
 │                                                                      │
-│  SECURITY REVIEWER — claude-sonnet-4-6      ← DEVSECOPS LAYER      │
+│  SECURITY REVIEWER — gpt-5.3-chat-latest      ← DEVSECOPS LAYER      │
 │  File: agents/security-reviewer.md                                  │
 │                                                                      │
 │  • Reviews GitHub Actions workflows for supply-chain risk           │
@@ -129,13 +129,13 @@
 
 | Agent | File | Model | Context Window | Primary Role |
 |---|---|---|---|---|
-| orchestrator | `agents/orchestrator.md` | claude-opus-4-6 | 200K | Routing, QA, escalation |
-| collector | `agents/collector.md` | claude-sonnet-4-6 | 200K | Salesforce API extraction |
-| assessor | `agents/assessor.md` | claude-sonnet-4-6 | 200K | OSCAL/SBS/SSCF mapping |
-| nist-reviewer | `agents/nist-reviewer.md` | claude-sonnet-4-6 | 200K | AI RMF validation |
-| reporter | `agents/reporter.md` | claude-haiku-4-5 | 200K | Output formatting |
-| security-reviewer | `agents/security-reviewer.md` | claude-sonnet-4-6 | 200K | AppSec + DevSecOps CI/CD audit |
-| sfdc-expert | `agents/sfdc-expert.md` | claude-sonnet-4-6 | 200K | Apex + deep admin specialist (on-demand) |
+| orchestrator | `agents/orchestrator.md` | gpt-5.3-chat-latest | 200K | Routing, QA, escalation |
+| collector | `agents/collector.md` | gpt-5.3-chat-latest | 200K | Salesforce API extraction |
+| assessor | `agents/assessor.md` | gpt-5.3-chat-latest | 200K | OSCAL/SBS/SSCF mapping |
+| nist-reviewer | `agents/nist-reviewer.md` | gpt-5.3-chat-latest | 200K | AI RMF validation |
+| reporter | `agents/reporter.md` | gpt-5.3-chat-latest | 200K | Output formatting |
+| security-reviewer | `agents/security-reviewer.md` | gpt-5.3-chat-latest | 200K | AppSec + DevSecOps CI/CD audit |
+| sfdc-expert | `agents/sfdc-expert.md` | gpt-5.3-chat-latest | 200K | Apex + deep admin specialist (on-demand) |
 
 **sfdc-expert** is invoked on-demand (not sequential) — only when `oscal_assess_assess`
 emits findings with `needs_expert_review=true`. It proposes read-only Apex scripts staged
@@ -249,10 +249,10 @@ See `scripts/validate_env.py --help` for the automated preflight check.
 |---|---|---|
 | Python | >= 3.11 | `python3 --version` |
 | uv | latest | `uv --version` |
-| Anthropic API key | — | `ANTHROPIC_API_KEY` in `.env` |
+| OpenAI API key | — | `OPENAI_API_KEY` in `.env` |
 | SF credentials | — | `SF_USERNAME`, `SF_PASSWORD`, `SF_SECURITY_TOKEN` in `.env` |
 | simple-salesforce | >= 1.12.6 | `pip show simple-salesforce` |
-| anthropic | >= 0.40.0 | `pip show anthropic` |
+| openai | >= 1.0.0 | `pip show openai` |
 | click | >= 8.1.0 | `pip show click` |
 
 ### Soft requirements (needed for full CI, not for local assessment)

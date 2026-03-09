@@ -65,11 +65,11 @@ nist-review assess \
 
 ## Live Mode
 
-In live mode (`--dry-run` omitted), calls `claude-sonnet-4-6` with `agents/nist-reviewer.md` as the system prompt. Both input JSONs are truncated to 6 000 characters each to stay within the token budget. Requires `ANTHROPIC_API_KEY` in the environment.
+In live mode (`--dry-run` omitted), calls `gpt-5.3-chat-latest` with `agents/nist-reviewer.md` as the system prompt. Both input JSONs are truncated to 6 000 characters each to stay within the token budget. Requires `OPENAI_API_KEY` in the environment.
 
 ## Dry-Run Mode
 
-Produces a realistic weak-org stub verdict without calling the Anthropic API:
+Produces a realistic weak-org stub verdict without calling the OpenAI API:
 
 - GOVERN: pass
 - MAP: partial

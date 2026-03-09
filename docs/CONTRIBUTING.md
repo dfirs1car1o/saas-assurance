@@ -45,7 +45,7 @@ That's it. No Docker, no Node.js, no container runtime required.
 - **What it is:** An AI-powered CLI tool that runs in your terminal
 - **Install:** `npm install -g @anthropic-ai/claude-code` (or `brew install claude-code`)
 - **Used for:** interactive development, running `agent-loop`, reviewing code, session memory
-- **Requirement:** `ANTHROPIC_API_KEY` in `.env` — that's it
+- **Requirement:** `OPENAI_API_KEY` in `.env` — that's it
 
 ### Claude Desktop — NOT needed for this repo
 
@@ -53,7 +53,7 @@ That's it. No Docker, no Node.js, no container runtime required.
 - **It does NOT** run `agent-loop`, harness code, or CLI skills
 - No dependency here
 
-**Neither Claude Code nor Claude Desktop is required to run the pipeline. Only `ANTHROPIC_API_KEY` is needed. The pipeline runs as a plain Python CLI.**
+**Neither Claude Code nor Claude Desktop is required to run the pipeline. Only `OPENAI_API_KEY` is needed. The pipeline runs as a plain Python CLI.**
 
 ---
 
@@ -70,7 +70,7 @@ pip install pytest pytest-mock PyYAML click ruff bandit
 
 # 3. Copy and fill .env
 cp .env.example .env
-# Edit .env — add SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN, ANTHROPIC_API_KEY
+# Edit .env — add SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN, OPENAI_API_KEY
 
 # 4. Verify everything works
 python3 -m pytest tests/ -v
@@ -92,8 +92,8 @@ sscf-benchmark --help
 Copy `.env.example` to `.env` and populate:
 
 ```bash
-# Anthropic API (required for agent-loop)
-ANTHROPIC_API_KEY=sk-ant-...
+# OpenAI API (required for agent-loop)
+OPENAI_API_KEY=sk-...
 
 # Salesforce org credentials (required for live assessment — skip for dry-run)
 SF_USERNAME=your@email.com
@@ -124,12 +124,12 @@ saas-posture/
 ├── CLAUDE.md                   ← Claude Code session instructions
 │
 ├── agents/                     ← Per-agent role definitions (markdown + YAML frontmatter)
-│   ├── orchestrator.md         ← claude-opus-4-6: loop control, routing
-│   ├── collector.md            ← claude-sonnet-4-6: Salesforce API extraction
-│   ├── assessor.md             ← claude-sonnet-4-6: OSCAL/SBS control mapping
-│   ├── reporter.md             ← claude-haiku-4-5: governance output generation
-│   ├── nist-reviewer.md        ← claude-sonnet-4-6: NIST AI RMF validation
-│   └── security-reviewer.md   ← claude-sonnet-4-6: CI/CD and AppSec review (Phase 6)
+│   ├── orchestrator.md         ← gpt-5.3-chat-latest: loop control, routing
+│   ├── collector.md            ← gpt-5.3-chat-latest: Salesforce API extraction
+│   ├── assessor.md             ← gpt-5.3-chat-latest: OSCAL/SBS control mapping
+│   ├── reporter.md             ← gpt-5.3-chat-latest: governance output generation
+│   ├── nist-reviewer.md        ← gpt-5.3-chat-latest: NIST AI RMF validation
+│   └── security-reviewer.md   ← gpt-5.3-chat-latest: CI/CD and AppSec review (Phase 6)
 │
 ├── harness/                    ← Agentic orchestration loop (Phase 3)
 │   ├── agents.py               ← AgentConfig dataclass + agent registry
@@ -178,7 +178,7 @@ python scripts/oscal_gap_map.py --gap-analysis gap_analysis.json --out-json back
 sscf-benchmark benchmark --backlog backlog.json --out sscf_report.json
 ```
 
-**Orchestrated via `agent-loop`** (Phase 3): `claude-opus-4-6` calls these tools automatically via `tool_use`.
+**Orchestrated via `agent-loop`** (Phase 3): `gpt-5.3-chat-latest` calls these tools automatically via `tool_use`.
 
 **Dry-run** (no live Salesforce org needed):
 ```bash
@@ -189,13 +189,13 @@ agent-loop run --dry-run --env dev --org my-test-org
 
 ## Running the Full Pipeline (Dry-Run)
 
-No Salesforce org or Anthropic API needed for the pipeline smoke tests:
+No Salesforce org or OpenAI API key needed for the pipeline smoke tests:
 
 ```bash
 pytest tests/test_pipeline_smoke.py -v
 ```
 
-For the agentic loop dry-run (needs `ANTHROPIC_API_KEY`):
+For the agentic loop dry-run (needs `OPENAI_API_KEY`):
 ```bash
 # QDRANT_IN_MEMORY=1 is the default — no Docker container needed
 agent-loop run --dry-run --env dev --org test-org
