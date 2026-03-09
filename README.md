@@ -154,8 +154,8 @@ Reports are assembled from deterministic Python-rendered sections (no hallucinat
 ```
 [Gate banner]                  ← ⛔ block / 🚩 flag if NIST verdict requires it
 Executive Scorecard            ← overall score + severity × status matrix
-OSCAL Framework Provenance     ← catalog → profile → component → ISO 27001 → CCM chain
 Domain Posture (ASCII chart)   ← bar chart of all SSCF domain scores
+OSCAL Framework Provenance     ← catalog → profile → component → ISO 27001 → CCM chain
 CCM v4.1 Regulatory Crosswalk  ← fail/partial findings → SOX/HIPAA/SOC2/PCI/GDPR
 ISO 27001:2022 SoA             ← full Statement of Applicability (all 93 Annex A controls)
 Immediate Actions              ← top-10 critical/fail findings, sorted by severity

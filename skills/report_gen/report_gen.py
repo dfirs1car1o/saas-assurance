@@ -5,8 +5,8 @@ Document structure (all sections except LLM narrative are Python-rendered):
 
   [Gate banner]                 — ⛔/🚩 if NIST verdict is block/flag
   Executive Scorecard           — overall score + severity × status matrix   [HARNESS]
-  OSCAL Framework Provenance    — catalog → profile → component → CCM chain  [HARNESS]
   Domain Posture                — ASCII bar chart of SSCF domain scores      [HARNESS]
+  OSCAL Framework Provenance    — catalog → profile → component → CCM chain  [HARNESS]
   CCM v4.1 Regulatory Crosswalk — per-CCM-control regulatory citations       [HARNESS]
   ISO 27001:2022 SoA            — 93-control Statement of Applicability      [HARNESS]
   Immediate Actions             — top-10 critical/fail findings              [HARNESS]
@@ -1181,8 +1181,8 @@ def generate(
             banner,
             drift_section,
             scorecard,
-            provenance,
             domain_chart,
+            provenance,
             ccm_crosswalk,
             iso_soa,
             priority,

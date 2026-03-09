@@ -201,8 +201,8 @@ report-gen generate --backlog backlog.json --audience security --out report.md \
 ```
 [Gate banner]                  ← ⛔ block / 🚩 flag if NIST verdict requires it
 Executive Scorecard            ← overall score + severity × status matrix        [HARNESS]
-OSCAL Framework Provenance     ← catalog → profile → ISO 27001:2022 → CCM chain  [HARNESS]
 Domain Posture (ASCII chart)   ← bar chart of SSCF domain scores                 [HARNESS]
+OSCAL Framework Provenance     ← catalog → profile → ISO 27001:2022 → CCM chain  [HARNESS]
 CCM v4.1 Regulatory Crosswalk  ← fail/partial → SOX/HIPAA/SOC2/PCI/GDPR         [HARNESS]
                                   (security audience only; ISO column = via CCM)
 ISO 27001:2022 SoA             ← Statement of Applicability: all 93 Annex A      [HARNESS]
