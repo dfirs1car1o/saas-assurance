@@ -75,7 +75,7 @@ For every workflow file, check:
 1. **Security plugin disabled** — `DISABLE_SECURITY_PLUGIN=true` is acceptable for dev only. Flag any occurrence in a config labelled `prod` or `production` as HIGH.
 2. **Admin password in compose** — `OPENSEARCH_INITIAL_ADMIN_PASSWORD` should reference `${OPENSEARCH_ADMIN_PASSWORD}` env var, not a hardcoded value. Flag hardcoded passwords as CRITICAL.
 3. **NDJSON scripts** — `scripts/export_to_opensearch.py` must not log credentials or index raw API response objects. Check that `http_auth` is read from environment only.
-4. **curl in dashboard-init** — verify curl commands use `http://` (not `https://`) when `DISABLE_SECURITY_PLUGIN=true`, and vice versa. Mismatched scheme causes silent init failure.
+4. **curl in dashboard-init** — container-to-container curl uses `http://` on the private Docker bridge only when `DISABLE_SECURITY_PLUGIN=true` (dev-only). Flag any `http://` targeting a public hostname or external IP as CRITICAL; all external connections must use HTTPS.
 5. **Volume paths** — `docker-compose.yml` volume bind mounts must not expose `.env` or `*.pem` files to the container. Only `docs/oscal-salesforce-poc/generated/` and `config/opensearch/` should be mounted.
 
 ### `agents/**/*.md` (system prompts)

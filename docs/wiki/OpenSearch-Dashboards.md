@@ -4,6 +4,10 @@
 > The core pipeline writes JSON, Markdown, and DOCX artifacts that stand on their own.
 > Dashboards are for teams who want trending, cross-org comparison, and continuous monitoring.
 
+> **Network security:** `localhost` URLs below use `http://` because the Docker stack runs with
+> `DISABLE_SECURITY_PLUGIN=true` on a private bridge network — dev only. All external API calls
+> (Salesforce, Workday, OpenAI) use HTTPS exclusively. Do not expose port 9200 or 5601 externally.
+
 ---
 
 ## The Three Dashboards

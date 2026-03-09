@@ -6,6 +6,11 @@
 #   dashboard-init  — one-shot: imports index patterns + saved dashboards on first start
 #   agent           — saas-posture CLI (runs on demand, not as a daemon)
 #
+# Security note: container-to-container communication uses http:// on the private
+# Docker bridge network with DISABLE_SECURITY_PLUGIN=true (dev only). All external
+# API calls (Salesforce, Workday, OpenAI) use HTTPS exclusively via their SDKs.
+# Do NOT use this compose file in production without enabling TLS on OpenSearch.
+#
 # Usage:
 #   docker compose up -d                          # start opensearch + dashboards
 #   docker compose run --rm agent agent-loop run \

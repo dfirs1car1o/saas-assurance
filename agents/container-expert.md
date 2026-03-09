@@ -60,7 +60,7 @@ agent (profile: agent — on-demand only, depends on opensearch healthy)
 | opensearch | `discovery.type` | `single-node` | Bypasses cluster bootstrap checks |
 | opensearch | `bootstrap.memory_lock` | `"true"` | Prevents JVM heap swapping to disk |
 | opensearch | `OPENSEARCH_JAVA_OPTS` | `-Xms512m -Xmx512m` | Dev heap; set Xmx = 50% of available RAM |
-| dashboards | `OPENSEARCH_HOSTS` | `["http://opensearch:9200"]` | Backend URL (http not https when security disabled) |
+| dashboards | `OPENSEARCH_HOSTS` | `["http://opensearch:9200"]` | Docker-internal only — HTTP on private bridge network; never used for external connections |
 | dashboards | `DISABLE_SECURITY_DASHBOARDS_PLUGIN` | `"true"` | Required when security plugin is off |
 
 ### JVM Heap Sizing Guide

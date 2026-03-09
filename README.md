@@ -274,6 +274,8 @@ MEMORY_ENABLED=0               # Disable Mem0 by default
 - Credentials sourced from environment only — never passed as CLI flags or logged.
 - All generated evidence written to `docs/oscal-salesforce-poc/generated/` — never to `/tmp`.
 - AI outputs validated by the `nist-review` skill before delivery. Block verdict stops report distribution.
+- **All external API connections use HTTPS exclusively** — Salesforce, Workday, and OpenAI SDKs enforce TLS on every call. No plaintext HTTP to external endpoints.
+- `http://localhost` references in the Docker stack are container-internal only (`DISABLE_SECURITY_PLUGIN=true`, private bridge network, dev use only). Ports 9200 and 5601 must not be exposed externally.
 
 ## Development
 
