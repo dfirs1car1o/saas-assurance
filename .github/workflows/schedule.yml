@@ -35,57 +35,58 @@ jobs:
           MEMORY_ENABLED: "0"
         run: |
           TODAY=$(date +%Y-%m-%d)
-          OUT=docs/oscal-salesforce-poc/generated/ci-dry-run-sfdc/$TODAY
+          OUT="docs/oscal-salesforce-poc/generated/ci-dry-run-sfdc/$TODAY"
 
           # Phase 1: collect (dry-run)
           python -m skills.sfdc_connect.sfdc_connect collect \
             --scope all --org ci-dry-run-sfdc --dry-run \
-            --out $OUT/sfdc_raw.json
+            --out "$OUT/sfdc_raw.json"
 
           # Phase 2: assess
           python -m skills.oscal_assess.oscal_assess assess \
-            --collector-output $OUT/sfdc_raw.json \
-            --org ci-dry-run-sfdc --out $OUT/gap_analysis.json
+            --collector-output "$OUT/sfdc_raw.json" \
+            --org ci-dry-run-sfdc --out "$OUT/gap_analysis.json"
 
           # Phase 2b: gap map
           python scripts/oscal_gap_map.py \
-            --gap-analysis $OUT/gap_analysis.json \
+            --gap-analysis "$OUT/gap_analysis.json" \
             --org ci-dry-run-sfdc \
-            --out-json $OUT/backlog.json
+            --out-json "$OUT/backlog.json"
 
           # Phase 3: benchmark
           python -m skills.sscf_benchmark.sscf_benchmark benchmark \
-            --backlog $OUT/backlog.json \
+            --backlog "$OUT/backlog.json" \
             --org ci-dry-run-sfdc \
-            --out $OUT/sscf_report.json
+            --out "$OUT/sscf_report.json"
 
           # Phase 4: NIST review (dry-run)
           python -m skills.nist_review.nist_review assess \
-            --gap-analysis $OUT/gap_analysis.json \
-            --backlog $OUT/backlog.json \
+            --gap-analysis "$OUT/gap_analysis.json" \
+            --backlog "$OUT/backlog.json" \
             --platform salesforce \
-            --out $OUT/nist_review.json \
+            --out "$OUT/nist_review.json" \
             --dry-run
 
           # Phase 5: report (mock LLM — no API spend)
           python -m skills.report_gen.report_gen generate \
-            --backlog $OUT/backlog.json \
-            --sscf-benchmark $OUT/sscf_report.json \
-            --nist-review $OUT/nist_review.json \
+            --backlog "$OUT/backlog.json" \
+            --sscf-benchmark "$OUT/sscf_report.json" \
+            --nist-review "$OUT/nist_review.json" \
             --audience security \
             --org-alias ci-dry-run-sfdc \
             --mock-llm \
-            --out $OUT/ci-dry-run-sfdc_security_assessment.md
+            --out "$OUT/ci-dry-run-sfdc_security_assessment.md"
 
           echo "=== Salesforce dry-run complete ==="
+          REPORT="$OUT/sscf_report.json"
           python3 -c "
-          import json
-          with open('$OUT/sscf_report.json') as f:
-              r = json.load(f)
-          score = r.get('overall_score', 0)
-          status = r.get('overall_status', '?').upper()
-          print(f'Overall score: {score:.1%} ({status})')
-          "
+import json, sys
+with open(sys.argv[1]) as f:
+    r = json.load(f)
+score = r.get('overall_score', 0)
+status = r.get('overall_status', '?').upper()
+print(f'Overall score: {score:.1%} ({status})')
+" "$REPORT"
 
       - name: Upload Salesforce dry-run artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
@@ -117,16 +118,16 @@ jobs:
 
           echo "=== Workday dry-run complete ==="
           TODAY=$(date +%Y-%m-%d)
-          OUT=docs/oscal-salesforce-poc/generated/ci-dry-run-workday/$TODAY
+          OUT="docs/oscal-salesforce-poc/generated/ci-dry-run-workday/$TODAY"
           if [ -f "$OUT/sscf_report.json" ]; then
             python3 -c "
-          import json
-          with open('$OUT/sscf_report.json') as f:
-              r = json.load(f)
-          score = r.get('overall_score', 0)
-          status = r.get('overall_status', '?').upper()
-          print(f'Overall score: {score:.1%} ({status})')
-            "
+import json, sys
+with open(sys.argv[1]) as f:
+    r = json.load(f)
+score = r.get('overall_score', 0)
+status = r.get('overall_status', '?').upper()
+print(f'Overall score: {score:.1%} ({status})')
+" "$OUT/sscf_report.json"
           fi
 
       - name: Upload Workday dry-run artifacts

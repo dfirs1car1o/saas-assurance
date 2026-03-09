@@ -199,21 +199,23 @@ jobs:
 
       - name: Verify OpenSearch cluster health endpoint
         run: |
-          curl -sf http://localhost:9200/_cluster/health | python3 - <<'PYEOF'
-          import sys, json
-          d = json.load(sys.stdin)
-          assert d["status"] != "red", f"cluster red: {d}"
-          print("Cluster status:", d["status"])
-          PYEOF
+          HEALTH=$(curl -sf http://localhost:9200/_cluster/health)
+          echo "$HEALTH" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+assert d['status'] != 'red', f'cluster red: {d}'
+print('Cluster status:', d['status'])
+"
 
       - name: Verify Dashboards API
         run: |
-          curl -sf http://localhost:5601/api/status | python3 - <<'PYEOF'
-          import sys, json
-          d = json.load(sys.stdin)
-          assert d.get("status", {}).get("overall", {}).get("state") == "green" or d.get("name"), "dashboards not ready"
-          print("Dashboards OK")
-          PYEOF
+          STATUS=$(curl -sf http://localhost:5601/api/status)
+          echo "$STATUS" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+assert d.get('name'), 'dashboards not ready'
+print('Dashboards OK')
+"
 
       - name: Tear down
         if: always()
