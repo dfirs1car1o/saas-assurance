@@ -1,20 +1,21 @@
 """
 report-gen — LLM-driven governance output skill.
 
-Document structure (all sections except LLM narrative are Python-rendered):
-
+Main document (security audience):
   [Gate banner]                 — ⛔/🚩 if NIST verdict is block/flag
   Executive Scorecard           — overall score + severity × status matrix   [HARNESS]
   Domain Posture                — ASCII bar chart of SSCF domain scores      [HARNESS]
+  Immediate Actions             — top-10 critical/fail findings              [HARNESS]
+  Executive Summary + Analysis  — LLM narrative                              [LLM]
+  Not Assessed Controls         — out-of-scope appendix for auditors         [HARNESS]
+  NIST AI RMF Review            — governance gate, function table, recs      [HARNESS]
+
+Annex document (security audience only — <org>_annex.md/.docx):
+  Full Control Matrix           — sorted findings table (all controls)       [HARNESS]
+  Plan of Action & Milestones   — open items: POAM-IDs, owners, due dates   [HARNESS]
   OSCAL Framework Provenance    — catalog → profile → component → CCM chain  [HARNESS]
   CCM v4.1 Regulatory Crosswalk — per-CCM-control regulatory citations       [HARNESS]
   ISO 27001:2022 SoA            — 93-control Statement of Applicability      [HARNESS]
-  Immediate Actions             — top-10 critical/fail findings              [HARNESS]
-  Executive Summary + Analysis  — LLM narrative                              [LLM]
-  Full Control Matrix           — sorted findings table (all controls)       [HARNESS]
-  Plan of Action & Milestones   — open items: POAM-IDs, owners, due dates   [HARNESS]
-  Not Assessed Controls         — out-of-scope appendix for auditors         [HARNESS]
-  NIST AI RMF Review            — governance gate, function table, recs      [HARNESS]
 
 Usage:
     report-gen generate --backlog <path> --audience app-owner|security --out <path>
@@ -887,6 +888,102 @@ def _render_full_matrix(backlog: dict) -> str:
     return "\n".join(lines)
 
 
+def _render_evidence_methodology(backlog: dict) -> str:
+    """Evidence methodology table — shows the API query or data source used to assess each control."""
+    items = backlog.get("mapped_items", [])
+    if not items:
+        return ""
+
+    org = backlog.get("org", "unknown-org")
+    platform = backlog.get("platform", "salesforce")
+    generated = backlog.get("generated_at_utc", "")[:10]
+
+    _platform_labels = {
+        "salesforce": "Salesforce (REST · Tooling · Metadata API)",
+        "workday": "Workday (SOAP · RaaS · REST)",
+    }
+    platform_label = _platform_labels.get(platform, platform)
+
+    lines = [
+        "# Assessment Evidence Methodology",
+        "",
+        f"**Org:** {org} &nbsp;|&nbsp; **Platform:** {platform_label} &nbsp;|&nbsp; **Generated:** {generated}",
+        "",
+        "> This document describes **how each control was assessed** — the specific API, query, or "
+        "endpoint used to collect evidence. Use this to verify assessment coverage, audit the "
+        "collection methodology, or reproduce results manually.",
+        "",
+        "---",
+        "",
+        "## Control Assessment Methods",
+        "",
+        "| Control | Description | Status | Evidence Source | Collection Method / Query |",
+        "|---------|-------------|--------|-----------------|---------------------------|",
+    ]
+
+    for item in _sorted_findings(items):
+        cid = item.get("sbs_control_id", "?")
+        desc = item.get("sbs_title", "—")
+        sta = item.get("status", "?")
+        sta_icon = _STA_ICON.get(sta, "")
+        sta_str = f"{sta_icon} {sta.capitalize()}"
+
+        evidence_ref = item.get("evidence_ref") or "—"
+        # Truncate long evidence refs for readability
+        if len(evidence_ref) > 80:
+            evidence_ref = evidence_ref[:77] + "…"
+
+        method = item.get("mapping_notes") or item.get("data_source") or "—"
+        if len(method) > 100:
+            method = method[:97] + "…"
+
+        lines.append(f"| `{cid}` | {desc} | {sta_str} | {evidence_ref} | {method} |")
+
+    lines.append("")
+
+    # Not assessed controls — why they couldn't be collected
+    na_items = [i for i in items if i.get("status") == "not_applicable"]
+    if na_items:
+        lines += [
+            "## Controls Not Assessable via API",
+            "",
+            "The following controls require manual review, vendor attestation, or configuration "
+            "data not exposed through platform APIs.",
+            "",
+            "| Control | Description | Reason |",
+            "|---------|-------------|--------|",
+        ]
+        for item in na_items:
+            cid = item.get("sbs_control_id", "?")
+            desc = item.get("sbs_title", "—")
+            reason = item.get("mapping_notes") or "Outside automated collector scope"
+            if len(reason) > 100:
+                reason = reason[:97] + "…"
+            lines.append(f"| `{cid}` | {desc} | {reason} |")
+        lines.append("")
+
+    unmapped = backlog.get("unmapped_items", [])
+    if unmapped:
+        lines += [
+            "## Unmapped Controls",
+            "",
+            "| Control | Reason |",
+            "|---------|--------|",
+        ]
+        for item in unmapped:
+            cid = item.get("legacy_control_id", "?")
+            lines.append(f"| `{cid}` | No catalog mapping — requires manual review |")
+        lines.append("")
+
+    lines.append(
+        "*Evidence collected by the platform connector skill. "
+        "For full query source code see `skills/sfdc_connect/sfdc_connect.py` "
+        "or `skills/workday_connect/workday_connect.py`.*"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # NIST section renderer
 # ---------------------------------------------------------------------------
@@ -1113,11 +1210,10 @@ def generate(
 ) -> None:
     """Generate an executive governance report (Markdown + DOCX for security audience).
 
-    Structure:
-      Scorecard + Domain Chart + Priority Findings [HARNESS]
-      Executive Summary + Risk Analysis            [LLM]
-      Full Control Matrix                          [HARNESS]
-      NIST AI RMF Governance Review                [HARNESS]
+    Produces three documents for security audience:
+      <out>                         — main report: scorecard + analysis + priority findings
+      <out stem>_annex              — full control matrix + POAM + framework crosswalk tables
+      <out stem>_evidence_methodology — API queries and collection methods per control
     """
     out_path = Path(out)
     if not out_path.suffix:
@@ -1159,42 +1255,39 @@ def generate(
 
     # ── Python-rendered structural sections ──────────────────────────────────
     scorecard = _render_executive_scorecard(backlog_data, sscf_data, org, report_title)
-    provenance = _render_oscal_provenance(backlog_data, platform)
     domain_chart = _render_domain_chart(sscf_data) if sscf_data else ""
-    ccm_crosswalk = _render_ccm_crosswalk(backlog_data) if audience == "security" else ""
-    iso_soa = _render_iso27001_soa(backlog_data, iso_catalog_path) if audience == "security" else ""
     drift_section = _render_drift_section(drift_data) if drift_data else ""
     priority = _render_priority_findings(backlog_data)
-    full_matrix = _render_full_matrix(backlog_data)
-    poam = _render_poam(backlog_data) if audience == "security" else ""
     not_assessed = _render_not_assessed(backlog_data) if audience == "security" else ""
+
+    # ── Annex sections (security only) ───────────────────────────────────────
+    full_matrix = _render_full_matrix(backlog_data) if audience == "security" else ""
+    poam = _render_poam(backlog_data) if audience == "security" else ""
+    provenance = _render_oscal_provenance(backlog_data, platform) if audience == "security" else ""
+    ccm_crosswalk = _render_ccm_crosswalk(backlog_data) if audience == "security" else ""
+    iso_soa = _render_iso27001_soa(backlog_data, iso_catalog_path) if audience == "security" else ""
 
     # ── LLM narrative ────────────────────────────────────────────────────────
     system_prompt = _SYSTEM_PROMPTS[audience]
     user_msg = _build_user_message(backlog_data, sscf_data, nist_data, audience, org, report_title)
     llm_narrative = _call_llm(system_prompt, user_msg, model, mock=mock_llm)
 
-    # ── Assemble document ────────────────────────────────────────────────────
-    parts = [
+    # ── Main document: scorecard + domain + priority findings + narrative ─────
+    main_parts = [
         p
         for p in [
             banner,
             drift_section,
             scorecard,
             domain_chart,
-            provenance,
-            ccm_crosswalk,
-            iso_soa,
             priority,
             llm_narrative,
-            full_matrix,
-            poam,
             not_assessed,
             nist_section,
         ]
         if p
     ]
-    markdown = "\n\n".join(parts)
+    markdown = "\n\n".join(main_parts)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(markdown)
@@ -1205,6 +1298,40 @@ def generate(
         _run_pandoc(out_path, docx_path)
         if docx_path.exists():
             click.echo(f"report-gen: wrote {docx_path}", err=True)
+
+        # ── Annex document: full control matrix + POAM + framework tables ────
+        annex_header = (
+            f"# {report_title} — Annex\n\n"
+            f"**Org:** {org} &nbsp;|&nbsp; "
+            f"**Generated:** {datetime.now(UTC).strftime('%Y-%m-%d')} &nbsp;|&nbsp; "
+            f"**Assessment ID:** {backlog_data.get('assessment_id', 'unknown')}\n\n"
+            "> This annex contains the full control matrix, plan of action & milestones, "
+            "and framework crosswalk tables. Share the main assessment document for executive "
+            "review; share this annex for governance tracking and audit evidence.\n"
+        )
+        annex_parts = [p for p in [annex_header, full_matrix, poam, provenance, ccm_crosswalk, iso_soa] if p]
+        annex_md = "\n\n".join(annex_parts)
+
+        annex_md_path = out_path.with_name(out_path.stem + "_annex.md")
+        annex_md_path.write_text(annex_md)
+        click.echo(f"report-gen: wrote {annex_md_path}", err=True)
+
+        annex_docx_path = annex_md_path.with_suffix(".docx")
+        _run_pandoc(annex_md_path, annex_docx_path)
+        if annex_docx_path.exists():
+            click.echo(f"report-gen: wrote {annex_docx_path}", err=True)
+
+        # ── Evidence methodology document ─────────────────────────────────────
+        methodology = _render_evidence_methodology(backlog_data)
+        if methodology:
+            method_md_path = out_path.with_name(out_path.stem + "_evidence_methodology.md")
+            method_md_path.write_text(methodology)
+            click.echo(f"report-gen: wrote {method_md_path}", err=True)
+
+            method_docx_path = method_md_path.with_suffix(".docx")
+            _run_pandoc(method_md_path, method_docx_path)
+            if method_docx_path.exists():
+                click.echo(f"report-gen: wrote {method_docx_path}", err=True)
 
 
 if __name__ == "__main__":
