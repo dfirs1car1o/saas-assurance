@@ -89,7 +89,7 @@ jobs:
           " "$REPORT"
 
       - name: Upload Salesforce dry-run artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: sfdc-dry-run-${{ github.run_id }}
           path: docs/oscal-salesforce-poc/generated/ci-dry-run-sfdc/
@@ -131,7 +131,7 @@ jobs:
           fi
 
       - name: Upload Workday dry-run artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: workday-dry-run-${{ github.run_id }}
           path: docs/oscal-salesforce-poc/generated/ci-dry-run-workday/
