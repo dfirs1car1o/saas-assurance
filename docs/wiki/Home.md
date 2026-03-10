@@ -32,7 +32,7 @@ This system connects to SaaS platforms, runs OSCAL and CSA SSCF security assessm
 - **Application owners** — remediation backlog with priority actions and due dates (Markdown)
 - **Security governance review** — full DOCX + Markdown report with Executive Scorecard, Domain Posture chart, NIST AI RMF review, and sorted control matrix
 
-Platform controls chain through **platform OSCAL catalog → SSCF → CCM v4.1 → regulatory crosswalk** (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, GDPR) automatically.
+Platform controls chain through **platform OSCAL catalog → SSCF → CCM v4.1 → regulatory crosswalk** (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, GDPR) automatically. For organizations using AI-enabled SaaS (Salesforce Einstein, Workday AI), an **AICM v1.0.3 crosswalk** (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) is generated as a companion output.
 
 The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 5 CLI tools and 7 specialist agents over a 14-turn ReAct loop. No human input needed once triggered.
 

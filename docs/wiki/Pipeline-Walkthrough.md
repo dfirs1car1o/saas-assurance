@@ -216,6 +216,32 @@ python3 scripts/gen_ssp.py \
 
 ---
 
+## Stage 2.8: AICM Coverage Crosswalk (`gen_aicm_crosswalk.py`)
+
+**What it does:** Maps SSCF backlog findings through the SSCF → AICM v1.0.3 bridge to produce a per-domain AI governance coverage report. Surfaces which of the 18 AICM domains receive coverage from your SaaS platform assessment and which are structural gaps requiring supplemental controls.
+
+**When to run:** After gen_ssp.py (Stage 2.7), once backlog.json is available.
+
+**Command:**
+```bash
+python3 scripts/gen_aicm_crosswalk.py \
+    --backlog backlog.json \
+    --org my-org \
+    --platform salesforce \
+    --out aicm_coverage.json
+```
+
+**Coverage verdicts:**
+| Verdict | Meaning |
+|---|---|
+| `covered` | SSCF assessment provides direct evidence for this AICM domain |
+| `partial` | SSCF partially addresses this domain; gaps remain |
+| `not_covered` | No SSCF coverage — supplemental controls required (BCR, CEK, DCS, HRS, IVS, MDS, UEM) |
+
+**Output:** `aicm_coverage.json` — per-domain coverage + posture verdict. MDS (Model Security) is the critical AI-specific gap domain not addressable via SaaS platform controls alone.
+
+---
+
 ## Stage 4: SSCF Benchmark (`sscf-benchmark`)
 
 **What it does:** Calculates maturity scores per SSCF domain and an overall posture rating.

@@ -288,7 +288,7 @@ def main(argv: list[str] | None = None) -> int:
     if summary["failing_domains"]:
         print(f"Failing domains: {', '.join(summary['failing_domains'])}")
     if summary["gap_domains"]:
-        print(f"Gap domains (no SSCF coverage): DCS, IVS, UEM, BCR, CEK, HRS, MDS")
+        print("Gap domains (no SSCF coverage): DCS, IVS, UEM, BCR, CEK, HRS, MDS")
 
     if args.dry_run:
         print("Dry run — no file written.")
