@@ -750,10 +750,7 @@ PARAMS: dict[str, dict] = {
 
 def _update_statement_parts(parts: list[dict], new_statement: str) -> list[dict]:
     """Replace statement prose with parameterized version; leave other parts unchanged."""
-    return [
-        {**p, "prose": new_statement} if p.get("name") == "statement" and new_statement else p
-        for p in parts
-    ]
+    return [{**p, "prose": new_statement} if p.get("name") == "statement" and new_statement else p for p in parts]
 
 
 def _add_params_to_control(control: dict) -> dict:

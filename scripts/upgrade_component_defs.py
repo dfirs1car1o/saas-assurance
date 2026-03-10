@@ -24,47 +24,47 @@ from pathlib import Path
 
 SFDC_ORIGINATION: dict[str, str] = {
     # IAM — mostly customer-configured (org sets Salesforce IAM policies)
-    "sscf-iam-001": "customer-configured",     # MFA enforcement in Salesforce
-    "sscf-iam-002": "customer-configured",     # privileged access review
-    "sscf-iam-003": "customer-provided",       # org provides the IdP (Okta/Azure AD)
-    "sscf-iam-004": "customer-configured",     # user lifecycle via SCIM/manual
-    "sscf-iam-005": "customer-configured",     # service account governance
-    "sscf-iam-006": "customer-configured",     # session timeout settings
-    "sscf-iam-007": "customer-configured",     # JIT access workflow
-    "sscf-iam-008": "customer-configured",     # external access controls
+    "sscf-iam-001": "customer-configured",  # MFA enforcement in Salesforce
+    "sscf-iam-002": "customer-configured",  # privileged access review
+    "sscf-iam-003": "customer-provided",  # org provides the IdP (Okta/Azure AD)
+    "sscf-iam-004": "customer-configured",  # user lifecycle via SCIM/manual
+    "sscf-iam-005": "customer-configured",  # service account governance
+    "sscf-iam-006": "customer-configured",  # session timeout settings
+    "sscf-iam-007": "customer-configured",  # JIT access workflow
+    "sscf-iam-008": "customer-configured",  # external access controls
     # CON — org hardening of Salesforce settings
-    "sscf-con-001": "customer-configured",     # baseline enforcement
-    "sscf-con-002": "customer-configured",     # drift detection
-    "sscf-con-003": "customer-configured",     # credential lifecycle
-    "sscf-con-004": "customer-configured",     # platform hardening
-    "sscf-con-005": "customer-configured",     # third-party integrations
-    "sscf-con-006": "shared",                  # patching: vendor releases, org enables
+    "sscf-con-001": "customer-configured",  # baseline enforcement
+    "sscf-con-002": "customer-configured",  # drift detection
+    "sscf-con-003": "customer-configured",  # credential lifecycle
+    "sscf-con-004": "customer-configured",  # platform hardening
+    "sscf-con-005": "customer-configured",  # third-party integrations
+    "sscf-con-006": "shared",  # patching: vendor releases, org enables
     # DSP — org configures Salesforce data controls
-    "sscf-dsp-001": "customer-configured",     # sensitive data access
-    "sscf-dsp-002": "customer-configured",     # export controls
-    "sscf-dsp-003": "customer-configured",     # data classification
-    "sscf-dsp-004": "customer-configured",     # cross-border data transfer
-    "sscf-dsp-005": "customer-configured",     # retention schedules
-    "sscf-dsp-006": "customer-configured",     # privacy rights
+    "sscf-dsp-001": "customer-configured",  # sensitive data access
+    "sscf-dsp-002": "customer-configured",  # export controls
+    "sscf-dsp-003": "customer-configured",  # data classification
+    "sscf-dsp-004": "customer-configured",  # cross-border data transfer
+    "sscf-dsp-005": "customer-configured",  # retention schedules
+    "sscf-dsp-006": "customer-configured",  # privacy rights
     # IPY
-    "sscf-ipy-001": "shared",                  # export: vendor provides API, org tests
-    "sscf-ipy-002": "shared",                  # API security: vendor controls + org governs
-    "sscf-ipy-003": "customer-configured",     # integration inventory
-    "sscf-ipy-004": "customer-provided",       # exit planning is org's responsibility
-    "sscf-ipy-005": "customer-configured",     # data residency config
+    "sscf-ipy-001": "shared",  # export: vendor provides API, org tests
+    "sscf-ipy-002": "shared",  # API security: vendor controls + org governs
+    "sscf-ipy-003": "customer-configured",  # integration inventory
+    "sscf-ipy-004": "customer-provided",  # exit planning is org's responsibility
+    "sscf-ipy-005": "customer-configured",  # data residency config
     # LOG
-    "sscf-log-001": "customer-configured",     # log enablement (Event Monitoring)
-    "sscf-log-002": "customer-configured",     # admin audit logging
-    "sscf-log-003": "customer-configured",     # audit retention
-    "sscf-log-004": "customer-configured",     # real-time monitoring
-    "sscf-log-005": "customer-configured",     # SIEM integration
-    "sscf-log-006": "customer-configured",     # UEBA
+    "sscf-log-001": "customer-configured",  # log enablement (Event Monitoring)
+    "sscf-log-002": "customer-configured",  # admin audit logging
+    "sscf-log-003": "customer-configured",  # audit retention
+    "sscf-log-004": "customer-configured",  # real-time monitoring
+    "sscf-log-005": "customer-configured",  # SIEM integration
+    "sscf-log-006": "customer-configured",  # UEBA
     # SEF
-    "sscf-sef-001": "customer-configured",     # threat policies
-    "sscf-sef-002": "customer-provided",       # SOC triage is org-operated
-    "sscf-sef-003": "customer-provided",       # IR plan is org-owned
-    "sscf-sef-004": "customer-provided",       # forensics readiness
-    "sscf-sef-005": "customer-configured",     # exception governance
+    "sscf-sef-001": "customer-configured",  # threat policies
+    "sscf-sef-002": "customer-provided",  # SOC triage is org-operated
+    "sscf-sef-003": "customer-provided",  # IR plan is org-owned
+    "sscf-sef-004": "customer-provided",  # forensics readiness
+    "sscf-sef-005": "customer-configured",  # exception governance
 }
 
 WD_ORIGINATION: dict[str, str] = {

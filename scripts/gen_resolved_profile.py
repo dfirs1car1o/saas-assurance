@@ -43,6 +43,7 @@ def _uuid() -> str:
 
 def _substitute_params(text: str, param_map: dict[str, str]) -> str:
     """Replace {{ insert: param, param-id }} with resolved values."""
+
     def _replace(m: re.Match) -> str:
         param_id = m.group(1)
         return param_map.get(param_id, f"[UNRESOLVED: {param_id}]")
@@ -135,11 +136,13 @@ def _params_to_props(params: list[dict], param_map: dict[str, str]) -> list[dict
     for p in params:
         pid = p.get("id", "")
         resolved_val = param_map.get(pid, ", ".join(p.get("values", [])))
-        props.append({
-            "name": f"resolved-param:{pid}",
-            "value": resolved_val,
-            "remarks": p.get("usage", ""),
-        })
+        props.append(
+            {
+                "name": f"resolved-param:{pid}",
+                "value": resolved_val,
+                "remarks": p.get("usage", ""),
+            }
+        )
     return props
 
 
@@ -227,13 +230,15 @@ def resolve_profile(
         if not controls:
             continue
         gi = group_info.get(gid, {})
-        groups.append({
-            "id": gid,
-            "class": "domain",
-            "title": gi.get("title", gid),
-            "props": gi.get("props", []),
-            "controls": controls,
-        })
+        groups.append(
+            {
+                "id": gid,
+                "class": "domain",
+                "title": gi.get("title", gid),
+                "props": gi.get("props", []),
+                "controls": controls,
+            }
+        )
 
     # Build metadata
     profile_meta = _profile_root(profile).get("metadata", {})
@@ -307,11 +312,7 @@ def main() -> None:
 
     total_controls = sum(len(g["controls"]) for g in resolved["catalog"]["groups"])
     total_params = int(
-        next(
-            p["value"]
-            for p in resolved["catalog"]["metadata"]["props"]
-            if p["name"] == "param-resolution-count"
-        )
+        next(p["value"] for p in resolved["catalog"]["metadata"]["props"] if p["name"] == "param-resolution-count")
     )
     print(f"Resolved catalog written to {out_path}")
     print(f"  Groups    : {len(resolved['catalog']['groups'])}")

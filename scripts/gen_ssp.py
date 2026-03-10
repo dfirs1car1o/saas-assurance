@@ -88,11 +88,7 @@ def _build_implemented_requirements(backlog: dict, platform: str) -> list[dict]:
     """Build control-implementation implemented-requirements from backlog findings."""
     reqs = []
     for item in backlog.get("mapped_items", []):
-        control_id = (
-            item.get("sbs_control_id")
-            or item.get("legacy_control_id")
-            or item.get("control_id", "")
-        )
+        control_id = item.get("sbs_control_id") or item.get("legacy_control_id") or item.get("control_id", "")
         # Map SBS/WD control IDs back to SSCF control IDs via sscf_mappings
         sscf_id = control_id
         sscf_mappings = item.get("sscf_mappings", [])
@@ -107,41 +103,43 @@ def _build_implemented_requirements(backlog: dict, platform: str) -> list[dict]:
             "not_applicable": "not-applicable",
         }.get(status, "not-implemented")
 
-        reqs.append({
-            "uuid": _uuid(),
-            "control-id": sscf_id,
-            "description": (
-                f"Implementation of {control_id} for {platform} deployment. "
-                f"Status: {status.upper()}. "
-                f"Remediation: {item.get('remediation', '')}"
-            ),
-            "props": [
-                {"name": "platform-control-id", "value": control_id},
-                {"name": "implementation-status", "value": impl_status},
-                {"name": "severity", "value": item.get("severity", "moderate")},
-                {"name": "owner", "value": item.get("owner", "Security Team")},
-            ],
-            "statements": [
-                {
-                    "statement-id": f"{sscf_id}_smt",
-                    "uuid": _uuid(),
-                    "description": item.get("remediation", ""),
-                    "by-components": [
-                        {
-                            "component-uuid": "COMPONENT_UUID_PLACEHOLDER",
-                            "uuid": _uuid(),
-                            "description": (
-                                f"Assessment evidence: {item.get('evidence_ref', 'N/A')}. "
-                                f"Current status: {status.upper()}."
-                            ),
-                            "implementation-status": {
-                                "state": impl_status,
-                            },
-                        }
-                    ],
-                }
-            ],
-        })
+        reqs.append(
+            {
+                "uuid": _uuid(),
+                "control-id": sscf_id,
+                "description": (
+                    f"Implementation of {control_id} for {platform} deployment. "
+                    f"Status: {status.upper()}. "
+                    f"Remediation: {item.get('remediation', '')}"
+                ),
+                "props": [
+                    {"name": "platform-control-id", "value": control_id},
+                    {"name": "implementation-status", "value": impl_status},
+                    {"name": "severity", "value": item.get("severity", "moderate")},
+                    {"name": "owner", "value": item.get("owner", "Security Team")},
+                ],
+                "statements": [
+                    {
+                        "statement-id": f"{sscf_id}_smt",
+                        "uuid": _uuid(),
+                        "description": item.get("remediation", ""),
+                        "by-components": [
+                            {
+                                "component-uuid": "COMPONENT_UUID_PLACEHOLDER",
+                                "uuid": _uuid(),
+                                "description": (
+                                    f"Assessment evidence: {item.get('evidence_ref', 'N/A')}. "
+                                    f"Current status: {status.upper()}."
+                                ),
+                                "implementation-status": {
+                                    "state": impl_status,
+                                },
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
     return reqs
 
 
@@ -214,7 +212,9 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--nist-review", required=True, help="Path to nist_review.json")
     p.add_argument("--org", required=True, help="Org alias")
     p.add_argument(
-        "--platform", default="salesforce", choices=["salesforce", "workday"],
+        "--platform",
+        default="salesforce",
+        choices=["salesforce", "workday"],
         help="Platform (default: salesforce)",
     )
     p.add_argument("--out", required=True, help="Output path for OSCAL SSP JSON")

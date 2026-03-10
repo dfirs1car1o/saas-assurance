@@ -221,7 +221,9 @@ for name, sub, y_pos in sub_agents:
         xytext=(ORC_X + ORC_W, ORC_Y + ORC_H / 2),
         arrowprops={
             "arrowstyle": "->,head_width=0.15,head_length=0.1",
-            "color": C_BLUE_MID, "lw": 0.8, "linestyle": "dashed",
+            "color": C_BLUE_MID,
+            "lw": 0.8,
+            "linestyle": "dashed",
         },
         zorder=4,
     )

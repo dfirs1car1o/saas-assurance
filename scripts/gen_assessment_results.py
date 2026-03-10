@@ -216,10 +216,7 @@ def build_assessment_results(
                 {
                     "uuid": _uuid(),
                     "title": f"Assessment Run — {assessment_id}",
-                    "description": (
-                        f"Results for SSCF assessment run {assessment_id} "
-                        f"against {platform} org {org}."
-                    ),
+                    "description": (f"Results for SSCF assessment run {assessment_id} against {platform} org {org}."),
                     "start": generated_at,
                     "end": _now_iso(),
                     "props": [
@@ -229,9 +226,7 @@ def build_assessment_results(
                     "reviewed-controls": {
                         "control-selections": [
                             {
-                                "description": (
-                                    f"All controls selected from resolved {platform.upper()} profile."
-                                ),
+                                "description": (f"All controls selected from resolved {platform.upper()} profile."),
                                 "include-all": {},
                             }
                         ]
@@ -255,12 +250,15 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--backlog", required=False, default=None, help="Path to backlog.json (optional metadata)")
     p.add_argument("--org", required=True, help="Org alias")
     p.add_argument(
-        "--platform", default="salesforce", choices=["salesforce", "workday"],
+        "--platform",
+        default="salesforce",
+        choices=["salesforce", "workday"],
         help="Platform (default: salesforce)",
     )
     p.add_argument("--out", required=True, help="Output path for OSCAL assessment-results JSON")
     p.add_argument(
-        "--resolved-catalog", default=None,
+        "--resolved-catalog",
+        default=None,
         help="Path to resolved catalog JSON (optional reference link)",
     )
     return p.parse_args()

@@ -119,12 +119,14 @@ def _compute_domain_verdict(
         if status not in _STATUS_PASS:
             sev = finding.get("severity", "low").lower()
             max_sev = max(max_sev, _SEVERITY_RANK.get(sev, 0))
-            failing.append({
-                "control_id": sscf_id,
-                "status": status,
-                "severity": sev,
-                "description": finding.get("description", ""),
-            })
+            failing.append(
+                {
+                    "control_id": sscf_id,
+                    "status": status,
+                    "severity": sev,
+                    "description": finding.get("description", ""),
+                }
+            )
 
     posture = _worst_status(statuses) if statuses else _VERDICT_NOT_ASSESSED
     sev_labels = {4: "critical", 3: "high", 2: "moderate", 1: "low", 0: None}
@@ -154,9 +156,7 @@ def build_aicm_coverage(
     catalog_domains = _index_catalog_domains(catalog)
 
     controls_map = mapping.get("controls", {})
-    uncovered_domains: list[str] = [
-        d["abbrev"] for d in mapping.get("uncovered_aicm_domains", [])
-    ]
+    uncovered_domains: list[str] = [d["abbrev"] for d in mapping.get("uncovered_aicm_domains", [])]
 
     # Build per-AICM-domain coverage: aggregate all SSCF controls that touch each domain
     # {aicm_abbrev: {mapping_verdict, [sscf_ctrl_entries]}}
@@ -177,11 +177,13 @@ def build_aicm_coverage(
             new_v = aicm_domain_entry.get("coverage_verdict", "partial")
             if existing == "covered" and new_v != "covered":
                 domain_sscf[abbrev]["mapping_verdict"] = new_v
-            domain_sscf[abbrev]["sscf_controls"].append({
-                "sscf_id": sscf_id,
-                "control_ids": aicm_domain_entry.get("control_ids", []),
-                "mapping_strength": aicm_domain_entry.get("mapping_strength", "partial"),
-            })
+            domain_sscf[abbrev]["sscf_controls"].append(
+                {
+                    "sscf_id": sscf_id,
+                    "control_ids": aicm_domain_entry.get("control_ids", []),
+                    "mapping_strength": aicm_domain_entry.get("mapping_strength", "partial"),
+                }
+            )
 
     # Add uncovered domains (not referenced by any SSCF control)
     for abbrev in uncovered_domains:
@@ -282,9 +284,11 @@ def main(argv: list[str] | None = None) -> int:
     coverage = build_aicm_coverage(backlog, mapping, catalog, args.org, args.platform)
 
     summary = coverage["summary"]
-    print(f"AICM coverage: {summary['covered_domains']} covered / "
-          f"{summary['partial_domains']} partial / "
-          f"{summary['gap_domains']} gap domains")
+    print(
+        f"AICM coverage: {summary['covered_domains']} covered / "
+        f"{summary['partial_domains']} partial / "
+        f"{summary['gap_domains']} gap domains"
+    )
     if summary["failing_domains"]:
         print(f"Failing domains: {', '.join(summary['failing_domains'])}")
     if summary["gap_domains"]:

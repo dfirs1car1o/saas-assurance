@@ -33,6 +33,7 @@ from pathlib import Path
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def _uuid() -> str:
     return str(uuid.uuid4())
 
@@ -71,6 +72,7 @@ def _poam_id(n: int) -> str:
 
 
 # ── OSCAL builders ────────────────────────────────────────────────────────────
+
 
 def _build_observation(item: dict, org: str, platform: str, assessment_id: str) -> dict:
     control_id = _control_key(item)
@@ -256,6 +258,7 @@ def _build_poam_item(
 
 # ── merge helpers ─────────────────────────────────────────────────────────────
 
+
 def _extract_existing_index(existing: dict) -> dict[str, dict]:
     """Build a lookup {control_id: poam_item_index} from an existing POA&M."""
     index: dict[str, dict] = {}
@@ -313,6 +316,7 @@ def _update_poam_item_props(item: dict, new_status: str) -> None:
 
 # ── main build ────────────────────────────────────────────────────────────────
 
+
 def _init_poam_state(
     existing: dict | None,
 ) -> tuple[list[dict], list[dict], list[dict], dict, int, dict]:
@@ -360,9 +364,7 @@ def _apply_finding_to_existing(
 
     existing_pi = existing_index[control_id]
     _update_poam_item_props(existing_pi, status)
-    existing_pi.setdefault("related-observations", []).append(
-        {"observation-uuid": new_obs["uuid"]}
-    )
+    existing_pi.setdefault("related-observations", []).append({"observation-uuid": new_obs["uuid"]})
 
 
 def _apply_finding_as_new(
@@ -423,9 +425,7 @@ def build_poam(
     assessment_id = backlog.get("assessment_id", "unknown")
     now = _now_iso()
 
-    observations, risks, poam_items, existing_index, next_poam_number, poam_root = (
-        _init_poam_state(existing)
-    )
+    observations, risks, poam_items, existing_index, next_poam_number, poam_root = _init_poam_state(existing)
 
     for finding in backlog.get("mapped_items", []):
         if finding.get("status") == "not_applicable":
@@ -433,13 +433,25 @@ def build_poam(
         control_id = _control_key(finding)
         if control_id in existing_index:
             _apply_finding_to_existing(
-                finding, existing or {}, existing_index,
-                observations, risks, org, platform, assessment_id,
+                finding,
+                existing or {},
+                existing_index,
+                observations,
+                risks,
+                org,
+                platform,
+                assessment_id,
             )
         else:
             next_poam_number = _apply_finding_as_new(
-                finding, observations, risks, poam_items,
-                next_poam_number, org, platform, assessment_id,
+                finding,
+                observations,
+                risks,
+                poam_items,
+                next_poam_number,
+                org,
+                platform,
+                assessment_id,
             )
 
     sensitivity, open_count, fail_count, partial_count = _compute_sensitivity(backlog)
@@ -489,6 +501,7 @@ def build_poam(
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Generate or update an OSCAL POA&M from SSCF assessment backlog.",
@@ -497,17 +510,22 @@ def _parse_args() -> argparse.Namespace:
     )
     p.add_argument("--backlog", required=True, help="Path to backlog.json from oscal_gap_map.py")
     p.add_argument(
-        "--gap-analysis", required=False, default=None,
+        "--gap-analysis",
+        required=False,
+        default=None,
         help="Path to gap_analysis.json (optional; adds observation detail)",
     )
     p.add_argument("--org", required=True, help="Org alias (e.g. cyber-coach-dev)")
     p.add_argument(
-        "--platform", default="salesforce", choices=["salesforce", "workday"],
+        "--platform",
+        default="salesforce",
+        choices=["salesforce", "workday"],
         help="Platform (default: salesforce)",
     )
     p.add_argument("--out", required=True, help="Output path for OSCAL POA&M JSON")
     p.add_argument(
-        "--existing", default=None,
+        "--existing",
+        default=None,
         help="Path to existing POA&M JSON for persistent cumulative update (defaults to --out if it exists)",  # noqa: E501
     )
     return p.parse_args()
@@ -546,13 +564,15 @@ def main() -> None:
     out_path.write_text(json.dumps(poam, indent=2))
 
     root = poam["plan-of-action-and-milestones"]
-    open_items = len([
-        pi for pi in root.get("poam-items", [])
-        if any(
-            prop.get("name") == "lifecycle-state" and prop.get("value") == "open"
-            for prop in pi.get("props", [])
-        )
-    ])
+    open_items = len(
+        [
+            pi
+            for pi in root.get("poam-items", [])
+            if any(
+                prop.get("name") == "lifecycle-state" and prop.get("value") == "open" for prop in pi.get("props", [])
+            )
+        ]
+    )
     total_items = len(root.get("poam-items", []))
     sensitivity = next(
         (p["value"] for p in root["metadata"].get("props", []) if p["name"] == "sensitivity-tier"),
