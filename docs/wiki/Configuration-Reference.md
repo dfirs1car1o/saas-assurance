@@ -96,6 +96,34 @@ Key differences from FedRAMP SSP: no JAB/PMO, no FIPS 199 government data catego
 | `config/sscf/sscf_to_ccm_mapping.yaml` | SSCF control → CCM v4.1 controls + regulatory highlights |
 | `config/sscf_control_index.yaml` | Legacy SSCF control index (superseded by sscf_catalog.json) |
 
+### CSA AI Controls Matrix (AICM) Files
+
+| File | Purpose |
+|---|---|
+| `config/aicm/aicm_v1_catalog.json` | AICM v1.0.3 catalog — 243 controls across 18 domains (11 overlap CCM v4.1 + MDS new AI domain) |
+| `config/aicm/sscf_to_aicm_mapping.yaml` | Full 36-control SSCF → AICM v1.0.3 crosswalk — coverage verdicts, mapping strength, gap domains |
+
+Generate AICM coverage report after an assessment:
+```bash
+python3 scripts/gen_aicm_crosswalk.py \
+    --backlog docs/oscal-salesforce-poc/generated/<org>/<date>/backlog.json \
+    --org <org-alias> \
+    --platform salesforce \
+    --out docs/oscal-salesforce-poc/generated/<org>/<date>/aicm_coverage.json
+```
+
+**AICM domain coverage summary (vs SSCF v1.0):**
+
+| Status | Domains |
+|---|---|
+| Covered | A&A, AIS, CCC, DSP, GRC, IAM, LOG, SEF, TVM |
+| Partial | IPY, SCT |
+| Gap (no SSCF coverage) | BCR, CEK, DCS, HRS, IVS, MDS, UEM |
+
+The 7 gap domains (especially **MDS — Model Security**, the only AI-specific AICM domain) require supplemental controls reviewed via questionnaire or third-party audit.
+
+AICM maps to: **EU AI Act** · **ISO/IEC 42001:2023** · **NIST AI 600-1 (2024)** · **BSI AI C4**
+
 ### `config/oscal-salesforce/sbs_to_sscf_mapping.yaml` schema
 
 ```yaml

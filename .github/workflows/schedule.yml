@@ -93,6 +93,13 @@ jobs:
             --platform salesforce \
             --out "$OUT/ssp.json"
 
+          # Phase 5d: AICM coverage crosswalk (AI Controls Matrix)
+          python3 scripts/gen_aicm_crosswalk.py \
+            --backlog "$OUT/backlog.json" \
+            --org ci-dry-run-sfdc \
+            --platform salesforce \
+            --out "$OUT/aicm_coverage.json"
+
           # Phase 6: report (mock LLM — no API spend)
           python3 -m skills.report_gen.report_gen generate \
             --backlog "$OUT/backlog.json" \

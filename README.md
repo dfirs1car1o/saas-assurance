@@ -20,13 +20,14 @@ Phase 2 — Assess       oscal-assess + oscal_gap_map       →  gap_analysis.js
 Phase 3 — Score        sscf-benchmark                     →  sscf_report.json (RED/AMBER/GREEN)
 Phase 4 — Gate         nist-reviewer (NIST AI RMF 1.0)    →  nist_review.json (clear/flag/block)
 Phase 5 — OSCAL        gen_poam + gen_assessment_results  →  poam.json + assessment_results.json
-           + gen_ssp                                       →  ssp.json (OSCAL 1.1.2 SSP per org)
+           + gen_ssp + gen_aicm_crosswalk                 →  ssp.json + aicm_coverage.json
 Phase 6 — Report       report-gen (app-owner + security)  →  Markdown + DOCX governance packages
 Phase 7 — Monitor      export_to_opensearch + dashboards  →  OpenSearch trending + 3 dashboards
 ```
 
 **Platform support:** Salesforce (35 SBS controls) · Workday (30 WSCC controls)
 **Framework chain:** Platform control → SSCF v1.0 → CCM v4.1 → ISO 27001:2022 Annex A → SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR
+**AI governance chain:** SSCF v1.0 → CSA AICM v1.0.3 (243 controls, 18 domains) → EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4
 **OSCAL output:** Resolved catalog · Assessment Results · System Security Plan · POA&M — all OSCAL 1.1.2 valid
 **AI governance:** Every output passes through a NIST AI RMF gate before delivery — distinguishes live collection from stubs, requires human acknowledgment on block verdicts
 
@@ -202,7 +203,7 @@ Collection method              ← API type (REST / Tooling / Metadata / RaaS / 
 
 ## Control Frameworks
 
-All platform controls chain through SSCF → CCM v4.1 → regulatory crosswalk (SOX, HIPAA, SOC2 TSC, ISO 27001, NIST 800-53, PCI DSS, GDPR).
+All platform controls chain through SSCF → CCM v4.1 → regulatory crosswalk (SOX, HIPAA, SOC2 TSC, ISO 27001, NIST 800-53, PCI DSS, GDPR). AICM v1.0.3 adds AI-specific governance coverage for organizations using AI-enabled SaaS.
 
 | Framework | Version | Config File |
 |---|---|---|
@@ -212,6 +213,7 @@ All platform controls chain through SSCF → CCM v4.1 → regulatory crosswalk (
 | CSA CCM | v4.1 | `config/ccm/ccm_v4.1_oscal_ref.yaml` (reference; CCM control IDs embedded in SSCF catalog) |
 | **ISO/IEC 27001:2022** | **2022** | **`config/iso27001/sscf_to_iso27001_mapping.yaml`** (direct Annex A mapping — 29 of 93 controls; full 93-control SoA auto-generated in security reports) |
 | NIST AI RMF | 1.0 | Applied by `nist-review` skill |
+| **CSA AI Controls Matrix (AICM)** | **v1.0.3** | **`config/aicm/sscf_to_aicm_mapping.yaml`** (36 SSCF → 18 AICM domains; 11 covered/partial, 7 gaps; maps to EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) |
 
 ## Repository Layout
 
@@ -225,6 +227,7 @@ config/
   oscal-salesforce/       ← Legacy SBS OSCAL catalog + SSCF mapping
   ccm/                    ← CCM v4.1 reference pointer (CCM IDs embedded in SSCF catalog)
   iso27001/               ← ISO 27001:2022 Annex A direct mapping (36 SSCF → 29 Annex A controls) + 93-control catalog
+  aicm/                   ← CSA AICM v1.0.3 catalog (243 controls, 18 domains) + SSCF crosswalk mapping
 contexts/                 ← System prompts for assess/review/research modes
 docs/
   architecture.png        ← Auto-generated reference architecture diagram

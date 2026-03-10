@@ -71,7 +71,7 @@
         { "name": "nist-ai-rmf-verdict", "value": "NIST_VERDICT_PLACEHOLDER" },
         {
           "name": "regulatory-obligations",
-          "value": "SOX, HIPAA, SOC2, ISO 27001:2022, PCI DSS v4, GDPR (as applicable)"
+          "value": "SOX, HIPAA, SOC2, ISO 27001:2022, PCI DSS v4, GDPR, CSA AICM v1.0.3 (as applicable)"
         }
       ],
       "security-sensitivity-level": "SENSITIVITY_TIER_PLACEHOLDER",

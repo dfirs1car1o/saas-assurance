@@ -1,4 +1,4 @@
-# saas-sec-agents — agent container
+# saas-posture — agent container
 # Python 3.11-slim + pandoc for DOCX generation
 # Non-root user; all credentials via env vars only
 

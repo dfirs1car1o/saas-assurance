@@ -91,3 +91,4 @@ agent-loop run --dry-run --env dev --org test-org
 | **OSCAL P0** | **✅ Done** | ODP parameterization — all 36 SSCF controls carry `params`; SBS (59) + WSCC (50) `set-parameters` |
 | **OSCAL P1** | **✅ Done** | `gen_resolved_profile.py` — resolved catalogs for SBS (35 controls) and WSCC (30 controls); component def upgrades with `control-origination` + `responsibility` |
 | **OSCAL P2** | **✅ Done** | `gen_assessment_results.py` (OSCAL AR), `gen_ssp.py` (per-org SSP), commercial SSP template; all wired into CI |
+| **AICM** | **✅ Done** | CSA AI Controls Matrix v1.0.3 crosswalk — 243 controls, 18 domains; `config/aicm/` + `gen_aicm_crosswalk.py`; maps to EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 |
