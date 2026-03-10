@@ -86,17 +86,26 @@ Three pre-built dashboards are imported automatically on first start — no manu
 | **Salesforce Security Posture** | `/app/dashboards#/view/sfdc-dashboard` | Salesforce-only findings, SBS quarterly review |
 | **Workday Security Posture** | `/app/dashboards#/view/workday-dashboard` | Workday-only findings, WSCC compliance review |
 
-Each platform dashboard (Salesforce / Workday) contains **13 panels**, all platform-filtered:
+**Salesforce Security Posture dashboard:**
+
+![Salesforce Dashboard](docs/screenshots/sfdc-dashboard.png)
+
+**Workday Security Posture dashboard:**
+
+![Workday Dashboard](docs/screenshots/workday-dashboard.png)
+
+Each platform dashboard contains **13 panels**, all platform-filtered by KQL (`platform : salesforce` / `platform : workday`):
 
 ```
-Row 1  Score tile (RED/AMBER/GREEN)  ·  Pass count  ·  Fail count  ·  Critical failures
-Row 2  Top Failing Controls (horizontal bar, colored by severity)  ·  Control Status donut
-Row 3  Risk by Domain (stacked bar, fail/partial only)  ·  Findings by Severity (stacked by status)
-Row 4  Open Items by Owner (accountability bar)  ·  Score Over Time (trend line)
-Row 5  Critical & High failures table — full width
-Row 6  POA&M open items table — full width
-Row 7  Failing Controls — full-width document search, sortable
-Row 8  Partial Controls — full-width document search with remediation notes (expert review queue)
+Row 1  Score tile (RED/AMBER/GREEN)  ·  Pass count  ·  Fail count
+Row 2  Top Failing Controls (horizontal bar, colored by severity)  —  full width
+Row 3  Control Status donut  ·  Risk by Domain (stacked bar, fail/partial only)
+Row 4  Findings by Severity (stacked by status)  ·  Open Items by Owner (accountability bar)
+Row 5  Score Over Time (trend line)  —  full width
+Row 6  Critical & High failures table  —  full width
+Row 7  POA&M open items table  —  full width
+Row 8  Failing Controls  —  full-width document search, sortable
+Row 9  Partial Controls  —  full-width document search with remediation notes
 ```
 
 After each assessment, export results to populate the dashboards:
