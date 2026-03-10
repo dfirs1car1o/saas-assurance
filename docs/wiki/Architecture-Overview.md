@@ -49,7 +49,7 @@
 | `nist-reviewer` | gpt-5.3-chat-latest | Validates outputs against NIST AI RMF | None (text analysis) |
 | `security-reviewer` | gpt-5.3-chat-latest | AppSec + DevSecOps review of CI/CD and skills | None (text analysis) |
 | `sfdc-expert` | gpt-5.3-chat-latest | On-call Salesforce/Apex specialist | None (text + code) |
-| `workday-expert` | gpt-5.3-chat-latest | On-call Workday HCM/Finance/SOAP specialist | None (text + code) |
+| `workday-expert` | gpt-5.3-chat-latest | On-call Workday HCM/Finance/RaaS specialist | None (text + code) |
 | `container-expert` | gpt-5.3-chat-latest | Docker Compose, OpenSearch, JVM tuning specialist | None (text + config) |
 
 ### Model Assignment Rationale
@@ -66,8 +66,8 @@
 
 | Skill | Binary | Platform | Purpose |
 |---|---|---|---|
-| `sfdc-connect` | `skills/sfdc_connect/sfdc_connect.py` | Salesforce | Authenticates via JWT/SOAP; collects SecuritySettings, Auth, Permissions, Network, Connected Apps |
-| `workday-connect` | `skills/workday_connect/workday_connect.py` | Workday | Authenticates via OAuth 2.0; collects 30 WSCC controls via SOAP/RaaS/REST |
+| `sfdc-connect` | `skills/sfdc_connect/sfdc_connect.py` | Salesforce | Authenticates via JWT Bearer; collects SecuritySettings, Auth, Permissions, Network, Connected Apps |
+| `workday-connect` | `skills/workday_connect/workday_connect.py` | Workday | Authenticates via OAuth 2.0; collects 30 WSCC controls via RaaS/REST/manual questionnaire |
 | `oscal-assess` | `skills/oscal_assess/oscal_assess.py` | Both | Evaluates platform controls against OSCAL catalog; produces findings with status and severity |
 | `sscf-benchmark` | `skills/sscf_benchmark/sscf_benchmark.py` | Both | Maps findings to SSCF domains; calculates domain scores and overall posture (RED/AMBER/GREEN) |
 | `nist-review` | `skills/nist_review/nist_review.py` | Both | Validates assessment outputs against NIST AI RMF 1.0; issues pass/flag/block verdict |

@@ -178,7 +178,7 @@ CodeRabbit runs automatically — no setup required for contributors. Reviews ap
 □ pip-audit — no CVEs
 □ validate-env — all non-credential checks pass
 □ license-check — no unapproved copyleft
-□ pytest — 33/33 pass + coverage ≥ 60%
+□ pytest — 37/37 pass + coverage ≥ 60%
 □ docker-smoke — OpenSearch + Dashboards healthy
 □ Bandit SAST — no HIGH findings
 □ Secret scan (gitleaks) — no credentials found

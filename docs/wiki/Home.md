@@ -14,8 +14,8 @@ Welcome to the **SaaS Security Multi-Agent System** wiki. Fully automated AI pip
 | [Windows Setup](Windows-Setup) | Corporate Windows machine with VS Code — step by step |
 | [Architecture Overview](Architecture-Overview) | How the system is designed |
 | [OSCAL Guide](OSCAL-Guide) | What OSCAL is and how we use it — catalogs, profiles, component definitions, diagrams |
-| [Agent Reference](Agent-Reference) | All 7 agents — roles, models, triggers |
-| [Skill Reference](Skill-Reference) | All 5 CLI tools — usage, inputs, outputs |
+| [Agent Reference](Agent-Reference) | All 9 agents — roles, models, triggers |
+| [Skill Reference](Skill-Reference) | All 6 CLI tools — usage, inputs, outputs |
 | [Pipeline Walkthrough](Pipeline-Walkthrough) | Step-by-step: from org → report |
 | [CI-CD Reference](CI-CD-Reference) | Every CI job, what it checks, how to fix failures |
 | [Security Model](Security-Model) | Rules, gates, escalation paths |
@@ -34,7 +34,7 @@ This system connects to SaaS platforms, runs OSCAL and CSA SSCF security assessm
 
 Platform controls chain through **platform OSCAL catalog → SSCF → CCM v4.1 → regulatory crosswalk** (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, GDPR) automatically. For organizations using AI-enabled SaaS (Salesforce Einstein, Workday AI), an **AICM v1.0.3 crosswalk** (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) is generated as a companion output.
 
-The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 5 CLI tools and 7 specialist agents over a 14-turn ReAct loop. No human input needed once triggered.
+The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 6 CLI tools and 9 specialist agents over a 14-turn ReAct loop. No human input needed once triggered.
 
 ---
 

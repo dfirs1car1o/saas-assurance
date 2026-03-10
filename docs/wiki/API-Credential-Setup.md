@@ -54,33 +54,6 @@ SF_DOMAIN=login                 # use "test" for sandboxes
 
 ---
 
-### Method 2 — SOAP (Username + Password)
-
-Simpler to set up but requires a Security Token, which rotates when you change your password.
-
-#### Credentials needed
-
-| Variable | Where to get it |
-|---|---|
-| `SF_USERNAME` | Your Salesforce login email |
-| `SF_PASSWORD` | Your Salesforce password |
-| `SF_SECURITY_TOKEN` | Setup → My Personal Information → Reset My Security Token → emailed to you |
-| `SF_DOMAIN` | `login` (production / Developer Edition) or `test` (sandbox) |
-
-#### `.env` configuration
-
-```bash
-SF_AUTH_METHOD=soap             # or omit — soap is the default
-SF_USERNAME=your@email.salesforce.com
-SF_PASSWORD=YourPassword
-SF_SECURITY_TOKEN=abcXYZ123     # from email
-SF_DOMAIN=login
-```
-
-> **Note:** If your org enforces IP allowlisting, append the Security Token to the password in the env var: `SF_PASSWORD=YourPasswordabcXYZ123` and leave `SF_SECURITY_TOKEN` blank.
-
----
-
 ### Required Salesforce Permissions
 
 The user account used by the agent needs **read-only** access:

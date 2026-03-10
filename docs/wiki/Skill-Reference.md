@@ -48,15 +48,6 @@ SF_PRIVATE_KEY_PATH=/path/to/private.pem
 SF_DOMAIN=login
 ```
 
-**SOAP (username/password):**
-```bash
-SF_AUTH_METHOD=soap   # or omit (default)
-SF_USERNAME=user@org.com
-SF_PASSWORD=...
-SF_SECURITY_TOKEN=...
-SF_DOMAIN=login
-```
-
 ---
 
 ## oscal-assess

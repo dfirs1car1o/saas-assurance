@@ -33,7 +33,7 @@ All environment variables, configuration files, and YAML schemas used by this sy
 | `MEMORY_ENABLED` | `0` | Set to `1` to enable Mem0 session memory |
 | `LLM_MODEL_ORCHESTRATOR` | `gpt-5.3-chat-latest` | Override orchestrator model |
 | `LLM_MODEL_ANALYST` | `gpt-5.3-chat-latest` | Override analyst/assessor model |
-| `LLM_MODEL_REPORTER` | `gpt-4o-mini` | Override reporter model |
+| `LLM_MODEL_REPORTER` | `gpt-5.3-chat-latest` | Override reporter model |
 
 ### Azure OpenAI Government (FedRAMP / IL5)
 
@@ -266,7 +266,7 @@ proactive_triggers:
 
 **Model options:**
 - `gpt-5.3-chat-latest` — orchestrator, collector, assessor, nist-reviewer, security-reviewer, sfdc-expert
-- `gpt-4o-mini` — reporter (cost-efficient for templated narrative output)
+- `gpt-5.3-chat-latest` — all agents (orchestrator, collector, assessor, nist-reviewer, reporter)
 
 ---
 
