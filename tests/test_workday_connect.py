@@ -13,12 +13,10 @@ import pytest
 import responses as resp_lib
 
 from skills.workday_connect.workday_connect import (
-    _assess_soap_result,
     clear_token_cache,
     collect_manual,
     collect_raas,
     collect_rest,
-    collect_soap,
     get_oauth_token,
     load_catalog,
     print_dry_run_plan,
@@ -35,93 +33,11 @@ TENANT = "acme"
 API_VERSION = "v40.0"
 FAKE_TOKEN = "fake-access-token-abc123"
 
-# Minimal SOAP XML responses for each control group
-_PW_RULES_XML = """\
-<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:wd="urn:com.workday/bsvc">
-  <env:Body>
-    <wd:Get_Password_Rules_Response>
-      <wd:Response_Data>
-        <wd:Password_Rules>
-          <wd:Minimum_Password_Length>14</wd:Minimum_Password_Length>
-          <wd:Password_Expiration_Days>60</wd:Password_Expiration_Days>
-          <wd:Password_History_Count>24</wd:Password_History_Count>
-          <wd:Lockout_Threshold>3</wd:Lockout_Threshold>
-          <wd:Lockout_Duration_Minutes>30</wd:Lockout_Duration_Minutes>
-        </wd:Password_Rules>
-      </wd:Response_Data>
-    </wd:Get_Password_Rules_Response>
-  </env:Body>
-</env:Envelope>"""
-
-_PW_RULES_FAIL_XML = """\
-<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:wd="urn:com.workday/bsvc">
-  <env:Body>
-    <wd:Get_Password_Rules_Response>
-      <wd:Response_Data>
-        <wd:Password_Rules>
-          <wd:Minimum_Password_Length>6</wd:Minimum_Password_Length>
-          <wd:Password_Expiration_Days>180</wd:Password_Expiration_Days>
-          <wd:Password_History_Count>3</wd:Password_History_Count>
-          <wd:Lockout_Threshold>10</wd:Lockout_Threshold>
-          <wd:Lockout_Duration_Minutes>5</wd:Lockout_Duration_Minutes>
-        </wd:Password_Rules>
-      </wd:Response_Data>
-    </wd:Get_Password_Rules_Response>
-  </env:Body>
-</env:Envelope>"""
-
-_MFA_XML = """\
-<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:wd="urn:com.workday/bsvc">
-  <env:Body>
-    <wd:Get_Authentication_Policies_Response>
-      <wd:Response_Data>
-        <wd:Authentication_Policy>
-          <wd:Authentication_Policy_Name>Default Policy</wd:Authentication_Policy_Name>
-          <wd:Multi_Factor_Authentication_Required>true</wd:Multi_Factor_Authentication_Required>
-        </wd:Authentication_Policy>
-      </wd:Response_Data>
-    </wd:Get_Authentication_Policies_Response>
-  </env:Body>
-</env:Envelope>"""
-
-_TLS_XML = """\
-<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:wd="urn:com.workday/bsvc">
-  <env:Body>
-    <wd:Get_Tenant_Setup_Security_Response>
-      <wd:Response_Data>
-        <wd:Tenant_Setup_Security>
-          <wd:Require_TLS_For_API>true</wd:Require_TLS_For_API>
-        </wd:Tenant_Setup_Security>
-      </wd:Response_Data>
-    </wd:Get_Tenant_Setup_Security_Response>
-  </env:Body>
-</env:Envelope>"""
-
-_RETENTION_XML = """\
-<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-              xmlns:wd="urn:com.workday/bsvc">
-  <env:Body>
-    <wd:Get_Audit_Retention_Settings_Response>
-      <wd:Response_Data>
-        <wd:Audit_Log_Retention_Days>730</wd:Audit_Log_Retention_Days>
-      </wd:Response_Data>
-    </wd:Get_Audit_Retention_Settings_Response>
-  </env:Body>
-</env:Envelope>"""
-
 
 @pytest.fixture(autouse=True)
 def _clear_caches():
-    """Clear OAuth token cache and SOAP cache before each test."""
+    """Clear OAuth token cache before each test."""
     clear_token_cache()
-    # Clear SOAP cache
-    from skills.workday_connect import workday_connect
-
-    workday_connect._soap_cache.clear()
     yield
 
 
@@ -134,15 +50,13 @@ def _token_stub():
     )
 
 
-def _make_ctrl(ctrl_id: str, method: str = "soap", operation: str = "Get_Password_Rules") -> dict:
+def _make_ctrl(ctrl_id: str, method: str = "manual") -> dict:
     return {
         "id": ctrl_id,
         "title": f"Test control {ctrl_id}",
         "group_id": "con",
         "severity": "high",
         "collection_method": method,
-        "soap_service": "Security_Configuration",
-        "soap_operation": operation,
         "raas_report": "Test_Report",
         "rest_endpoint": "/staffing/v6/workers",
         "sscf_control": "SSCF-IAM-001",
@@ -194,80 +108,16 @@ def test_load_catalog_all_have_required_fields():
     for ctrl in controls:
         assert "id" in ctrl
         assert "collection_method" in ctrl
-        assert ctrl["collection_method"] in ("soap", "soap+oauth", "raas", "rest", "manual")
+        assert ctrl["collection_method"] in ("raas", "rest", "manual"), (
+            f"{ctrl['id']} has unexpected method: {ctrl['collection_method']}"
+        )
 
 
-# ---------------------------------------------------------------------------
-# SOAP assessment tests
-# ---------------------------------------------------------------------------
-
-
-def test_assess_soap_password_length_pass():
-    result = _assess_soap_result("WD-CON-001", _PW_RULES_XML)
-    assert result["status"] == "pass"
-    assert "14" in result["observed_value"]
-
-
-def test_assess_soap_password_length_fail():
-    result = _assess_soap_result("WD-CON-001", _PW_RULES_FAIL_XML)
-    assert result["status"] == "fail"
-    assert "6" in result["observed_value"]
-
-
-def test_assess_soap_password_expiry_pass():
-    result = _assess_soap_result("WD-CON-002", _PW_RULES_XML)
-    assert result["status"] == "pass"
-
-
-def test_assess_soap_lockout_pass():
-    result = _assess_soap_result("WD-CON-004", _PW_RULES_XML)
-    assert result["status"] == "pass"
-
-
-def test_assess_soap_lockout_fail():
-    result = _assess_soap_result("WD-CON-004", _PW_RULES_FAIL_XML)
-    assert result["status"] == "fail"
-
-
-def test_assess_soap_mfa_required():
-    result = _assess_soap_result("WD-IAM-003", _MFA_XML)
-    assert result["status"] == "pass"
-
-
-def test_assess_soap_tls_required():
-    result = _assess_soap_result("WD-CKM-001", _TLS_XML)
-    assert result["status"] == "pass"
-
-
-def test_assess_soap_audit_retention_pass():
-    result = _assess_soap_result("WD-LOG-005", _RETENTION_XML)
-    assert result["status"] == "pass"
-    assert "730" in result["observed_value"]
-
-
-# ---------------------------------------------------------------------------
-# collect_soap tests
-# ---------------------------------------------------------------------------
-
-
-@resp_lib.activate
-def test_collect_soap_permission_denied():
-    soap_url = f"{BASE_URL}/ccx/service/{TENANT}/Security_Configuration/{API_VERSION}"
-    resp_lib.add(resp_lib.POST, soap_url, status=403, body="Forbidden")
-    ctrl = _make_ctrl("WD-CON-001")
-    result = collect_soap(ctrl, BASE_URL, TENANT, FAKE_TOKEN, API_VERSION)
-    assert result["status"] == "partial"
-    assert result["platform_data"]["soap_error"] == "PERMISSION_DENIED: domain not granted to ISSG"
-
-
-@resp_lib.activate
-def test_collect_soap_success_pass():
-    soap_url = f"{BASE_URL}/ccx/service/{TENANT}/Security_Configuration/{API_VERSION}"
-    resp_lib.add(resp_lib.POST, soap_url, status=200, body=_PW_RULES_XML, content_type="text/xml")
-    ctrl = _make_ctrl("WD-CON-001")
-    result = collect_soap(ctrl, BASE_URL, TENANT, FAKE_TOKEN, API_VERSION)
-    assert result["status"] == "pass"
-    assert result["platform_data"]["collection_method"] == "soap"
+def test_load_catalog_no_soap_controls():
+    """SOAP has been removed — no control should use soap or soap+oauth."""
+    controls = load_catalog()
+    soap_controls = [c for c in controls if "soap" in c["collection_method"]]
+    assert soap_controls == [], f"Found unexpected soap controls: {[c['id'] for c in soap_controls]}"
 
 
 # ---------------------------------------------------------------------------
@@ -345,16 +195,11 @@ def test_dry_run_prints_plan(capsys):
 
 @resp_lib.activate
 def test_run_collect_writes_output(tmp_path):
-    # Stub SOAP endpoints for both services used by the catalog
-    for service in ("Security_Configuration", "Human_Resources"):
-        soap_url = f"{BASE_URL}/ccx/service/{TENANT}/{service}/{API_VERSION}"
-        resp_lib.add(resp_lib.POST, soap_url, status=200, body=_PW_RULES_XML, content_type="text/xml")
-
     # Stub REST endpoint
     rest_url = f"{BASE_URL}/ccx/api/staffing/v6/workers"
     resp_lib.add(resp_lib.GET, rest_url, status=200, json={"data": []})
 
-    # Stub all RaaS endpoints as 404 (not pre-configured) using regex pattern
+    # Stub all RaaS endpoints as 404 (not pre-configured)
     resp_lib.add(resp_lib.GET, re.compile(r".*/customreport2/.*"), status=404)
 
     out_path = tmp_path / "workday_raw.json"
@@ -367,3 +212,6 @@ def test_run_collect_writes_output(tmp_path):
     # Manual controls are not_applicable
     ckm2 = next(f for f in output["findings"] if f["control_id"] == "WD-CKM-002")
     assert ckm2["status"] == "not_applicable"
+    # Previously-soap controls are now manual/not_applicable
+    con001 = next(f for f in output["findings"] if f["control_id"] == "WD-CON-001")
+    assert con001["status"] == "not_applicable"

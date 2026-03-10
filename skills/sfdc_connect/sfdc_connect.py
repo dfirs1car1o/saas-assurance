@@ -23,13 +23,10 @@ load_dotenv()
 # Auth constants
 # ---------------------------------------------------------------------------
 
-AUTH_METHOD_SOAP = "soap"
 AUTH_METHOD_JWT = "jwt"
-VALID_AUTH_METHODS = (AUTH_METHOD_SOAP, AUTH_METHOD_JWT)
+VALID_AUTH_METHODS = (AUTH_METHOD_JWT,)
 
-REQUIRED_ENV_SOAP = ("SF_USERNAME", "SF_PASSWORD", "SF_SECURITY_TOKEN")
 REQUIRED_ENV_JWT = ("SF_USERNAME", "SF_CONSUMER_KEY", "SF_PRIVATE_KEY_PATH")
-REQUIRED_ENV = REQUIRED_ENV_SOAP  # backward-compat alias
 
 JWT_EXPIRY_SECONDS = 300  # Salesforce max: 5 min
 JWT_REQUEST_TIMEOUT = 30  # seconds
@@ -42,40 +39,31 @@ _TOOLING_QUERY = "tooling/query"
 # ---------------------------------------------------------------------------
 
 
-def _check_env(auth_method: str = AUTH_METHOD_SOAP) -> None:
-    if auth_method == AUTH_METHOD_JWT:
-        missing = [k for k in REQUIRED_ENV_JWT if not os.getenv(k)]
-        if missing:
-            click.echo(
-                f"ERROR: Missing required env vars for JWT auth: {', '.join(missing)}\n"
-                "See .env.example for the JWT Bearer Flow section.",
-                err=True,
-            )
-            sys.exit(1)
-        key_path = os.environ.get("SF_PRIVATE_KEY_PATH", "")
-        if not Path(key_path).is_file():
-            click.echo(
-                f"ERROR: SF_PRIVATE_KEY_PATH does not exist or is not a file: {key_path}",
-                err=True,
-            )
-            sys.exit(1)
-    else:
-        missing = [k for k in REQUIRED_ENV_SOAP if not os.getenv(k)]
-        if missing:
-            click.echo(
-                f"ERROR: Missing required env vars: {', '.join(missing)}\n"
-                "Copy .env.example to .env and fill in values.",
-                err=True,
-            )
-            sys.exit(1)
+def _check_env() -> None:
+    """Verify all required JWT env vars are present and private key file exists."""
+    missing = [k for k in REQUIRED_ENV_JWT if not os.getenv(k)]
+    if missing:
+        click.echo(
+            f"ERROR: Missing required env vars for JWT auth: {', '.join(missing)}\n"
+            "See .env.example for the JWT Bearer Flow section.",
+            err=True,
+        )
+        sys.exit(1)
+    key_path = os.environ.get("SF_PRIVATE_KEY_PATH", "")
+    if not Path(key_path).is_file():
+        click.echo(
+            f"ERROR: SF_PRIVATE_KEY_PATH does not exist or is not a file: {key_path}",
+            err=True,
+        )
+        sys.exit(1)
 
 
 def _resolve_auth_method(cli_flag: str | None) -> str:
-    """Return the effective auth method: CLI flag > SF_AUTH_METHOD env > 'soap'."""
-    method = cli_flag or os.getenv("SF_AUTH_METHOD") or AUTH_METHOD_SOAP
+    """Return the effective auth method: CLI flag > SF_AUTH_METHOD env > 'jwt'."""
+    method = cli_flag or os.getenv("SF_AUTH_METHOD") or AUTH_METHOD_JWT
     if method not in VALID_AUTH_METHODS:
         click.echo(
-            f"ERROR: Unknown auth method '{method}'. Valid values: {', '.join(VALID_AUTH_METHODS)}",
+            f"ERROR: Unknown auth method '{method}'. Only 'jwt' is supported.",
             err=True,
         )
         sys.exit(1)
@@ -96,7 +84,7 @@ def _connect_jwt() -> Any:
         click.echo("ERROR: simple-salesforce not installed. Run: uv pip install simple-salesforce", err=True)
         sys.exit(1)
 
-    _check_env(AUTH_METHOD_JWT)
+    _check_env()
 
     key_path = os.environ["SF_PRIVATE_KEY_PATH"]
     try:
@@ -165,25 +153,10 @@ def _connect_jwt() -> Any:
     return Salesforce(instance_url=instance_url, session_id=access_token)
 
 
-def _connect(auth_method: str = AUTH_METHOD_SOAP) -> Any:
-    """Return an authenticated Salesforce client (read-only use only)."""
-    if auth_method == AUTH_METHOD_JWT:
-        return _connect_jwt()
-
-    try:
-        from simple_salesforce import Salesforce
-    except ImportError:
-        click.echo("ERROR: simple-salesforce not installed. Run: uv pip install simple-salesforce", err=True)
-        sys.exit(1)
-
-    _check_env(AUTH_METHOD_SOAP)
-    return Salesforce(
-        username=os.environ["SF_USERNAME"],
-        password=os.environ["SF_PASSWORD"],
-        security_token=os.environ.get("SF_SECURITY_TOKEN", ""),
-        domain=os.environ.get("SF_DOMAIN", "login"),
-        instance_url=os.environ.get("SF_INSTANCE_URL") or None,
-    )
+def _connect(auth_method: str | None = None) -> Any:
+    """Return an authenticated Salesforce client using JWT Bearer Flow (read-only use only)."""
+    _resolve_auth_method(auth_method)  # validates any explicit override
+    return _connect_jwt()
 
 
 def _result_envelope(org: str, env: str, scope: str, data: Any) -> dict:
@@ -398,7 +371,7 @@ def cli() -> None:
     "--auth-method",
     default=None,
     type=click.Choice(list(VALID_AUTH_METHODS)),
-    help="Auth method override (default: SF_AUTH_METHOD env var or 'soap')",
+    help="Auth method override (default: SF_AUTH_METHOD env var or 'jwt')",
 )
 def collect(
     org: str | None, scope: str, out: str | None, env: str, timeout: int, dry_run: bool, auth_method: str | None
@@ -439,22 +412,21 @@ def collect(
     "--auth-method",
     default=None,
     type=click.Choice(list(VALID_AUTH_METHODS)),
-    help="Auth method override (default: SF_AUTH_METHOD env var or 'soap')",
+    help="Auth method override (only 'jwt' is supported)",
 )
 def auth(dry_run: bool, auth_method: str | None) -> None:
-    """Test authentication to the Salesforce org."""
-    effective_method = _resolve_auth_method(auth_method)
+    """Test authentication to the Salesforce org (JWT Bearer Flow)."""
+    _resolve_auth_method(auth_method)
 
     if dry_run:
-        required = REQUIRED_ENV_JWT if effective_method == AUTH_METHOD_JWT else REQUIRED_ENV_SOAP
-        missing = [k for k in required if not os.getenv(k)]
+        missing = [k for k in REQUIRED_ENV_JWT if not os.getenv(k)]
         if missing:
             click.echo(f"FAIL — missing env vars: {', '.join(missing)}", err=True)
             sys.exit(1)
-        click.echo(f"OK — all required env vars set for {effective_method} auth (dry-run, no connection made)")
+        click.echo("OK — all required JWT env vars set (dry-run, no connection made)")
         return
 
-    sf = _connect(effective_method)
+    sf = _connect()
     org_info = sf.query_all("SELECT Id, Name, OrganizationType FROM Organization LIMIT 1")
     if org_info["totalSize"] == 1:
         rec = org_info["records"][0]

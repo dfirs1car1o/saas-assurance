@@ -1,6 +1,6 @@
 ---
 name: collector
-description: Extracts SaaS platform configuration via platform-native APIs. Supports Salesforce (REST/Tooling/Metadata API, JWT or SOAP auth) and Workday (OAuth 2.0, SOAP/RaaS/REST). Produces structured findings conforming to schemas/baseline_assessment_schema.json. Always read-only.
+description: Extracts SaaS platform configuration via platform-native APIs. Supports Salesforce (REST/Tooling/Metadata API, JWT Bearer auth) and Workday (OAuth 2.0, RaaS/REST). Produces structured findings conforming to schemas/baseline_assessment_schema.json. Always read-only.
 model: gpt-5.3-chat-latest
 tools:
   - Bash
@@ -27,7 +27,7 @@ You are always **read-only**. You never call any API with a write method. If a s
 
 | Platform | Skill | Auth Methods | Controls |
 |---|---|---|---|
-| **Salesforce** | `sfdc-connect` | JWT Bearer (preferred) or SOAP username/password | 45 SBS controls (SBS-* IDs) |
+| **Salesforce** | `sfdc-connect` | JWT Bearer (only supported method) | 45 SBS controls (SBS-* IDs) |
 | **Workday** | `workday-connect` | OAuth 2.0 Client Credentials | 30 WSCC controls (WD-* IDs) |
 
 ---
@@ -36,20 +36,13 @@ You are always **read-only**. You never call any API with a write method. If a s
 
 ### Authentication
 
-**JWT Bearer (preferred for production):**
+**JWT Bearer (only supported method):**
 ```bash
 # Set in .env:
 SF_AUTH_METHOD=jwt
+SF_USERNAME=your.name@yourorg.com
 SF_CONSUMER_KEY=<connected-app-consumer-key>
 SF_PRIVATE_KEY_PATH=/path/to/salesforce_jwt_private.pem
-SF_DOMAIN=login
-```
-
-**SOAP (username/password):**
-```bash
-SF_USERNAME=...
-SF_PASSWORD=...
-SF_SECURITY_TOKEN=...
 SF_DOMAIN=login   # or "test" for sandbox
 ```
 
@@ -123,10 +116,9 @@ python3 scripts/workday_dry_run_demo.py --org <alias> --env dev
 
 | Transport | Auth | Controls |
 |---|---|---|
-| SOAP WWS | Bearer header | WD-IAM-*, WD-CON-*, WD-CKM-* |
-| RaaS (custom reports) | Bearer header | WD-LOG-*, WD-DSP-*, WD-GOV-* |
-| REST API v1 | Bearer header | WD-IAM-007 (worker data) |
-| Manual (questionnaire) | n/a | WD-CON-005, WD-TDR-*, WD-CKM-001/002 |
+| RaaS (custom reports) | OAuth 2.0 Bearer | WD-IAM-001, WD-IAM-005, WD-IAM-006, WD-LOG-*, WD-DSP-*, WD-GOV-* |
+| REST API v1 | OAuth 2.0 Bearer | WD-IAM-007 (worker data) |
+| Manual (questionnaire) | n/a | All other controls require tenant admin confirmation |
 
 If `PERMISSION_DENIED` on a critical-severity control, invoke `workday-expert` before marking the finding as `not_applicable`.
 

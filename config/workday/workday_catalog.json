@@ -3,13 +3,19 @@
     "uuid": "f7a8b9c0-d1e2-3456-abcd-901234567890",
     "metadata": {
       "title": "Workday Security Control Catalog (WSCC)",
-      "last-modified": "2026-03-07T00:00:00Z",
-      "version": "0.2.0",
+      "last-modified": "2026-03-09T00:00:00Z",
+      "version": "0.3.0",
       "oscal-version": "1.1.2",
-      "remarks": "OSCAL 1.1.2 catalog of Workday HCM/Financials security controls mapped to SSCF domains. Controls link to parent SSCF controls in config/sscf/sscf_catalog.json. collection_method prop classifies how each control is collected: 'rest' (Workday REST API v1, OAuth 2.0 Bearer), 'soap' (Workday Web Services SOAP API, OAuth 2.0 Bearer — no WS-Security BasicAuth), 'raas' (Reports-as-a-Service custom report endpoint, OAuth 2.0 Bearer), or 'manual' (questionnaire only). ALL authenticated calls use OAuth 2.0 Client Credentials — no password credentials are transmitted. Version 0.2.0 updates collection methods and tightens auth to OAuth 2.0 throughout.",
+      "remarks": "OSCAL 1.1.2 catalog of Workday HCM/Financials security controls mapped to SSCF domains. Controls link to parent SSCF controls in config/sscf/sscf_catalog.json. collection_method prop classifies how each control is collected: 'rest' (Workday REST API v1, OAuth 2.0 Bearer), 'raas' (Reports-as-a-Service custom report endpoint, OAuth 2.0 Bearer), or 'manual' (questionnaire only). All authenticated calls use OAuth 2.0 Client Credentials \u2014 HTTPS exclusively. No SOAP.",
       "roles": [
-        { "id": "creator", "title": "Catalog Author" },
-        { "id": "maintainer", "title": "Control Framework Maintainer" }
+        {
+          "id": "creator",
+          "title": "Catalog Author"
+        },
+        {
+          "id": "maintainer",
+          "title": "Control Framework Maintainer"
+        }
       ],
       "parties": [
         {
@@ -19,8 +25,18 @@
         }
       ],
       "responsible-parties": [
-        { "role-id": "creator", "party-uuids": ["b2c3d4e5-f6a7-8901-bcde-f12345678901"] },
-        { "role-id": "maintainer", "party-uuids": ["b2c3d4e5-f6a7-8901-bcde-f12345678901"] }
+        {
+          "role-id": "creator",
+          "party-uuids": [
+            "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          ]
+        },
+        {
+          "role-id": "maintainer",
+          "party-uuids": [
+            "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          ]
+        }
       ]
     },
     "groups": [
@@ -33,12 +49,30 @@
             "id": "wd-iam-001",
             "title": "Security Group Overprivilege Assessment",
             "props": [
-              { "name": "label", "value": "WD-IAM-001" },
-              { "name": "sort-id", "value": "iam-01" },
-              { "name": "severity", "value": "critical" },
-              { "name": "sscf-control", "value": "SSCF-IAM-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Security_Group_Domain_Access_Audit" }
+              {
+                "name": "label",
+                "value": "WD-IAM-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-01"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Security_Group_Domain_Access_Audit"
+              }
             ],
             "parts": [
               {
@@ -49,7 +83,7 @@
               {
                 "id": "wd-iam-001_gdn",
                 "name": "guidance",
-                "prose": "Workday's security model is built on Domain Security Policies (DSPs), which grant security groups access to functional areas (Get, Put, View, Modify). Groups with broad domain access — particularly access to sensitive domains like Compensation, Benefits, and Personal Information — must be inventoried, justified, and reviewed quarterly. Integration System Security Groups (ISSGs) must not hold permissions beyond those required for their specific integration task."
+                "prose": "Workday's security model is built on Domain Security Policies (DSPs), which grant security groups access to functional areas (Get, Put, View, Modify). Groups with broad domain access \u2014 particularly access to sensitive domains like Compensation, Benefits, and Personal Information \u2014 must be inventoried, justified, and reviewed quarterly. Integration System Security Groups (ISSGs) must not hold permissions beyond those required for their specific integration task."
               },
               {
                 "id": "wd-iam-001_obj",
@@ -68,20 +102,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-002", "rel": "related", "text": "SSCF-IAM-002: Privileged Access Governance and Review" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-002",
+                "rel": "related",
+                "text": "SSCF-IAM-002: Privileged Access Governance and Review"
+              }
             ]
           },
           {
             "id": "wd-iam-002",
             "title": "Integration System User (ISU) Least Privilege",
             "props": [
-              { "name": "label", "value": "WD-IAM-002" },
-              { "name": "sort-id", "value": "iam-02" },
-              { "name": "severity", "value": "critical" },
-              { "name": "sscf-control", "value": "SSCF-IAM-002" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_Workday_Account" }
+              {
+                "name": "label",
+                "value": "WD-IAM-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-02"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -102,7 +153,7 @@
               {
                 "id": "wd-iam-002_imp",
                 "name": "implementation-guidance",
-                "prose": "1. Search for 'Create Integration System User' in Workday; audit all existing ISUs.\n2. Enable 'Disallow UI Sessions' on all ISUs that lack it.\n3. Remove ISUs from any non-ISSG security groups.\n4. Reduce ISSG domain permissions to minimum required — test the integration in staging before removing permissions.\n5. Register all ISU credentials in the enterprise secrets manager and configure automated rotation reminders."
+                "prose": "1. Search for 'Create Integration System User' in Workday; audit all existing ISUs.\n2. Enable 'Disallow UI Sessions' on all ISUs that lack it.\n3. Remove ISUs from any non-ISSG security groups.\n4. Reduce ISSG domain permissions to minimum required \u2014 test the integration in staging before removing permissions.\n5. Register all ISU credentials in the enterprise secrets manager and configure automated rotation reminders."
               },
               {
                 "id": "wd-iam-002_def",
@@ -111,20 +162,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-002", "rel": "related", "text": "SSCF-IAM-002: Privileged Access Governance and Review" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-002",
+                "rel": "related",
+                "text": "SSCF-IAM-002: Privileged Access Governance and Review"
+              }
             ]
           },
           {
             "id": "wd-iam-003",
             "title": "MFA Enforcement via Authentication Policy",
             "props": [
-              { "name": "label", "value": "WD-IAM-003" },
-              { "name": "sort-id", "value": "iam-03" },
-              { "name": "severity", "value": "critical" },
-              { "name": "sscf-control", "value": "SSCF-IAM-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Security_Configuration" },
-              { "name": "soap-operation", "value": "Get_Authentication_Policies" }
+              {
+                "name": "label",
+                "value": "WD-IAM-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-03"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -154,20 +222,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-001", "rel": "related", "text": "SSCF-IAM-001: Multi-Factor Authentication Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-001",
+                "rel": "related",
+                "text": "SSCF-IAM-001: Multi-Factor Authentication Enforcement"
+              }
             ]
           },
           {
             "id": "wd-iam-004",
             "title": "SSO and Federation Configuration",
             "props": [
-              { "name": "label", "value": "WD-IAM-004" },
-              { "name": "sort-id", "value": "iam-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-IAM-003" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_SAML_Setup" }
+              {
+                "name": "label",
+                "value": "WD-IAM-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-003"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -197,19 +282,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-003", "rel": "related", "text": "SSCF-IAM-003: Federation and SSO Assurance" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-003",
+                "rel": "related",
+                "text": "SSCF-IAM-003: Federation and SSO Assurance"
+              }
             ]
           },
           {
             "id": "wd-iam-005",
             "title": "Privileged Role Assignment Governance",
             "props": [
-              { "name": "label", "value": "WD-IAM-005" },
-              { "name": "sort-id", "value": "iam-05" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-IAM-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Privileged_Role_Assignments_Audit" }
+              {
+                "name": "label",
+                "value": "WD-IAM-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-05"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Privileged_Role_Assignments_Audit"
+              }
             ],
             "parts": [
               {
@@ -225,7 +332,7 @@
               {
                 "id": "wd-iam-005_obj",
                 "name": "objective",
-                "prose": "1. Run 'Privileged_Role_Assignments_Audit' RaaS report or use Setup > Security > Security Analysis for Workday Account.\n2. List all users in privileged security groups.\n3. Verify each assignment has documented approval in the access request system.\n4. Verify last recertification date is within 12 months.\n5. Cross-reference with HR terminations list — flag any departed users still holding privileged roles."
+                "prose": "1. Run 'Privileged_Role_Assignments_Audit' RaaS report or use Setup > Security > Security Analysis for Workday Account.\n2. List all users in privileged security groups.\n3. Verify each assignment has documented approval in the access request system.\n4. Verify last recertification date is within 12 months.\n5. Cross-reference with HR terminations list \u2014 flag any departed users still holding privileged roles."
               },
               {
                 "id": "wd-iam-005_imp",
@@ -239,19 +346,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-002", "rel": "related", "text": "SSCF-IAM-002: Privileged Access Governance and Review" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-002",
+                "rel": "related",
+                "text": "SSCF-IAM-002: Privileged Access Governance and Review"
+              }
             ]
           },
           {
             "id": "wd-iam-006",
             "title": "Segregation of Duties on Critical Business Processes",
             "props": [
-              { "name": "label", "value": "WD-IAM-006" },
-              { "name": "sort-id", "value": "iam-06" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-IAM-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Business_Process_Security_Policy_Audit" }
+              {
+                "name": "label",
+                "value": "WD-IAM-006"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-06"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Business_Process_Security_Policy_Audit"
+              }
             ],
             "parts": [
               {
@@ -262,7 +391,7 @@
               {
                 "id": "wd-iam-006_gdn",
                 "name": "guidance",
-                "prose": "Critical SOD controls include: Hire employee — initiator and approver must be different security groups; Payroll run — initiator and final approver must be different; Compensation change — employee manager cannot be sole approver without HR Partner review; Security group modification — must not allow self-modification of own security group access. SOD violations are a top SOX ITGC finding and must be remediated within 30 days."
+                "prose": "Critical SOD controls include: Hire employee \u2014 initiator and approver must be different security groups; Payroll run \u2014 initiator and final approver must be different; Compensation change \u2014 employee manager cannot be sole approver without HR Partner review; Security group modification \u2014 must not allow self-modification of own security group access. SOD violations are a top SOX ITGC finding and must be remediated within 30 days."
               },
               {
                 "id": "wd-iam-006_obj",
@@ -281,20 +410,45 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-002", "rel": "related", "text": "SSCF-IAM-002: Privileged Access Governance and Review" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-002",
+                "rel": "related",
+                "text": "SSCF-IAM-002: Privileged Access Governance and Review"
+              }
             ]
           },
           {
             "id": "wd-iam-007",
             "title": "Inactive User Account Review",
             "props": [
-              { "name": "label", "value": "WD-IAM-007" },
-              { "name": "sort-id", "value": "iam-07" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-IAM-002" },
-              { "name": "collection-method", "value": "rest" },
-              { "name": "rest-endpoint", "value": "GET /staffing/v6/workers?includeTerminated=false" },
-              { "name": "rest-auth", "value": "oauth2-client-credentials" }
+              {
+                "name": "label",
+                "value": "WD-IAM-007"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-07"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-IAM-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "rest"
+              },
+              {
+                "name": "rest-endpoint",
+                "value": "GET /staffing/v6/workers?includeTerminated=false"
+              },
+              {
+                "name": "rest-auth",
+                "value": "oauth2-client-credentials"
+              }
             ],
             "parts": [
               {
@@ -305,12 +459,12 @@
               {
                 "id": "wd-iam-007_gdn",
                 "name": "guidance",
-                "prose": "Inactive accounts represent an access risk — dormant credentials that could be compromised without detection. Workday's sign-on audit report provides last login timestamps. Accounts for terminated workers must be disabled within 1 business day via the offboarding workflow. Long-term leave accounts (parental, medical) must be managed separately with a leave policy that maintains access controls."
+                "prose": "Inactive accounts represent an access risk \u2014 dormant credentials that could be compromised without detection. Workday's sign-on audit report provides last login timestamps. Accounts for terminated workers must be disabled within 1 business day via the offboarding workflow. Long-term leave accounts (parental, medical) must be managed separately with a leave policy that maintains access controls."
               },
               {
                 "id": "wd-iam-007_obj",
                 "name": "objective",
-                "prose": "1. Query active worker accounts via Get_Workers SOAP operation or the Workday sign-on audit report.\n2. Filter for accounts with last login date older than 90 days.\n3. Cross-reference against active workers list from HR — flag accounts for terminated workers.\n4. For active workers with 90+ day inactivity: verify a documented reason (leave, role change).\n5. Report count of accounts disabled, exceptions documented, and accounts pending action."
+                "prose": "1. Query active worker accounts via Get_Workers SOAP operation or the Workday sign-on audit report.\n2. Filter for accounts with last login date older than 90 days.\n3. Cross-reference against active workers list from HR \u2014 flag accounts for terminated workers.\n4. For active workers with 90+ day inactivity: verify a documented reason (leave, role change).\n5. Report count of accounts disabled, exceptions documented, and accounts pending action."
               },
               {
                 "id": "wd-iam-007_imp",
@@ -324,20 +478,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-iam-002", "rel": "related", "text": "SSCF-IAM-002: Privileged Access Governance and Review" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-iam-002",
+                "rel": "related",
+                "text": "SSCF-IAM-002: Privileged Access Governance and Review"
+              }
             ]
           },
           {
             "id": "wd-iam-008",
             "title": "API Client Scope Restriction (OAuth)",
             "props": [
-              { "name": "label", "value": "WD-IAM-008" },
-              { "name": "sort-id", "value": "iam-08" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-CKM-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Security_Configuration" },
-              { "name": "soap-operation", "value": "Get_API_Clients" }
+              {
+                "name": "label",
+                "value": "WD-IAM-008"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-08"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CKM-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -348,7 +519,7 @@
               {
                 "id": "wd-iam-008_gdn",
                 "name": "guidance",
-                "prose": "Workday REST API clients require an OAuth 2.0 API client registration with specific scopes (functional areas like 'Human Capital Management', 'Payroll', 'Financials'). Over-scoped clients — those with access to more functional areas than needed — create an exfiltration risk. Refresh tokens must be inventoried and have documented rotation schedules. Unused API clients must be revoked. Client credentials must be stored in a secrets manager, not in application configuration files."
+                "prose": "Workday REST API clients require an OAuth 2.0 API client registration with specific scopes (functional areas like 'Human Capital Management', 'Payroll', 'Financials'). Over-scoped clients \u2014 those with access to more functional areas than needed \u2014 create an exfiltration risk. Refresh tokens must be inventoried and have documented rotation schedules. Unused API clients must be revoked. Client credentials must be stored in a secrets manager, not in application configuration files."
               },
               {
                 "id": "wd-iam-008_obj",
@@ -358,7 +529,7 @@
               {
                 "id": "wd-iam-008_imp",
                 "name": "implementation-guidance",
-                "prose": "1. Navigate to Setup > OAuth 2.0 API Clients; audit all registered clients.\n2. For each client, reduce scopes to the minimum set required — test in sandbox first.\n3. Revoke any client not actively used within the past 90 days.\n4. Migrate client secrets to the enterprise secrets manager and remove from config files.\n5. Set calendar reminders for annual refresh token rotation or implement automated rotation."
+                "prose": "1. Navigate to Setup > OAuth 2.0 API Clients; audit all registered clients.\n2. For each client, reduce scopes to the minimum set required \u2014 test in sandbox first.\n3. Revoke any client not actively used within the past 90 days.\n4. Migrate client secrets to the enterprise secrets manager and remove from config files.\n5. Set calendar reminders for annual refresh token rotation or implement automated rotation."
               },
               {
                 "id": "wd-iam-008_def",
@@ -367,7 +538,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-ckm-001", "rel": "related", "text": "SSCF-CKM-001: API Credential and Token Lifecycle" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-ckm-001",
+                "rel": "related",
+                "text": "SSCF-CKM-001: API Credential and Token Lifecycle"
+              }
             ]
           }
         ]
@@ -381,13 +556,26 @@
             "id": "wd-con-001",
             "title": "Password Complexity and Length Policy",
             "props": [
-              { "name": "label", "value": "WD-CON-001" },
-              { "name": "sort-id", "value": "con-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-CON-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_Password_Rules" }
+              {
+                "name": "label",
+                "value": "WD-CON-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -417,20 +605,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-001", "rel": "related", "text": "SSCF-CON-001: SaaS Security Baseline Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-001",
+                "rel": "related",
+                "text": "SSCF-CON-001: SaaS Security Baseline Enforcement"
+              }
             ]
           },
           {
             "id": "wd-con-002",
             "title": "Password Expiration and History Policy",
             "props": [
-              { "name": "label", "value": "WD-CON-002" },
-              { "name": "sort-id", "value": "con-02" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-CON-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_Password_Rules" }
+              {
+                "name": "label",
+                "value": "WD-CON-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-02"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -441,7 +646,7 @@
               {
                 "id": "wd-con-002_gdn",
                 "name": "guidance",
-                "prose": "For ISUs using password-based authentication, 90-day rotation is the maximum allowed interval. Shorter intervals (60 days) are recommended for ISUs with access to sensitive domains. Password history prevents credential cycling attacks. Note: NIST SP 800-63B recommends against mandatory expiration for user accounts when MFA is enforced — apply judgment based on account type and regulatory requirements."
+                "prose": "For ISUs using password-based authentication, 90-day rotation is the maximum allowed interval. Shorter intervals (60 days) are recommended for ISUs with access to sensitive domains. Password history prevents credential cycling attacks. Note: NIST SP 800-63B recommends against mandatory expiration for user accounts when MFA is enforced \u2014 apply judgment based on account type and regulatory requirements."
               },
               {
                 "id": "wd-con-002_obj",
@@ -460,20 +665,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-001", "rel": "related", "text": "SSCF-CON-001: SaaS Security Baseline Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-001",
+                "rel": "related",
+                "text": "SSCF-CON-001: SaaS Security Baseline Enforcement"
+              }
             ]
           },
           {
             "id": "wd-con-003",
             "title": "Session Timeout Configuration",
             "props": [
-              { "name": "label", "value": "WD-CON-003" },
-              { "name": "sort-id", "value": "con-03" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-CON-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_Workday_Account" }
+              {
+                "name": "label",
+                "value": "WD-CON-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-03"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -484,17 +706,17 @@
               {
                 "id": "wd-con-003_gdn",
                 "name": "guidance",
-                "prose": "Session timeout is configured per user account in Workday (Session Timeout Minutes field). ISUs used in integrations should be set to 0 (no timeout, to prevent mid-run session expiry) — but ISUs must have UI sessions disabled to compensate. Workforce users must not have session timeout set to 0. Privileged users (Security Administrator, Payroll Administrator) should have a shorter timeout (30 minutes)."
+                "prose": "Session timeout is configured per user account in Workday (Session Timeout Minutes field). ISUs used in integrations should be set to 0 (no timeout, to prevent mid-run session expiry) \u2014 but ISUs must have UI sessions disabled to compensate. Workforce users must not have session timeout set to 0. Privileged users (Security Administrator, Payroll Administrator) should have a shorter timeout (30 minutes)."
               },
               {
                 "id": "wd-con-003_obj",
                 "name": "objective",
-                "prose": "1. Retrieve Workday account settings via Get_Workday_Account SOAP operation for a sample of accounts.\n2. Verify no active workforce user account has Session Timeout Minutes set to 0.\n3. Verify privileged accounts have Session Timeout Minutes ≤ 30.\n4. Verify standard workforce accounts have Session Timeout Minutes ≤ 60.\n5. Verify ISUs with timeout = 0 have 'Disallow UI Sessions' enabled."
+                "prose": "1. Retrieve Workday account settings via Get_Workday_Account SOAP operation for a sample of accounts.\n2. Verify no active workforce user account has Session Timeout Minutes set to 0.\n3. Verify privileged accounts have Session Timeout Minutes \u2264 30.\n4. Verify standard workforce accounts have Session Timeout Minutes \u2264 60.\n5. Verify ISUs with timeout = 0 have 'Disallow UI Sessions' enabled."
               },
               {
                 "id": "wd-con-003_imp",
                 "name": "implementation-guidance",
-                "prose": "1. Audit session timeout settings via the 'All Active Workday Accounts' report filtered by Session Timeout Minutes.\n2. Set Session Timeout Minutes to 60 for standard workforce accounts; 30 for privileged accounts.\n3. For ISUs with timeout = 0: verify 'Disallow UI Sessions' is checked — this is the required compensating control.\n4. Create a scheduled report to alert when any account session timeout is changed to 0."
+                "prose": "1. Audit session timeout settings via the 'All Active Workday Accounts' report filtered by Session Timeout Minutes.\n2. Set Session Timeout Minutes to 60 for standard workforce accounts; 30 for privileged accounts.\n3. For ISUs with timeout = 0: verify 'Disallow UI Sessions' is checked \u2014 this is the required compensating control.\n4. Create a scheduled report to alert when any account session timeout is changed to 0."
               },
               {
                 "id": "wd-con-003_def",
@@ -503,20 +725,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-001", "rel": "related", "text": "SSCF-CON-001: SaaS Security Baseline Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-001",
+                "rel": "related",
+                "text": "SSCF-CON-001: SaaS Security Baseline Enforcement"
+              }
             ]
           },
           {
             "id": "wd-con-004",
             "title": "Account Lockout Threshold",
             "props": [
-              { "name": "label", "value": "WD-CON-004" },
-              { "name": "sort-id", "value": "con-04" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-CON-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_Password_Rules" }
+              {
+                "name": "label",
+                "value": "WD-CON-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-04"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -546,19 +785,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-001", "rel": "related", "text": "SSCF-CON-001: SaaS Security Baseline Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-001",
+                "rel": "related",
+                "text": "SSCF-CON-001: SaaS Security Baseline Enforcement"
+              }
             ]
           },
           {
             "id": "wd-con-005",
             "title": "IP Allowlisting for Authentication",
             "props": [
-              { "name": "label", "value": "WD-CON-005" },
-              { "name": "sort-id", "value": "con-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-CON-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "IP allowlisting configuration is not exposed via standard SOAP or REST API; requires Workday admin review of Setup > Security > Allowed IP Addresses." }
+              {
+                "name": "label",
+                "value": "WD-CON-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "IP allowlisting configuration is not exposed via standard SOAP or REST API; requires Workday admin review of Setup > Security > Allowed IP Addresses."
+              }
             ],
             "parts": [
               {
@@ -588,20 +849,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-001", "rel": "related", "text": "SSCF-CON-001: SaaS Security Baseline Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-001",
+                "rel": "related",
+                "text": "SSCF-CON-001: SaaS Security Baseline Enforcement"
+              }
             ]
           },
           {
             "id": "wd-con-006",
             "title": "Authentication Policy Scope and Coverage",
             "props": [
-              { "name": "label", "value": "WD-CON-006" },
-              { "name": "sort-id", "value": "con-06" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-CON-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Security_Configuration" },
-              { "name": "soap-operation", "value": "Get_Authentication_Policies" }
+              {
+                "name": "label",
+                "value": "WD-CON-006"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-06"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -612,7 +890,7 @@
               {
                 "id": "wd-con-006_gdn",
                 "name": "guidance",
-                "prose": "Unassigned security groups fall back to Workday's default authentication policy, which may not enforce MFA or IP restrictions. All security groups — including new groups created for integrations or custom roles — must be explicitly assigned to an authentication policy that meets the organizational standard. Authentication policy assignments must be reviewed when new security groups are created."
+                "prose": "Unassigned security groups fall back to Workday's default authentication policy, which may not enforce MFA or IP restrictions. All security groups \u2014 including new groups created for integrations or custom roles \u2014 must be explicitly assigned to an authentication policy that meets the organizational standard. Authentication policy assignments must be reviewed when new security groups are created."
               },
               {
                 "id": "wd-con-006_obj",
@@ -622,7 +900,7 @@
               {
                 "id": "wd-con-006_imp",
                 "name": "implementation-guidance",
-                "prose": "1. Review all authentication policies in Setup > Security > Manage Authentication Policies.\n2. For each policy, review the assigned security groups.\n3. Identify security groups without explicit policy assignment — assign them to the appropriate policy based on role type.\n4. Establish a change control process that requires authentication policy assignment as part of any new security group creation.\n5. Run 'Activate All Pending Authentication Policy Changes' after updates."
+                "prose": "1. Review all authentication policies in Setup > Security > Manage Authentication Policies.\n2. For each policy, review the assigned security groups.\n3. Identify security groups without explicit policy assignment \u2014 assign them to the appropriate policy based on role type.\n4. Establish a change control process that requires authentication policy assignment as part of any new security group creation.\n5. Run 'Activate All Pending Authentication Policy Changes' after updates."
               },
               {
                 "id": "wd-con-006_def",
@@ -631,7 +909,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-001", "rel": "related", "text": "SSCF-CON-001: SaaS Security Baseline Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-001",
+                "rel": "related",
+                "text": "SSCF-CON-001: SaaS Security Baseline Enforcement"
+              }
             ]
           }
         ]
@@ -645,12 +927,30 @@
             "id": "wd-log-001",
             "title": "User Activity Logging Enabled",
             "props": [
-              { "name": "label", "value": "WD-LOG-001" },
-              { "name": "sort-id", "value": "log-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-LOG-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "User Activity Logging enablement state is not directly queryable via public SOAP/REST API; requires admin review of Setup > Security > User Activity Logging." }
+              {
+                "name": "label",
+                "value": "WD-LOG-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-LOG-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "User Activity Logging enablement state is not directly queryable via public SOAP/REST API; requires admin review of Setup > Security > User Activity Logging."
+              }
             ],
             "parts": [
               {
@@ -680,19 +980,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-log-001", "rel": "related", "text": "SSCF-LOG-001: Security Telemetry Enablement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-log-001",
+                "rel": "related",
+                "text": "SSCF-LOG-001: Security Telemetry Enablement"
+              }
             ]
           },
           {
             "id": "wd-log-002",
             "title": "Sign-On Audit Reporting",
             "props": [
-              { "name": "label", "value": "WD-LOG-002" },
-              { "name": "sort-id", "value": "log-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-LOG-001" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Sign_On_Audit_Report" }
+              {
+                "name": "label",
+                "value": "WD-LOG-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-LOG-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Sign_On_Audit_Report"
+              }
             ],
             "parts": [
               {
@@ -722,19 +1044,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-log-001", "rel": "related", "text": "SSCF-LOG-001: Security Telemetry Enablement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-log-001",
+                "rel": "related",
+                "text": "SSCF-LOG-001: Security Telemetry Enablement"
+              }
             ]
           },
           {
             "id": "wd-log-003",
             "title": "Failed Login Tracking and Alerting",
             "props": [
-              { "name": "label", "value": "WD-LOG-003" },
-              { "name": "sort-id", "value": "log-03" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-TDR-001" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Sign_On_Audit_Report" }
+              {
+                "name": "label",
+                "value": "WD-LOG-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-03"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-TDR-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Sign_On_Audit_Report"
+              }
             ],
             "parts": [
               {
@@ -745,7 +1089,7 @@
               {
                 "id": "wd-log-003_gdn",
                 "name": "guidance",
-                "prose": "Failed login tracking relies on the Sign-On Audit report data. The alert threshold should be calibrated to the organization's baseline — too low generates noise; too high misses attacks. The threshold is a detection control, not a lockout control (lockout is WD-CON-004). Both controls should be active simultaneously."
+                "prose": "Failed login tracking relies on the Sign-On Audit report data. The alert threshold should be calibrated to the organization's baseline \u2014 too low generates noise; too high misses attacks. The threshold is a detection control, not a lockout control (lockout is WD-CON-004). Both controls should be active simultaneously."
               },
               {
                 "id": "wd-log-003_obj",
@@ -764,30 +1108,52 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-tdr-001", "rel": "related", "text": "SSCF-TDR-001: Real-Time Threat Policy Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-tdr-001",
+                "rel": "related",
+                "text": "SSCF-TDR-001: Real-Time Threat Policy Enforcement"
+              }
             ]
           },
           {
             "id": "wd-log-004",
             "title": "Administrative Action Audit Trail",
             "props": [
-              { "name": "label", "value": "WD-LOG-004" },
-              { "name": "sort-id", "value": "log-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-LOG-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Workday_Audit_Report" }
+              {
+                "name": "label",
+                "value": "WD-LOG-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-LOG-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Workday_Audit_Report"
+              }
             ],
             "parts": [
               {
                 "id": "wd-log-004_smt",
                 "name": "statement",
-                "prose": "All administrative actions — including security group changes, domain policy modifications, and authentication policy updates — must be captured in an audit trail accessible for review."
+                "prose": "All administrative actions \u2014 including security group changes, domain policy modifications, and authentication policy updates \u2014 must be captured in an audit trail accessible for review."
               },
               {
                 "id": "wd-log-004_gdn",
                 "name": "guidance",
-                "prose": "Workday's audit trail (accessible via the Workday Audit report) records all configuration changes with actor, action, timestamp, and before/after state where available. This is a critical SOX ITGC control — auditors will request evidence that configuration changes were tracked and authorized. The audit trail must be exported to SIEM and retained for at least 12 months (7 years for SOX-scoped records)."
+                "prose": "Workday's audit trail (accessible via the Workday Audit report) records all configuration changes with actor, action, timestamp, and before/after state where available. This is a critical SOX ITGC control \u2014 auditors will request evidence that configuration changes were tracked and authorized. The audit trail must be exported to SIEM and retained for at least 12 months (7 years for SOX-scoped records)."
               },
               {
                 "id": "wd-log-004_obj",
@@ -806,19 +1172,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-log-002", "rel": "related", "text": "SSCF-LOG-002: Administrative and Configuration Audit Logging" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-log-002",
+                "rel": "related",
+                "text": "SSCF-LOG-002: Administrative and Configuration Audit Logging"
+              }
             ]
           },
           {
             "id": "wd-log-005",
             "title": "Audit Log Retention Configuration",
             "props": [
-              { "name": "label", "value": "WD-LOG-005" },
-              { "name": "sort-id", "value": "log-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-LOG-003" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "Workday native retention settings and SIEM retention configuration are not queryable via public API; requires admin review." }
+              {
+                "name": "label",
+                "value": "WD-LOG-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-LOG-003"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "Workday native retention settings and SIEM retention configuration are not queryable via public API; requires admin review."
+              }
             ],
             "parts": [
               {
@@ -848,7 +1236,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-log-003", "rel": "related", "text": "SSCF-LOG-003: Audit Retention and Integrity" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-log-003",
+                "rel": "related",
+                "text": "SSCF-LOG-003: Audit Retention and Integrity"
+              }
             ]
           }
         ]
@@ -862,12 +1254,30 @@
             "id": "wd-ckm-001",
             "title": "TLS Enforcement for Integrations (WS-Security)",
             "props": [
-              { "name": "label", "value": "WD-CKM-001" },
-              { "name": "sort-id", "value": "ckm-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-CKM-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "TLS and WS-Security configuration for integrations requires manual review of integration system definitions and Workday network configuration." }
+              {
+                "name": "label",
+                "value": "WD-CKM-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "ckm-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CKM-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "TLS and WS-Security configuration for integrations requires manual review of integration system definitions and Workday network configuration."
+              }
             ],
             "parts": [
               {
@@ -897,19 +1307,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-ckm-001", "rel": "related", "text": "SSCF-CKM-001: API Credential and Token Lifecycle" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-ckm-001",
+                "rel": "related",
+                "text": "SSCF-CKM-001: API Credential and Token Lifecycle"
+              }
             ]
           },
           {
             "id": "wd-ckm-002",
             "title": "BYOK (Bring Your Own Key) Configuration",
             "props": [
-              { "name": "label", "value": "WD-CKM-002" },
-              { "name": "sort-id", "value": "ckm-02" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-CKM-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "BYOK/KMS configuration is a tenant-level setting not exposed via public API; requires Workday admin review and vendor confirmation." }
+              {
+                "name": "label",
+                "value": "WD-CKM-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "ckm-02"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CKM-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "BYOK/KMS configuration is a tenant-level setting not exposed via public API; requires Workday admin review and vendor confirmation."
+              }
             ],
             "parts": [
               {
@@ -939,20 +1371,37 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-ckm-001", "rel": "related", "text": "SSCF-CKM-001: API Credential and Token Lifecycle" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-ckm-001",
+                "rel": "related",
+                "text": "SSCF-CKM-001: API Credential and Token Lifecycle"
+              }
             ]
           },
           {
             "id": "wd-ckm-003",
             "title": "ISU Credential Rotation Policy",
             "props": [
-              { "name": "label", "value": "WD-CKM-003" },
-              { "name": "sort-id", "value": "ckm-03" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-CKM-001" },
-              { "name": "collection-method", "value": "soap" },
-              { "name": "soap-service", "value": "Human_Resources" },
-              { "name": "soap-operation", "value": "Get_Workday_Account" }
+              {
+                "name": "label",
+                "value": "WD-CKM-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "ckm-03"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CKM-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              }
             ],
             "parts": [
               {
@@ -963,7 +1412,7 @@
               {
                 "id": "wd-ckm-003_gdn",
                 "name": "guidance",
-                "prose": "ISU credentials are long-lived service account passwords. Unlike user passwords, there is no forced expiry by default. Unrotated ISU credentials represent a persistent risk — a compromised ISU credential could provide long-term unauthorized API access without detection. Credentials must be stored in a PAM/secrets manager. Rotation should be automated where the PAM tool supports it."
+                "prose": "ISU credentials are long-lived service account passwords. Unlike user passwords, there is no forced expiry by default. Unrotated ISU credentials represent a persistent risk \u2014 a compromised ISU credential could provide long-term unauthorized API access without detection. Credentials must be stored in a PAM/secrets manager. Rotation should be automated where the PAM tool supports it."
               },
               {
                 "id": "wd-ckm-003_obj",
@@ -982,7 +1431,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-ckm-001", "rel": "related", "text": "SSCF-CKM-001: API Credential and Token Lifecycle" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-ckm-001",
+                "rel": "related",
+                "text": "SSCF-CKM-001: API Credential and Token Lifecycle"
+              }
             ]
           }
         ]
@@ -996,18 +1449,36 @@
             "id": "wd-dsp-001",
             "title": "Sensitive Domain Permission Review",
             "props": [
-              { "name": "label", "value": "WD-DSP-001" },
-              { "name": "sort-id", "value": "dsp-01" },
-              { "name": "severity", "value": "critical" },
-              { "name": "sscf-control", "value": "SSCF-DSP-001" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Sensitive_Domain_Access_Audit" }
+              {
+                "name": "label",
+                "value": "WD-DSP-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-01"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-DSP-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Sensitive_Domain_Access_Audit"
+              }
             ],
             "parts": [
               {
                 "id": "wd-dsp-001_smt",
                 "name": "statement",
-                "prose": "Access to sensitive Workday data domains — including Social Security Number, Compensation, Benefits, Date of Birth, and Government ID — must be restricted to roles with documented business need and reviewed quarterly."
+                "prose": "Access to sensitive Workday data domains \u2014 including Social Security Number, Compensation, Benefits, Date of Birth, and Government ID \u2014 must be restricted to roles with documented business need and reviewed quarterly."
               },
               {
                 "id": "wd-dsp-001_gdn",
@@ -1031,19 +1502,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-dsp-001", "rel": "related", "text": "SSCF-DSP-001: Sensitive Data Access Control" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-dsp-001",
+                "rel": "related",
+                "text": "SSCF-DSP-001: Sensitive Data Access Control"
+              }
             ]
           },
           {
             "id": "wd-dsp-002",
             "title": "Data Export and Download Controls",
             "props": [
-              { "name": "label", "value": "WD-DSP-002" },
-              { "name": "sort-id", "value": "dsp-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-DSP-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Data_Export_Activity_Report" }
+              {
+                "name": "label",
+                "value": "WD-DSP-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-DSP-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Data_Export_Activity_Report"
+              }
             ],
             "parts": [
               {
@@ -1059,7 +1552,7 @@
               {
                 "id": "wd-dsp-002_obj",
                 "name": "objective",
-                "prose": "1. Identify reports containing sensitive data (SSN, compensation, benefits, health data).\n2. Verify each sensitive report has domain security policy access restricted to authorized security groups.\n3. Verify RaaS endpoints for sensitive reports require authentication (not publicly accessible).\n4. Review export activity log for bulk downloads in the past 90 days — flag anomalous export volume.\n5. Verify Export domain policy is not granted to all users."
+                "prose": "1. Identify reports containing sensitive data (SSN, compensation, benefits, health data).\n2. Verify each sensitive report has domain security policy access restricted to authorized security groups.\n3. Verify RaaS endpoints for sensitive reports require authentication (not publicly accessible).\n4. Review export activity log for bulk downloads in the past 90 days \u2014 flag anomalous export volume.\n5. Verify Export domain policy is not granted to all users."
               },
               {
                 "id": "wd-dsp-002_imp",
@@ -1073,19 +1566,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-dsp-002", "rel": "related", "text": "SSCF-DSP-002: Data Export and Exfiltration Controls" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-dsp-002",
+                "rel": "related",
+                "text": "SSCF-DSP-002: Data Export and Exfiltration Controls"
+              }
             ]
           },
           {
             "id": "wd-dsp-003",
             "title": "Third-Party Integration Data Access Scope",
             "props": [
-              { "name": "label", "value": "WD-DSP-003" },
-              { "name": "sort-id", "value": "dsp-03" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-DSP-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Integration_Data_Access_Audit" }
+              {
+                "name": "label",
+                "value": "WD-DSP-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-03"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-DSP-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Integration_Data_Access_Audit"
+              }
             ],
             "parts": [
               {
@@ -1106,7 +1621,7 @@
               {
                 "id": "wd-dsp-003_imp",
                 "name": "implementation-guidance",
-                "prose": "1. Create an integration data access register listing: integration name, purpose, ISSG, domains accessed, data fields accessed.\n2. Remove ISSG domain access not required for the integration's function — test in sandbox first.\n3. For integrations accessing sensitive data: require annual review and approval from the Data Privacy Officer.\n4. Document all integration data flows in the organization's data map for GDPR Article 30 Records of Processing Activities."
+                "prose": "1. Create an integration data access register listing: integration name, purpose, ISSG, domains accessed, data fields accessed.\n2. Remove ISSG domain access not required for the integration's function \u2014 test in sandbox first.\n3. For integrations accessing sensitive data: require annual review and approval from the Data Privacy Officer.\n4. Document all integration data flows in the organization's data map for GDPR Article 30 Records of Processing Activities."
               },
               {
                 "id": "wd-dsp-003_def",
@@ -1115,30 +1630,52 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-dsp-002", "rel": "related", "text": "SSCF-DSP-002: Data Export and Exfiltration Controls" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-dsp-002",
+                "rel": "related",
+                "text": "SSCF-DSP-002: Data Export and Exfiltration Controls"
+              }
             ]
           },
           {
             "id": "wd-dsp-004",
             "title": "PII Field Access Governance",
             "props": [
-              { "name": "label", "value": "WD-DSP-004" },
-              { "name": "sort-id", "value": "dsp-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-DSP-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "PII field-level masking and display configuration requires review in Workday Setup; not exposed via public API." }
+              {
+                "name": "label",
+                "value": "WD-DSP-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-DSP-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "PII field-level masking and display configuration requires review in Workday Setup; not exposed via public API."
+              }
             ],
             "parts": [
               {
                 "id": "wd-dsp-004_smt",
                 "name": "statement",
-                "prose": "Personally Identifiable Information (PII) fields in Workday — including SSN, government ID, date of birth, home address, and direct deposit account numbers — must be masked by default and only unmasked for authorized roles with documented justification."
+                "prose": "Personally Identifiable Information (PII) fields in Workday \u2014 including SSN, government ID, date of birth, home address, and direct deposit account numbers \u2014 must be masked by default and only unmasked for authorized roles with documented justification."
               },
               {
                 "id": "wd-dsp-004_gdn",
                 "name": "guidance",
-                "prose": "Workday supports field-level masking for sensitive PII fields. By default, SSN may be displayed in partial form (last 4 digits). Full display of SSN and other sensitive PII should require an explicit domain permission and the unmasking action should be logged. GDPR and CCPA require data minimization — users should only see PII they have a legitimate need to access. Health information fields are subject to HIPAA minimum necessary standard."
+                "prose": "Workday supports field-level masking for sensitive PII fields. By default, SSN may be displayed in partial form (last 4 digits). Full display of SSN and other sensitive PII should require an explicit domain permission and the unmasking action should be logged. GDPR and CCPA require data minimization \u2014 users should only see PII they have a legitimate need to access. Health information fields are subject to HIPAA minimum necessary standard."
               },
               {
                 "id": "wd-dsp-004_obj",
@@ -1157,7 +1694,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-dsp-001", "rel": "related", "text": "SSCF-DSP-001: Sensitive Data Access Control" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-dsp-001",
+                "rel": "related",
+                "text": "SSCF-DSP-001: Sensitive Data Access Control"
+              }
             ]
           }
         ]
@@ -1171,12 +1712,30 @@
             "id": "wd-tdr-001",
             "title": "Authentication Anomaly Alert Configuration",
             "props": [
-              { "name": "label", "value": "WD-TDR-001" },
-              { "name": "sort-id", "value": "tdr-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-TDR-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "SIEM alert configuration for Workday authentication anomalies is external to Workday; requires review of SIEM rules and runbooks." }
+              {
+                "name": "label",
+                "value": "WD-TDR-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "tdr-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-TDR-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "SIEM alert configuration for Workday authentication anomalies is external to Workday; requires review of SIEM rules and runbooks."
+              }
             ],
             "parts": [
               {
@@ -1187,12 +1746,12 @@
               {
                 "id": "wd-tdr-001_gdn",
                 "name": "guidance",
-                "prose": "Detection of authentication anomalies relies on ingesting Workday Sign-On Audit logs into a SIEM and applying behavioral analytics or rule-based detection. Workday itself does not natively integrate with SIEM — log forwarding is via RaaS export or Workday's data lake capabilities. The most important detection scenarios for Workday are: impossible travel (user authenticates from two geographies within a short window), bulk compensation or SSN data access, and privileged admin actions outside business hours."
+                "prose": "Detection of authentication anomalies relies on ingesting Workday Sign-On Audit logs into a SIEM and applying behavioral analytics or rule-based detection. Workday itself does not natively integrate with SIEM \u2014 log forwarding is via RaaS export or Workday's data lake capabilities. The most important detection scenarios for Workday are: impossible travel (user authenticates from two geographies within a short window), bulk compensation or SSN data access, and privileged admin actions outside business hours."
               },
               {
                 "id": "wd-tdr-001_obj",
                 "name": "objective",
-                "prose": "1. Verify Workday Sign-On Audit logs are being ingested into the SIEM.\n2. Verify SIEM rules are active for: (a) impossible travel (>500mi in <1 hour), (b) bulk sensitive field access (>100 SSN/compensation records in 10 minutes), (c) admin actions outside 06:00–22:00 local time, (d) concurrent sessions from different countries.\n3. Verify alert routing sends detections to the SOC queue.\n4. Review the last 90 days for any triggered alerts and verify triage occurred within SLA."
+                "prose": "1. Verify Workday Sign-On Audit logs are being ingested into the SIEM.\n2. Verify SIEM rules are active for: (a) impossible travel (>500mi in <1 hour), (b) bulk sensitive field access (>100 SSN/compensation records in 10 minutes), (c) admin actions outside 06:00\u201322:00 local time, (d) concurrent sessions from different countries.\n3. Verify alert routing sends detections to the SOC queue.\n4. Review the last 90 days for any triggered alerts and verify triage occurred within SLA."
               },
               {
                 "id": "wd-tdr-001_imp",
@@ -1206,19 +1765,41 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-tdr-001", "rel": "related", "text": "SSCF-TDR-001: Real-Time Threat Policy Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-tdr-001",
+                "rel": "related",
+                "text": "SSCF-TDR-001: Real-Time Threat Policy Enforcement"
+              }
             ]
           },
           {
             "id": "wd-tdr-002",
             "title": "Transaction Security Policy Enforcement",
             "props": [
-              { "name": "label", "value": "WD-TDR-002" },
-              { "name": "sort-id", "value": "tdr-02" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-TDR-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "Workday does not have a native Transaction Security Policy feature equivalent to Salesforce. This control assesses compensating controls via SIEM and business process approvals." }
+              {
+                "name": "label",
+                "value": "WD-TDR-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "tdr-02"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-TDR-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "Workday does not have a native Transaction Security Policy feature equivalent to Salesforce. This control assesses compensating controls via SIEM and business process approvals."
+              }
             ],
             "parts": [
               {
@@ -1248,7 +1829,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-tdr-001", "rel": "related", "text": "SSCF-TDR-001: Real-Time Threat Policy Enforcement" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-tdr-001",
+                "rel": "related",
+                "text": "SSCF-TDR-001: Real-Time Threat Policy Enforcement"
+              }
             ]
           }
         ]
@@ -1262,12 +1847,30 @@
             "id": "wd-gov-001",
             "title": "Pending Security Policy Activation Governance",
             "props": [
-              { "name": "label", "value": "WD-GOV-001" },
-              { "name": "sort-id", "value": "gov-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "sscf-control", "value": "SSCF-GOV-001" },
-              { "name": "collection-method", "value": "manual" },
-              { "name": "manual-reason", "value": "Pending security policy changes status requires Workday admin UI review; not exposed via public API." }
+              {
+                "name": "label",
+                "value": "WD-GOV-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "gov-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-GOV-001"
+              },
+              {
+                "name": "collection-method",
+                "value": "manual"
+              },
+              {
+                "name": "manual-reason",
+                "value": "Pending security policy changes status requires Workday admin UI review; not exposed via public API."
+              }
             ],
             "parts": [
               {
@@ -1297,30 +1900,52 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-gov-001", "rel": "related", "text": "SSCF-GOV-001: Exception Governance and Risk Acceptance" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-gov-001",
+                "rel": "related",
+                "text": "SSCF-GOV-001: Exception Governance and Risk Acceptance"
+              }
             ]
           },
           {
             "id": "wd-gov-002",
             "title": "Security Configuration Change Management",
             "props": [
-              { "name": "label", "value": "WD-GOV-002" },
-              { "name": "sort-id", "value": "gov-02" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "sscf-control", "value": "SSCF-CON-002" },
-              { "name": "collection-method", "value": "raas" },
-              { "name": "raas-report", "value": "Workday_Audit_Report" }
+              {
+                "name": "label",
+                "value": "WD-GOV-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "gov-02"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "sscf-control",
+                "value": "SSCF-CON-002"
+              },
+              {
+                "name": "collection-method",
+                "value": "raas"
+              },
+              {
+                "name": "raas-report",
+                "value": "Workday_Audit_Report"
+              }
             ],
             "parts": [
               {
                 "id": "wd-gov-002_smt",
                 "name": "statement",
-                "prose": "All Workday security configuration changes — including domain security policy edits, authentication policy changes, and security group modifications — must be made via an approved change management process with documented authorization."
+                "prose": "All Workday security configuration changes \u2014 including domain security policy edits, authentication policy changes, and security group modifications \u2014 must be made via an approved change management process with documented authorization."
               },
               {
                 "id": "wd-gov-002_gdn",
                 "name": "guidance",
-                "prose": "Unauthorized or undocumented security configuration changes are a key SOX ITGC finding. Every change to Workday's security configuration must correspond to an approved change request in the ITSM tool. Emergency changes must be reviewed and approved retroactively within 24 hours. The Workday Audit Report provides evidence of who made which changes — this must be cross-referenced against the change management system during audits."
+                "prose": "Unauthorized or undocumented security configuration changes are a key SOX ITGC finding. Every change to Workday's security configuration must correspond to an approved change request in the ITSM tool. Emergency changes must be reviewed and approved retroactively within 24 hours. The Workday Audit Report provides evidence of who made which changes \u2014 this must be cross-referenced against the change management system during audits."
               },
               {
                 "id": "wd-gov-002_obj",
@@ -1339,7 +1964,11 @@
               }
             ],
             "links": [
-              { "href": "../../sscf/sscf_catalog.json#sscf-con-002", "rel": "related", "text": "SSCF-CON-002: Drift Detection and Baseline Deviation Management" }
+              {
+                "href": "../../sscf/sscf_catalog.json#sscf-con-002",
+                "rel": "related",
+                "text": "SSCF-CON-002: Drift Detection and Baseline Deviation Management"
+              }
             ]
           }
         ]
@@ -1350,22 +1979,38 @@
         {
           "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
           "title": "SSCF Catalog",
-          "rlinks": [{ "href": "../../sscf/sscf_catalog.json" }]
+          "rlinks": [
+            {
+              "href": "../../sscf/sscf_catalog.json"
+            }
+          ]
         },
         {
           "uuid": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
           "title": "CCM v4.1 Reference",
-          "rlinks": [{ "href": "../../ccm/ccm_v4.1_oscal_ref.yaml" }]
+          "rlinks": [
+            {
+              "href": "../../ccm/ccm_v4.1_oscal_ref.yaml"
+            }
+          ]
         },
         {
           "uuid": "c3d4e5f6-a7b8-9012-cdef-123456789012",
           "title": "SSCF to CCM Mapping",
-          "rlinks": [{ "href": "../../sscf/sscf_to_ccm_mapping.yaml" }]
+          "rlinks": [
+            {
+              "href": "../../sscf/sscf_to_ccm_mapping.yaml"
+            }
+          ]
         },
         {
           "uuid": "d4e5f6a7-b8c9-0123-defa-234567890123",
           "title": "Workday Connector Blueprint",
-          "rlinks": [{ "href": "../../skills/workday_connect/BLUEPRINT.md" }]
+          "rlinks": [
+            {
+              "href": "../../skills/workday_connect/BLUEPRINT.md"
+            }
+          ]
         }
       ]
     }

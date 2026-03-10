@@ -2,7 +2,7 @@
 workday_connect — Workday HCM/Finance tenant security baseline collector.
 
 Read-only. Never modifies tenant configuration.
-Auth: OAuth 2.0 Client Credentials (machine-to-machine). No WS-Security BasicAuth.
+Auth: OAuth 2.0 Client Credentials (machine-to-machine) exclusively. No SOAP/WS-Security.
 Catalog-driven: reads config/workday/workday_catalog.json for control enumeration.
 
 Usage:
@@ -34,7 +34,6 @@ _SCHEMA_PATH = _REPO / "schemas" / "baseline_assessment_schema.json"
 _VERSION = "0.1.0"
 
 WD_NS = "urn:com.workday/bsvc"
-SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/"
 
 # Assessment thresholds (from BLUEPRINT.md)
 _THRESHOLDS = {
@@ -93,17 +92,6 @@ def clear_token_cache() -> None:
 
 
 # ---------------------------------------------------------------------------
-# SOAP response cache (one call per unique operation)
-# ---------------------------------------------------------------------------
-
-_soap_cache: dict[str, tuple[int, str]] = {}
-
-
-def _soap_cache_key(service: str, operation: str) -> str:
-    return f"{service}:{operation}"
-
-
-# ---------------------------------------------------------------------------
 # Catalog loading
 # ---------------------------------------------------------------------------
 
@@ -127,8 +115,6 @@ def load_catalog() -> list[dict[str, Any]]:
                     "group_id": group["id"],
                     "severity": props.get("severity", "moderate"),
                     "collection_method": props.get("collection-method", "manual"),
-                    "soap_service": props.get("soap-service", "Security_Configuration"),
-                    "soap_operation": props.get("soap-operation"),
                     "raas_report": props.get("raas-report"),
                     "rest_endpoint": (props.get("rest-endpoint") or "").removeprefix("GET ").removeprefix("POST "),
                     "sscf_control": props.get("sscf-control"),
@@ -155,61 +141,6 @@ def _sscf_for_control(ctrl: dict[str, Any], domain_map: dict[str, Any]) -> list[
         return [{"sscf_control_id": ctrl["sscf_control"], "sscf_domain": ctrl["group_id"]}]
     # Fall back to domain defaults
     return domain_map.get(ctrl["group_id"], [])
-
-
-# ---------------------------------------------------------------------------
-# SOAP transport
-# ---------------------------------------------------------------------------
-
-_SOAP_TEMPLATE = """\
-<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope
-    xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:wd="urn:com.workday/bsvc">
-  <SOAP-ENV:Body>
-    <wd:{operation}_Request wd:version="{api_version}">
-    </wd:{operation}_Request>
-  </SOAP-ENV:Body>
-</SOAP-ENV:Envelope>"""
-
-
-def _soap_url(base_url: str, tenant: str, service: str, api_version: str) -> str:
-    return f"{base_url}/ccx/service/{tenant}/{service}/{api_version}"
-
-
-def call_soap(
-    base_url: str,
-    tenant: str,
-    service: str,
-    operation: str,
-    token: str,
-    api_version: str,
-    *,
-    use_cache: bool = True,
-) -> tuple[int, str]:
-    """POST a minimal SOAP envelope; return (status_code, response_text).
-
-    Results are cached per (service, operation) to avoid duplicate API calls
-    when multiple controls share the same SOAP operation.
-    """
-    import requests
-
-    cache_key = _soap_cache_key(service, operation)
-    if use_cache and cache_key in _soap_cache:
-        return _soap_cache[cache_key]
-
-    url = _soap_url(base_url, tenant, service, api_version)
-    body = _SOAP_TEMPLATE.format(operation=operation, api_version=api_version)
-    headers = {
-        "Content-Type": "text/xml; charset=UTF-8",
-        "Authorization": f"Bearer {token}",
-        "SOAPAction": f"urn:com.workday/bsvc/{operation}",
-    }
-    resp = requests.post(url, data=body.encode(), headers=headers, timeout=30)
-    result = (resp.status_code, resp.text)
-    if use_cache:
-        _soap_cache[cache_key] = result
-    return result
 
 
 # ---------------------------------------------------------------------------
@@ -251,368 +182,8 @@ def call_rest(base_url: str, endpoint: str, token: str) -> tuple[int, dict[str, 
 
 
 # ---------------------------------------------------------------------------
-# XML helpers
-# ---------------------------------------------------------------------------
-
-
-def _xml_text(xml_str: str, *element_names: str) -> str | None:
-    """Return text of the first matching element (any of element_names) in WD namespace."""
-    try:
-        from lxml import etree  # type: ignore[import-untyped]
-
-        root = etree.fromstring(xml_str.encode())
-        for name in element_names:
-            el = root.find(f".//{{{WD_NS}}}{name}")
-            if el is not None and el.text:
-                return el.text.strip()
-        return None
-    except Exception:
-        return None
-
-
-def _xml_all_texts(xml_str: str, element_name: str) -> list[str]:
-    """Return all text values for elements matching element_name in WD namespace."""
-    try:
-        from lxml import etree  # type: ignore[import-untyped]
-
-        root = etree.fromstring(xml_str.encode())
-        return [el.text.strip() for el in root.findall(f".//{{{WD_NS}}}{element_name}") if el.text]
-    except Exception:
-        return []
-
-
-def _bool_val(raw: str | None) -> bool | None:
-    """Coerce Workday boolean text (true/false/1/0) to Python bool."""
-    if raw is None:
-        return None
-    return raw.strip().lower() in ("true", "1", "yes")
-
-
-# ---------------------------------------------------------------------------
-# Per-control assessment logic
-# ---------------------------------------------------------------------------
-
-
-def _assess_password_rules(ctrl_id: str, xml_str: str) -> dict[str, Any]:  # NOSONAR
-    """Assess WD-CON-001, WD-CON-002, WD-CON-004 from Get_Password_Rules response."""
-    t = _THRESHOLDS
-    result: dict[str, Any] = {"observed": {}, "status": "partial", "notes": ""}
-
-    if ctrl_id == "WD-CON-001":
-        val = _xml_text(xml_str, "Minimum_Password_Length")
-        result["observed"] = {"Minimum_Password_Length": val}
-        result["expected"] = f">= {t['min_password_length']}"
-        if val is not None:
-            result["status"] = "pass" if int(val) >= t["min_password_length"] else "fail"
-            result["observed_value"] = f"Minimum_Password_Length={val}"
-        else:
-            result["notes"] = "Field not returned by API"
-
-    elif ctrl_id == "WD-CON-002":
-        expiry = _xml_text(xml_str, "Password_Expiration_Days")
-        history = _xml_text(xml_str, "Password_History_Count")
-        result["observed"] = {"Password_Expiration_Days": expiry, "Password_History_Count": history}
-        result["expected"] = f"expiry <= {t['max_password_expiry_days']} AND history >= {t['min_password_history']}"
-        if expiry is not None and history is not None:
-            ok = int(expiry) <= t["max_password_expiry_days"] and int(history) >= t["min_password_history"]
-            result["status"] = "pass" if ok else "fail"
-            result["observed_value"] = f"Password_Expiration_Days={expiry}, Password_History_Count={history}"
-        else:
-            result["notes"] = "One or more fields not returned by API"
-
-    elif ctrl_id == "WD-CON-004":
-        threshold = _xml_text(xml_str, "Lockout_Threshold")
-        duration = _xml_text(xml_str, "Lockout_Duration_Minutes")
-        result["observed"] = {"Lockout_Threshold": threshold, "Lockout_Duration_Minutes": duration}
-        result["expected"] = (
-            f"threshold <= {t['max_lockout_threshold']} AND duration >= {t['min_lockout_duration_minutes']}"
-        )
-        if threshold is not None and duration is not None:
-            ok = int(threshold) <= t["max_lockout_threshold"] and int(duration) >= t["min_lockout_duration_minutes"]
-            result["status"] = "pass" if ok else "fail"
-            result["observed_value"] = f"Lockout_Threshold={threshold}, Lockout_Duration_Minutes={duration}"
-        else:
-            result["notes"] = "One or more fields not returned by API"
-
-    return result
-
-
-def _assess_soap_result(ctrl_id: str, xml_str: str) -> dict[str, Any]:  # NOSONAR
-    """Route SOAP XML response to the appropriate assessment function."""
-    # Password rules: CON-001, CON-002, CON-004 all share Get_Password_Rules
-    if ctrl_id in ("WD-CON-001", "WD-CON-002", "WD-CON-004"):
-        return _assess_password_rules(ctrl_id, xml_str)
-
-    # Session timeout
-    if ctrl_id == "WD-CON-003":
-        val = _xml_text(xml_str, "Session_Timeout_Minutes", "SessionTimeout")
-        result: dict[str, Any] = {
-            "observed": {"Session_Timeout_Minutes": val},
-            "expected": f"<= {_THRESHOLDS['max_session_timeout_minutes']}",
-        }
-        if val is not None:
-            result["status"] = "pass" if int(val) <= _THRESHOLDS["max_session_timeout_minutes"] else "fail"
-            result["observed_value"] = f"Session_Timeout_Minutes={val}"
-        else:
-            result["status"] = "partial"
-            result["notes"] = "Field not returned by API"
-        return result
-
-    # IP restriction
-    if ctrl_id == "WD-CON-005":
-        ranges = _xml_all_texts(xml_str, "IP_Range")
-        has_restriction = len(ranges) > 0
-        return {
-            "observed": {"IP_Range_count": len(ranges)},
-            "expected": "At least one IP range configured",
-            "status": "pass" if has_restriction else "fail",
-            "observed_value": f"IP ranges configured: {len(ranges)}",
-        }
-
-    # Auth policy coverage
-    if ctrl_id == "WD-CON-006":
-        policies = _xml_all_texts(xml_str, "Authentication_Policy_Name")
-        return {
-            "observed": {"policy_count": len(policies)},
-            "expected": "At least one authentication policy covering all users",
-            "status": "pass" if len(policies) >= 1 else "fail",
-            "observed_value": f"Authentication policies found: {len(policies)}",
-        }
-
-    # ISU Disallow_UI_Sessions
-    if ctrl_id == "WD-IAM-002":
-        vals = _xml_all_texts(xml_str, "Disallow_UI_Sessions")
-        all_disabled = all(_bool_val(v) for v in vals) if vals else None
-        if all_disabled:
-            iam002_status = "pass"
-        elif all_disabled is False:
-            iam002_status = "fail"
-        else:
-            iam002_status = "partial"
-        return {
-            "observed": {"Disallow_UI_Sessions_values": vals},
-            "expected": "Disallow_UI_Sessions=true for all ISUs",
-            "status": iam002_status,
-            "observed_value": f"Disallow_UI_Sessions values: {vals}",
-        }
-
-    # MFA required on all auth policies
-    if ctrl_id == "WD-IAM-003":
-        mfa_vals = _xml_all_texts(xml_str, "Multi_Factor_Authentication_Required")
-        all_mfa = all(_bool_val(v) for v in mfa_vals) if mfa_vals else None
-        if all_mfa:
-            iam003_status = "pass"
-        elif all_mfa is False:
-            iam003_status = "fail"
-        else:
-            iam003_status = "partial"
-        return {
-            "observed": {"MFA_Required_values": mfa_vals},
-            "expected": "Multi_Factor_Authentication_Required=true on all policies",
-            "status": iam003_status,
-            "observed_value": f"MFA required on {sum(1 for v in mfa_vals if _bool_val(v))}/{len(mfa_vals)} policies",
-        }
-
-    # SSO + signed assertions
-    if ctrl_id == "WD-IAM-004":
-        sso_active = _bool_val(_xml_text(xml_str, "SSO_Enabled", "SAML_Enabled"))
-        signed = _bool_val(_xml_text(xml_str, "Require_Signed_Assertions"))
-        ok = sso_active and signed
-        return {
-            "observed": {"SSO_Enabled": sso_active, "Require_Signed_Assertions": signed},
-            "expected": "SSO enabled with signed assertions required",
-            "status": "pass" if ok else "fail",
-            "observed_value": f"SSO_Enabled={sso_active}, Require_Signed_Assertions={signed}",
-        }
-
-    # API client scope check
-    if ctrl_id == "WD-IAM-008":
-        broad_scopes = _xml_all_texts(xml_str, "All_Workday_Data")
-        flagged = any(_bool_val(v) for v in broad_scopes)
-        return {
-            "observed": {"broad_scope_clients": len(broad_scopes)},
-            "expected": "No API clients with All_Workday_Data scope",
-            "status": "fail" if flagged else "pass",
-            "observed_value": f"API clients with broad scope: {len(broad_scopes)}",
-        }
-
-    # Audit log retention
-    if ctrl_id == "WD-LOG-005":
-        val = _xml_text(xml_str, "Audit_Log_Retention_Days")
-        if val is not None:
-            ok = int(val) >= _THRESHOLDS["min_audit_retention_days"]
-            return {
-                "observed": {"Audit_Log_Retention_Days": val},
-                "expected": f">= {_THRESHOLDS['min_audit_retention_days']}",
-                "status": "pass" if ok else "fail",
-                "observed_value": f"Audit_Log_Retention_Days={val}",
-            }
-        return {"status": "partial", "observed": {}, "notes": "Audit_Log_Retention_Days not returned"}
-
-    # TLS required for API
-    if ctrl_id == "WD-CKM-001":
-        val = _bool_val(_xml_text(xml_str, "Require_TLS_For_API", "TLS_Required"))
-        return {
-            "observed": {"Require_TLS_For_API": val},
-            "expected": "Require_TLS_For_API=true",
-            "status": "pass" if val else "fail",
-            "observed_value": f"Require_TLS_For_API={val}",
-        }
-
-    # ISU credential age
-    if ctrl_id == "WD-CKM-003":
-        rotation_dates = _xml_all_texts(xml_str, "Password_Last_Changed_Date")
-        return {
-            "observed": {"ISU_credential_rotation_dates": rotation_dates},
-            "expected": f"Credential rotated within {_THRESHOLDS['max_isu_password_age_days']} days",
-            "status": "partial" if rotation_dates else "not_applicable",
-            "observed_value": f"ISU credentials last rotated: {rotation_dates or 'unknown'}",
-            "notes": "Age comparison requires runtime date calculation; review dates manually",
-        }
-
-    # Pending security policies
-    if ctrl_id == "WD-GOV-001":
-        pending = _xml_all_texts(xml_str, "Pending_Security_Policy")
-        return {
-            "observed": {"pending_count": len(pending)},
-            "expected": "No pending security policies",
-            "status": "pass" if len(pending) == 0 else "fail",
-            "observed_value": f"Pending security policies: {len(pending)}",
-        }
-
-    # Failed login alert
-    if ctrl_id == "WD-TDR-001":
-        threshold = _xml_text(xml_str, "Failed_Login_Alert_Threshold")
-        routing = _xml_text(xml_str, "Alert_Routing_Enabled", "Alert_Email")
-        return {
-            "observed": {"Failed_Login_Alert_Threshold": threshold, "alert_routing": routing},
-            "expected": "Alert threshold configured with routing",
-            "status": "pass" if threshold and routing else "partial",
-            "observed_value": f"Failed_Login_Alert_Threshold={threshold}, routing={routing}",
-        }
-
-    # Business process approval steps
-    if ctrl_id == "WD-TDR-002":
-        single_approver = _xml_all_texts(xml_str, "Single_Approver_Chain")
-        return {
-            "observed": {"single_approver_chains": len(single_approver)},
-            "expected": "No single-approver business process chains for sensitive actions",
-            "status": "pass" if len(single_approver) == 0 else "fail",
-            "observed_value": f"Single-approver chains: {len(single_approver)}",
-        }
-
-    # User activity logging
-    if ctrl_id == "WD-LOG-001":
-        val = _bool_val(_xml_text(xml_str, "User_Activity_Logging_Enabled"))
-        return {
-            "observed": {"User_Activity_Logging_Enabled": val},
-            "expected": "User_Activity_Logging_Enabled=true",
-            "status": "pass" if val else "fail",
-            "observed_value": f"User_Activity_Logging_Enabled={val}",
-        }
-
-    # Log accessibility checks (WD-LOG-002, WD-LOG-004): partial with data
-    if ctrl_id in ("WD-LOG-002", "WD-LOG-004"):
-        count = len(_xml_all_texts(xml_str, "Audit_Log_Entry") + _xml_all_texts(xml_str, "Sign_On_Event"))
-        return {
-            "observed": {"log_entries_accessible": count},
-            "expected": "Audit logs accessible and non-empty",
-            "status": "pass" if count > 0 else "partial",
-            "observed_value": f"Log entries accessible: {count}",
-        }
-
-    # Security group sensitive domain access (WD-DSP-001, WD-DSP-004)
-    if ctrl_id in ("WD-DSP-001", "WD-DSP-004"):
-        members = _xml_all_texts(xml_str, "Security_Group_Member")
-        return {
-            "observed": {"sensitive_domain_members": len(members)},
-            "expected": "Sensitive domain access limited to documented groups",
-            "status": "partial",
-            "observed_value": f"Security group members in sensitive domains: {len(members)}",
-            "notes": "Human review required to verify all members are authorized",
-        }
-
-    # Data export permissions
-    if ctrl_id == "WD-DSP-002":
-        val = _bool_val(_xml_text(xml_str, "Allow_Data_Export"))
-        return {
-            "observed": {"Allow_Data_Export": val},
-            "expected": "Allow_Data_Export restricted",
-            "status": "fail" if val else "pass",
-            "observed_value": f"Allow_Data_Export={val}",
-        }
-
-    # API client data access (WD-DSP-003)
-    if ctrl_id == "WD-DSP-003":
-        broad = _xml_all_texts(xml_str, "All_Workday_Data")
-        return {
-            "observed": {"broad_access_clients": len(broad)},
-            "expected": "No integrations with All_Workday_Data scope",
-            "status": "fail" if broad else "pass",
-            "observed_value": f"Integrations with broad data scope: {len(broad)}",
-        }
-
-    # Fallback: return partial with raw XML excerpt
-    return {
-        "status": "partial",
-        "observed": {},
-        "observed_value": xml_str[:200] if xml_str else "no response",
-        "notes": f"No specific assessment rule for {ctrl_id}; manual review required",
-    }
-
-
-# ---------------------------------------------------------------------------
 # Per-method collectors
 # ---------------------------------------------------------------------------
-
-
-def collect_soap(
-    ctrl: dict[str, Any],
-    base_url: str,
-    tenant: str,
-    token: str,
-    api_version: str,
-) -> dict[str, Any]:
-    """Collect via SOAP WWS. Returns partial finding dict."""
-    service = ctrl["soap_service"]
-    operation = ctrl["soap_operation"]
-    status_code, xml_str = call_soap(base_url, tenant, service, operation, token, api_version)
-
-    if status_code == 403:
-        return {
-            "status": "partial",
-            "observed_value": None,
-            "evidence_source": f"{operation} — SOAP (permission denied)",
-            "platform_data": {
-                "collection_method": "soap",
-                "http_status": status_code,
-                "soap_error": "PERMISSION_DENIED: domain not granted to ISSG",
-            },
-        }
-
-    if status_code != 200:
-        return {
-            "status": "partial",
-            "observed_value": None,
-            "evidence_source": f"{operation} — SOAP HTTP {status_code}",
-            "platform_data": {"collection_method": "soap", "http_status": status_code},
-        }
-
-    assessed = _assess_soap_result(ctrl["id"], xml_str)
-    return {
-        "status": assessed.get("status", "partial"),
-        "observed_value": assessed.get("observed_value"),
-        "expected_value": assessed.get("expected"),
-        "notes": assessed.get("notes"),
-        "evidence_source": f"workday-connect://soap/{service}/{operation}",
-        "platform_data": {
-            "collection_method": "soap",
-            "soap_service": service,
-            "soap_operation": operation,
-            "http_status": status_code,
-            "raw_fields": assessed.get("observed", {}),
-        },
-    }
 
 
 def collect_raas(
@@ -743,8 +314,6 @@ def run_collect(
     out_path: Path,
 ) -> dict[str, Any]:
     """Run all controls from catalog; write schema v2 output to out_path."""
-    _soap_cache.clear()  # fresh cache per run
-
     controls = load_catalog()
     domain_map = load_sscf_domain_map()
 
@@ -752,9 +321,7 @@ def run_collect(
     for ctrl in controls:
         method = ctrl["collection_method"]
 
-        if method in ("soap", "soap+oauth"):
-            raw = collect_soap(ctrl, base_url, tenant, token, api_version)
-        elif method == "raas":
+        if method == "raas":
             raw = collect_raas(ctrl, base_url, tenant, token)
         elif method == "rest":
             raw = collect_rest(ctrl, base_url, token)
@@ -786,7 +353,7 @@ def run_collect(
         "environment": env,
         "assessor": f"workday-connect v{_VERSION}",
         "assessment_owner": assessment_owner,
-        "data_source": f"workday-connect SOAP WWS {api_version} + RaaS",
+        "data_source": f"workday-connect OAuth 2.0 REST + RaaS {api_version}",
         "ai_generated_findings_notice": (
             "Findings produced by automated collector workday-connect. "
             "Requires human review before use in audit evidence."
@@ -823,7 +390,7 @@ def print_dry_run_plan(tenant: str, org_alias: str) -> None:
     for ctrl in controls:
         m = ctrl["collection_method"]
         method_counts[m] = method_counts.get(m, 0) + 1
-        op = ctrl.get("soap_operation") or ctrl.get("raas_report") or ctrl.get("rest_endpoint") or "(manual)"
+        op = ctrl.get("raas_report") or ctrl.get("rest_endpoint") or "(manual)"
         if m == "raas":
             flag = "*"
         elif m == "manual":

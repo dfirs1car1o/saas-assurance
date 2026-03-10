@@ -141,7 +141,7 @@ All agents are OpenAI models. The orchestrator dispatches numbered tool calls to
 | Reporter | `gpt-5.3-chat-latest` | Writes LLM narrative for governance reports |
 | Security Reviewer | `gpt-5.3-chat-latest` | DevSecOps audit on CI/CD skill changes |
 | SFDC Expert | `gpt-5.3-chat-latest` | On-call specialist for complex Salesforce/Apex/API questions |
-| Workday Expert | `gpt-5.3-chat-latest` | On-call specialist for Workday HCM/Finance SOAP/RaaS/REST |
+| Workday Expert | `gpt-5.3-chat-latest` | On-call specialist for Workday HCM/Finance RaaS/REST |
 | Container Expert | `gpt-5.3-chat-latest` | Docker Compose, OpenSearch, NDJSON dashboards, JVM tuning |
 
 ## Skills (CLIs)
@@ -155,7 +155,7 @@ All tools are CLI-based Python scripts. Each supports `--help` and `--dry-run`.
 | `sscf-benchmark` | `skills/sscf_benchmark/` | Scores findings by CSA SSCF domain (red/amber/green) |
 | `nist-review` | `skills/nist_review/` | NIST AI RMF 1.0 governance gate (govern/map/measure/manage) |
 | `report-gen` | `skills/report_gen/` | Generates executive Markdown + DOCX reports |
-| `workday-connect` | `skills/workday_connect/` | Workday HCM/Finance collector — OAuth 2.0, 30 controls, SOAP/RaaS/REST, 21 tests |
+| `workday-connect` | `skills/workday_connect/` | Workday HCM/Finance collector — OAuth 2.0, 30 controls, RaaS/REST/manual |
 
 ### Report Structure
 
@@ -185,7 +185,7 @@ ISO 27001:2022 SoA             ← full Statement of Applicability (all 93 Annex
 **Evidence Methodology** (`report_security_methodology.md`) — for auditors verifying collection:
 ```
 Per-control API queries        ← exact SOQL/REST endpoint used to assess each control
-Collection method              ← API type (REST / Tooling / Metadata / SOAP)
+Collection method              ← API type (REST / Tooling / Metadata / RaaS / manual)
 ```
 
 ## Control Frameworks
@@ -231,28 +231,21 @@ skills/
   nist_review/            ← NIST AI RMF gate (--platform salesforce|workday)
   report_gen/             ← Governance report generator (MD + DOCX)
   workday_connect/        ← Workday HCM/Finance collector (OAuth 2.0, 30 controls, 21 tests)
-tests/                    ← pytest suite (43 tests, fully offline with --mock-llm)
+tests/                    ← pytest suite (37 tests, fully offline with --mock-llm)
 ```
 
 ## Authentication
 
 Two Salesforce auth methods are supported. JWT is preferred for production.
 
-> **New setup?** See [`docs/wiki/API-Credential-Setup.md`](docs/wiki/API-Credential-Setup.md) for step-by-step instructions on obtaining Salesforce JWT / SOAP credentials, Workday OAuth 2.0 client credentials, and OpenAI API keys — including permission sets and secrets rotation guidance.
+> **New setup?** See [`docs/wiki/API-Credential-Setup.md`](docs/wiki/API-Credential-Setup.md) for step-by-step instructions on obtaining Salesforce JWT Bearer credentials, Workday OAuth 2.0 client credentials, and OpenAI API keys — including permission sets and secrets rotation guidance.
 
-**JWT Bearer (preferred):**
+**JWT Bearer (only supported method):**
 ```bash
 SF_AUTH_METHOD=jwt
+SF_USERNAME=your.name@yourorg.com
 SF_CONSUMER_KEY=<consumer-key>
 SF_PRIVATE_KEY_PATH=/path/to/salesforce_jwt_private.pem
-SF_DOMAIN=login
-```
-
-**SOAP (username/password):**
-```bash
-SF_USERNAME=...
-SF_PASSWORD=...
-SF_SECURITY_TOKEN=...
 SF_DOMAIN=login
 ```
 
@@ -262,8 +255,10 @@ See `.env.example` for full reference. Minimum required:
 
 ```bash
 OPENAI_API_KEY=sk-...          # Required for all LLM calls
-SF_USERNAME=...                 # Salesforce credentials
-SF_AUTH_METHOD=jwt              # or "soap"
+SF_USERNAME=...                 # Salesforce username
+SF_AUTH_METHOD=jwt              # JWT Bearer — only supported method
+SF_CONSUMER_KEY=...             # Salesforce Connected App consumer key
+SF_PRIVATE_KEY_PATH=...         # Path to RSA private key (outside repo, chmod 600)
 QDRANT_IN_MEMORY=1             # Use in-memory Qdrant (no server needed)
 MEMORY_ENABLED=0               # Disable Mem0 by default
 ```
@@ -284,7 +279,7 @@ source .venv/bin/activate
 ruff check skills/ harness/    # lint
 bandit -r skills/ harness/     # SAST
 pip-audit                      # dependency CVEs
-pytest tests/ -v               # 43 tests (offline, no API key needed)
+pytest tests/ -v               # 37 tests, fully offline (no API key needed)
 ```
 
 CI stack: ruff · bandit · pip-audit · gitleaks · pytest · CodeQL · CodeRabbit Pro · dependency-review.
