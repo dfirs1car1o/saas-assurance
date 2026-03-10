@@ -88,3 +88,6 @@ agent-loop run --dry-run --env dev --org test-org
 | Report: OSCAL Provenance | ✅ Done | Catalog → Profile → Component Def → CCM chain table in every report |
 | Report: Table borders + Description | ✅ Done | Full single-line borders on all DOCX tables; Description column added |
 | **Phase H** | **✅ Done** | Docker stack + OpenSearch + 3 pre-built dashboards (combined, Salesforce, Workday) |
+| **OSCAL P0** | **✅ Done** | ODP parameterization — all 36 SSCF controls carry `params`; SBS (59) + WSCC (50) `set-parameters` |
+| **OSCAL P1** | **✅ Done** | `gen_resolved_profile.py` — resolved catalogs for SBS (35 controls) and WSCC (30 controls); component def upgrades with `control-origination` + `responsibility` |
+| **OSCAL P2** | **✅ Done** | `gen_assessment_results.py` (OSCAL AR), `gen_ssp.py` (per-org SSP), commercial SSP template; all wired into CI |

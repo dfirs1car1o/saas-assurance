@@ -47,6 +47,10 @@ agent-loop [DRY-RUN]: org=test-org env=dev
   → writes: docs/oscal-salesforce-poc/generated/test-org/test-org_security_assessment.md
   → writes: docs/oscal-salesforce-poc/generated/test-org/test-org_security_assessment.docx
 
+  [OSCAL] gen_poam.py → poam.json (OSCAL 1.1.2 Plan of Action and Milestones)
+  [OSCAL] gen_assessment_results.py → assessment_results.json (OSCAL 1.1.2 Assessment Results)
+  [OSCAL] gen_ssp.py → ssp.json (OSCAL 1.1.2 System Security Plan)
+
 ============================================================
 Assessment complete (7 turn(s))
 overall_score : 34.8%
@@ -107,6 +111,9 @@ Runs the complete Workday pipeline (all 30 WSCC controls) using realistic stub d
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/backlog.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/sscf_report.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/nist_review.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/poam.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/assessment_results.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/ssp.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_remediation_report.md
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_security_assessment.md
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_security_assessment.docx
@@ -127,15 +134,15 @@ To test just the pipeline logic without any API calls:
 pytest tests/ -v
 ```
 
-This runs 33 tests across 5 suites — all pass without any environment variables or API keys:
+This runs 37 tests across 6 suites — all pass without any environment variables or API keys:
 
 | Test file | Tests | What it covers |
 |---|---|---|
 | `tests/test_pipeline_smoke.py` | 3 | Dry-run assess, gap map, benchmark |
 | `tests/test_report_gen.py` | 3 | App-owner MD, security MD, DOCX generation |
 | `tests/test_harness_dry_run.py` | 3 | Loop tool dispatch, error handler, API key handling |
-| `tests/test_sfdc_connect_jwt.py` | 3 | JWT auth resolution and env validation |
-| `tests/test_workday_connect.py` | 21 | OAuth flow, 30 controls, SOAP/RaaS/REST, graceful degradation |
+| `tests/test_sfdc_connect_jwt.py` | 6 | JWT auth resolution, env validation, key path handling |
+| `tests/test_workday_connect.py` | 12 | OAuth flow, 30 controls, RaaS/REST, graceful degradation |
 | `tests/test_drift_and_ccm.py` | 10 | Drift classification, CCM crosswalk rendering |
 
 **Run with coverage:**

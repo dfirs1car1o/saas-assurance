@@ -19,12 +19,15 @@ Phase 1 — Collect      sfdc-connect / workday-connect    →  sfdc_raw.json / 
 Phase 2 — Assess       oscal-assess + oscal_gap_map       →  gap_analysis.json + backlog.json
 Phase 3 — Score        sscf-benchmark                     →  sscf_report.json (RED/AMBER/GREEN)
 Phase 4 — Gate         nist-reviewer (NIST AI RMF 1.0)    →  nist_review.json (clear/flag/block)
-Phase 5 — Report       report-gen (app-owner + security)  →  Markdown + DOCX governance packages
-Phase 6 — Monitor      export_to_opensearch + dashboards  →  OpenSearch trending + 3 dashboards
+Phase 5 — OSCAL        gen_poam + gen_assessment_results  →  poam.json + assessment_results.json
+           + gen_ssp                                       →  ssp.json (OSCAL 1.1.2 SSP per org)
+Phase 6 — Report       report-gen (app-owner + security)  →  Markdown + DOCX governance packages
+Phase 7 — Monitor      export_to_opensearch + dashboards  →  OpenSearch trending + 3 dashboards
 ```
 
 **Platform support:** Salesforce (35 SBS controls) · Workday (30 WSCC controls)
-**Framework chain:** Platform control → SSCF domain → CCM v4.1 → ISO 27001:2022 Annex A (direct) → SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR
+**Framework chain:** Platform control → SSCF v1.0 → CCM v4.1 → ISO 27001:2022 Annex A → SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR
+**OSCAL output:** Resolved catalog · Assessment Results · System Security Plan · POA&M — all OSCAL 1.1.2 valid
 **AI governance:** Every output passes through a NIST AI RMF gate before delivery — distinguishes live collection from stubs, requires human acknowledgment on block verdicts
 
 This system **never writes to any SaaS org**. All evidence stays in `docs/oscal-salesforce-poc/generated/`.

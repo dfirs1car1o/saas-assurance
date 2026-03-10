@@ -12,7 +12,7 @@ All environment variables, configuration files, and YAML schemas used by this sy
 |---|---|---|
 | `OPENAI_API_KEY` | OpenAI API key for all LLM calls | `sk-...` |
 | `SF_USERNAME` | Salesforce login username | `admin@mycompany.com` |
-| `SF_AUTH_METHOD` | Auth method: `jwt` (preferred) or `soap` | `jwt` |
+| `SF_AUTH_METHOD` | Auth method: `jwt` (only supported method) | `jwt` |
 
 ### Salesforce Auth — JWT (Preferred)
 
@@ -20,14 +20,6 @@ All environment variables, configuration files, and YAML schemas used by this sy
 |---|---|---|
 | `SF_CONSUMER_KEY` | Connected app consumer key | `3MVG9...` |
 | `SF_PRIVATE_KEY_PATH` | Path to JWT private key PEM file | `/home/user/sf.pem` |
-| `SF_DOMAIN` | `login` for production, `test` for sandbox | `login` |
-
-### Salesforce Auth — SOAP (Username/Password)
-
-| Variable | Description | Example |
-|---|---|---|
-| `SF_PASSWORD` | Salesforce login password | `MyPassword123` |
-| `SF_SECURITY_TOKEN` | Security token (appended to password for non-trusted IPs) | `AbcDef123...` |
 | `SF_DOMAIN` | `login` for production, `test` for sandbox | `login` |
 
 ### Optional / Override
@@ -57,14 +49,43 @@ To route all calls through Azure OpenAI instead of the public OpenAI API, set:
 
 ## Configuration Files
 
-### OSCAL Catalogs
+### OSCAL Catalogs and Profiles
 
-| File | Platform | Controls | Format |
+| File | Purpose | Controls |
+|---|---|---|
+| `config/sscf/sscf_v1_catalog.json` | SSCF v1.0 base catalog — all 36 controls with ODPs | 36 (parameterized) |
+| `config/salesforce/sbs_v1_profile.json` | Salesforce SBS profile — selects 35 controls, sets ODP values | 35 selected |
+| `config/workday/wscc_v1_profile.json` | Workday WSCC profile — selects 30 controls, sets ODP values | 30 selected |
+
+### Resolved Catalogs (pre-generated — regenerate with `gen_resolved_profile.py`)
+
+| File | Platform | Controls | Description |
 |---|---|---|---|
-| `config/oscal-salesforce/sbs_catalog.json` | Salesforce | 45 SBS controls | OSCAL 1.1.2 |
-| `config/workday/workday_catalog.json` | Workday | 30 WSCC controls | OSCAL 1.1.2 |
-| `config/sscf/sscf_catalog.json` | Platform-agnostic | 14 SSCF controls | OSCAL 1.1.2 |
-| `config/ccm/ccm_v4.1_oscal_ref.yaml` | Reference | 197 CCM v4.1 controls | Reference pointer |
+| `config/salesforce/sbs_resolved_catalog.json` | Salesforce | 35 | Params substituted, platform alters merged |
+| `config/workday/wscc_resolved_catalog.json` | Workday | 30 | Params substituted, platform alters merged |
+
+Regenerate after editing a profile:
+```bash
+python3 scripts/gen_resolved_profile.py \
+    --catalog config/sscf/sscf_v1_catalog.json \
+    --profile config/salesforce/sbs_v1_profile.json \
+    --out config/salesforce/sbs_resolved_catalog.json
+```
+
+### SSP Template
+
+| File | Purpose |
+|---|---|
+| `config/ssp/commercial_saas_ssp_template.json` | OSCAL 1.1.2 SSP template — commercial SaaS variant (no FedRAMP red tape) |
+
+Key differences from FedRAMP SSP: no JAB/PMO, no FIPS 199 government data categories, no physical media controls. Sensitivity tier derived from SSCF score (RED=high, AMBER=moderate, GREEN=low). Regulatory crosswalk: SOX/HIPAA/SOC2/ISO 27001:2022/PCI DSS v4/GDPR.
+
+### Component Definitions
+
+| File | Purpose |
+|---|---|
+| `config/component-definitions/salesforce_component.json` | Salesforce SaaS component — 18 implemented-requirements with `control-origination`, `responsibility`, `set-parameters` |
+| `config/component-definitions/workday_component.json` | Workday SaaS component — 16 implemented-requirements |
 
 ### SSCF and CCM Mapping Files
 

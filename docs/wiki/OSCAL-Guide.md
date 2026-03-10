@@ -55,7 +55,7 @@ flowchart TD
 | 6 | **Assessment Results** | What did I find? Pass, fail, or partial? |
 | 7 | **POA&M** | What gaps exist, who owns them, and when will they be fixed? |
 
-> **We currently implement layers 1–3 and 6–7.** Layers 4–5 (SSP and Assessment Plan) are on the roadmap.
+> **We implement layers 1–4, 6–7.** Layer 5 (Assessment Plan) is the only unimplemented layer — it is a planning artifact for future test cycles and not required for automated continuous assessment.
 
 ---
 
@@ -74,7 +74,11 @@ No machine-readable output. No regulatory crosswalk. Nothing a GRC tool could im
 ### With OSCAL
 
 ```
-OSCAL Catalog → OSCAL Profile → Evidence Collection → OSCAL Assessment Results → OSCAL POA&M
+OSCAL Catalog (+ ODPs) → Resolved Profile Catalog
+       ↓
+Platform Evidence Collection (Salesforce / Workday API)
+       ↓
+OSCAL Assessment Results  →  OSCAL SSP  →  OSCAL POA&M
 ```
 
 The output is a structured file any compliant tool can read. The CCM v4.1 regulatory crosswalk (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, GDPR) comes for free because it lives in the catalog layer and flows down automatically.
@@ -333,13 +337,15 @@ flowchart LR
 
 ## OSCAL Interoperability
 
-Because this system produces OSCAL-structured outputs, other tools can consume them directly:
+This system produces fully OSCAL 1.1.2-valid output files. Any OSCAL-compliant tool can consume them directly:
 
 ```mermaid
 flowchart LR
-    subgraph OUR["This System"]
-        AR["Assessment Results\n(gap_analysis.json → OSCAL AR)"]
-        POAM["POA&M\n(backlog.json → OSCAL POA&M)"]
+    subgraph OUR["This System — OSCAL Outputs"]
+        RC["Resolved Catalog\n(gen_resolved_profile.py)"]
+        AR["Assessment Results\n(gen_assessment_results.py)"]
+        SSP["System Security Plan\n(gen_ssp.py)"]
+        POAM["POA&M\n(gen_poam.py)"]
     end
 
     subgraph TOOLS["Compatible Tools"]
@@ -347,21 +353,34 @@ flowchart LR
         TR["IBM Compliance Trestle\nOSCAL authoring"]
         FED["FedRAMP 20x\nFederal compliance"]
         CLI["oscal-cli\nValidation & profile resolution"]
-        SC["oscal-compass\nCommunity tooling"]
     end
 
+    RC --> TR
+    RC --> CLI
     AR --> RS
     AR --> TR
     AR --> FED
+    SSP --> RS
+    SSP --> TR
     POAM --> RS
     POAM --> TR
     POAM --> CLI
 
+    style RC fill:#e8932a,color:#fff
     style AR fill:#16a085,color:#fff
+    style SSP fill:#9b59b6,color:#fff
     style POAM fill:#7f8c8d,color:#fff
 ```
 
-> **Note:** Full OSCAL AR and POA&M output is on the roadmap (Phase I). The current `gap_analysis.json` and `backlog.json` follow OSCAL field naming conventions but are not yet fully OSCAL-schema-valid. Phase I migrates them to the official formats.
+**Output files per assessment run:**
+
+| File | Generator | OSCAL Model | Purpose |
+|---|---|---|---|
+| `sbs_resolved_catalog.json` | `gen_resolved_profile.py` | Catalog | Flattened SBS profile — params substituted, alters merged |
+| `wscc_resolved_catalog.json` | `gen_resolved_profile.py` | Catalog | Flattened WSCC profile |
+| `assessment_results.json` | `gen_assessment_results.py` | Assessment Results | One observation + finding per control; evidence refs |
+| `ssp.json` | `gen_ssp.py` | System Security Plan | Per-org, per-run; sensitivity tier from SSCF score |
+| `poam.json` | `gen_poam.py` | POA&M | Cumulative; numbered POAM-NNNN items; auto-closes resolved |
 
 ---
 
@@ -398,7 +417,7 @@ It answers "how specifically do I check this control in Salesforce (or Workday)?
 The CSA Cloud Controls Matrix (CCM) v4.1 has 207 controls across 17 cloud security domains. Its main value is a built-in regulatory crosswalk — every CCM control is already mapped to SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, and GDPR. By referencing CCM control IDs, our SSCF controls inherit those regulatory mappings for free.
 
 **Q: Will findings from this tool be accepted by a FedRAMP auditor?**
-After Phase I (OSCAL AR + POA&M), the output files will be OSCAL-schema-valid and compatible with FedRAMP 20x automation tooling. Acceptance by a specific auditor depends on their tooling and process — but OSCAL-valid output is the baseline requirement.
+The output files (`assessment_results.json`, `ssp.json`, `poam.json`) are OSCAL 1.1.2-schema-valid and compatible with FedRAMP 20x automation tooling. Acceptance by a specific auditor depends on their tooling and process — but OSCAL-valid output is the baseline requirement. Note: this is a commercial SaaS SSP, not a FedRAMP SSP — the template explicitly removes JAB/PMO references and replaces FIPS 199 categories with SSCF RED/AMBER/GREEN sensitivity tiers.
 
 ---
 
