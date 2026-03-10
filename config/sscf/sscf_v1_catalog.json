@@ -3,13 +3,19 @@
     "uuid": "f1a2b3c4-d5e6-7890-fedc-ba0987654321",
     "metadata": {
       "title": "SaaS Security Customer Framework (SSCF) v1.0 Control Catalog",
-      "last-modified": "2026-03-07T00:00:00Z",
+      "last-modified": "2026-03-10T00:00:00Z",
       "version": "1.0.0",
       "oscal-version": "1.1.2",
-      "remarks": "SSCF v1.0 full catalog: 36 controls across 6 domains (CON, DSP, IAM, IPY, LOG, SEF). Each control carries a ccm-controls prop referencing the authoritative CSA CCM v4.1 control IDs. This catalog is the base for platform-specific OSCAL profiles (SBS for Salesforce, WSCC for Workday). CCM v4.1 regulatory crosswalk (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53 r5, PCI DSS v4, GDPR) applies to all referenced CCM controls.",
+      "remarks": "SSCF v1.0 full catalog: 36 controls across 6 domains (CON, DSP, IAM, IPY, LOG, SEF). Each control carries a ccm-controls prop referencing the authoritative CSA CCM v4.1 control IDs. This catalog is the base for platform-specific OSCAL profiles (SBS for Salesforce, WSCC for Workday). CCM v4.1 regulatory crosswalk (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53 r5, PCI DSS v4, GDPR) applies to all referenced CCM controls. Parameterized 2026-03-10: all 36 controls carry ODP params following NIST/FedRAMP patterns. Platform profiles (SBS/WSCC) set-parameters override defaults.",
       "roles": [
-        { "id": "creator", "title": "Catalog Author" },
-        { "id": "maintainer", "title": "Control Framework Maintainer" }
+        {
+          "id": "creator",
+          "title": "Catalog Author"
+        },
+        {
+          "id": "maintainer",
+          "title": "Control Framework Maintainer"
+        }
       ],
       "parties": [
         {
@@ -19,8 +25,18 @@
         }
       ],
       "responsible-parties": [
-        { "role-id": "creator", "party-uuids": ["b2c3d4e5-f6a7-8901-bcde-f12345678901"] },
-        { "role-id": "maintainer", "party-uuids": ["b2c3d4e5-f6a7-8901-bcde-f12345678901"] }
+        {
+          "role-id": "creator",
+          "party-uuids": [
+            "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          ]
+        },
+        {
+          "role-id": "maintainer",
+          "party-uuids": [
+            "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          ]
+        }
       ],
       "links": [
         {
@@ -41,107 +57,400 @@
         "class": "domain",
         "title": "Configuration Hardening",
         "props": [
-          { "name": "ccm-domain", "value": "CCC" },
-          { "name": "domain-description", "value": "Controls ensuring SaaS platforms are deployed and maintained against approved security baselines, with drift detection and credential lifecycle governance." }
+          {
+            "name": "ccm-domain",
+            "value": "CCC"
+          },
+          {
+            "name": "domain-description",
+            "value": "Controls ensuring SaaS platforms are deployed and maintained against approved security baselines, with drift detection and credential lifecycle governance."
+          }
         ],
         "controls": [
           {
             "id": "sscf-con-001",
             "title": "SaaS Security Baseline Enforcement",
+            "params": [
+              {
+                "id": "sscf-con-001_prm_1",
+                "label": "assessment-frequency",
+                "usage": "Frequency at which the security baseline is assessed against a published benchmark (e.g., quarterly, monthly, semi-annually)",
+                "values": [
+                  "quarterly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-CON-001" },
-              { "name": "sort-id", "value": "con-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "CCC-01,CCC-07" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-CON-001" }
+              {
+                "name": "label",
+                "value": "SSCF-CON-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "CCC-01,CCC-07"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-CON-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-con-001_smt", "name": "statement", "prose": "Apply and continuously assess approved secure configuration baselines for each SaaS platform against a published benchmark." },
-              { "id": "sscf-con-001_gdn", "name": "guidance", "prose": "Each SaaS platform must have a documented security baseline approved by the Security Team. Baseline controls must be assessed at least quarterly via automated tooling. Deviations must be tracked as findings with assigned owners and remediation deadlines. The baseline must be updated when the vendor releases new security features or configuration options relevant to the organization's risk profile." },
-              { "id": "sscf-con-001_obj", "name": "objective", "prose": "Verify that an approved baseline exists for the platform, automated assessment occurs at least quarterly, all current deviations are tracked with owners and deadlines, and the baseline is current with vendor guidance." }
+              {
+                "id": "sscf-con-001_smt",
+                "name": "statement",
+                "prose": "Apply and continuously assess approved secure configuration baselines for each SaaS platform against a published benchmark, at minimum {{ insert: param, sscf-con-001_prm_1 }}."
+              },
+              {
+                "id": "sscf-con-001_gdn",
+                "name": "guidance",
+                "prose": "Each SaaS platform must have a documented security baseline approved by the Security Team. Baseline controls must be assessed at least quarterly via automated tooling. Deviations must be tracked as findings with assigned owners and remediation deadlines. The baseline must be updated when the vendor releases new security features or configuration options relevant to the organization's risk profile."
+              },
+              {
+                "id": "sscf-con-001_obj",
+                "name": "objective",
+                "prose": "Verify that an approved baseline exists for the platform, automated assessment occurs at least quarterly, all current deviations are tracked with owners and deadlines, and the baseline is current with vendor guidance."
+              }
             ]
           },
           {
             "id": "sscf-con-002",
             "title": "Drift Detection and Baseline Deviation Management",
+            "params": [
+              {
+                "id": "sscf-con-002_prm_1",
+                "label": "critical-drift-remediation-sla",
+                "usage": "Maximum time allowed to remediate a critical baseline drift deviation",
+                "values": [
+                  "24 hours"
+                ]
+              },
+              {
+                "id": "sscf-con-002_prm_2",
+                "label": "high-drift-remediation-sla",
+                "usage": "Maximum time allowed to remediate a high-severity baseline drift deviation",
+                "values": [
+                  "7 days"
+                ]
+              },
+              {
+                "id": "sscf-con-002_prm_3",
+                "label": "moderate-drift-remediation-sla",
+                "usage": "Maximum time allowed to remediate a moderate-severity baseline drift deviation",
+                "values": [
+                  "30 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-CON-002" },
-              { "name": "sort-id", "value": "con-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "CCC-04,CCC-06" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-CON-002" }
+              {
+                "name": "label",
+                "value": "SSCF-CON-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "CCC-04,CCC-06"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-CON-002"
+              }
             ],
             "parts": [
-              { "id": "sscf-con-002_smt", "name": "statement", "prose": "Detect unauthorized configuration drift from the approved security baseline and enforce a remediation workflow with defined SLAs." },
-              { "id": "sscf-con-002_gdn", "name": "guidance", "prose": "Drift detection must be continuous or near-real-time for critical configuration items. Detection of baseline deviation must trigger an automated alert routed to the platform owner and Security Team. Remediation SLAs: Critical drift — 24 hours; High drift — 7 days; Moderate drift — 30 days. Unresolved drift beyond SLA must escalate to management review." },
-              { "id": "sscf-con-002_obj", "name": "objective", "prose": "Verify that drift detection is active for critical baseline items, alerts route to owners and security, and remediation SLAs are defined and tracked." }
+              {
+                "id": "sscf-con-002_smt",
+                "name": "statement",
+                "prose": "Detect unauthorized configuration drift from the approved security baseline and enforce a remediation workflow with defined SLAs: Critical \u2014 {{ insert: param, sscf-con-002_prm_1 }}; High \u2014 {{ insert: param, sscf-con-002_prm_2 }}; Moderate \u2014 {{ insert: param, sscf-con-002_prm_3 }}."
+              },
+              {
+                "id": "sscf-con-002_gdn",
+                "name": "guidance",
+                "prose": "Drift detection must be continuous or near-real-time for critical configuration items. Detection of baseline deviation must trigger an automated alert routed to the platform owner and Security Team. Remediation SLAs: Critical drift \u2014 24 hours; High drift \u2014 7 days; Moderate drift \u2014 30 days. Unresolved drift beyond SLA must escalate to management review."
+              },
+              {
+                "id": "sscf-con-002_obj",
+                "name": "objective",
+                "prose": "Verify that drift detection is active for critical baseline items, alerts route to owners and security, and remediation SLAs are defined and tracked."
+              }
             ]
           },
           {
             "id": "sscf-con-003",
             "title": "API Credential and Token Lifecycle",
+            "params": [
+              {
+                "id": "sscf-con-003_prm_1",
+                "label": "integration-password-max-age",
+                "usage": "Maximum age for integration system passwords before mandatory rotation",
+                "values": [
+                  "90 days"
+                ]
+              },
+              {
+                "id": "sscf-con-003_prm_2",
+                "label": "api-key-max-age",
+                "usage": "Maximum age for API keys before mandatory rotation",
+                "values": [
+                  "180 days"
+                ]
+              },
+              {
+                "id": "sscf-con-003_prm_3",
+                "label": "oauth-refresh-token-max-lifetime",
+                "usage": "Maximum lifetime for OAuth refresh tokens",
+                "values": [
+                  "1 year"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-CON-003" },
-              { "name": "sort-id", "value": "con-03" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "CEK-01,IAM-07" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-CKM-001" }
+              {
+                "name": "label",
+                "value": "SSCF-CON-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-03"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "CEK-01,IAM-07"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-CKM-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-con-003_smt", "name": "statement", "prose": "Govern the full lifecycle of API credentials, OAuth tokens, integration system passwords, and service account secrets used to access SaaS platforms." },
-              { "id": "sscf-con-003_gdn", "name": "guidance", "prose": "All API credentials must be inventoried in a secrets manager. Rotation intervals: integration passwords — 90 days max; OAuth refresh tokens — 1 year max; API keys — 180 days max. Credentials must not be stored in code repositories, config files, or incident tickets. Revocation must be immediate on personnel departure or suspected compromise." },
-              { "id": "sscf-con-003_obj", "name": "objective", "prose": "Verify that all API credentials are inventoried, rotation schedules are enforced, no long-lived credentials exceed policy limits, and revocation procedures are documented and tested." }
+              {
+                "id": "sscf-con-003_smt",
+                "name": "statement",
+                "prose": "Govern the full lifecycle of API credentials, OAuth tokens, integration system passwords, and service account secrets used to access SaaS platforms, with maximum credential ages of: integration passwords {{ insert: param, sscf-con-003_prm_1 }}, API keys {{ insert: param, sscf-con-003_prm_2 }}, OAuth refresh tokens {{ insert: param, sscf-con-003_prm_3 }}."
+              },
+              {
+                "id": "sscf-con-003_gdn",
+                "name": "guidance",
+                "prose": "All API credentials must be inventoried in a secrets manager. Rotation intervals: integration passwords \u2014 90 days max; OAuth refresh tokens \u2014 1 year max; API keys \u2014 180 days max. Credentials must not be stored in code repositories, config files, or incident tickets. Revocation must be immediate on personnel departure or suspected compromise."
+              },
+              {
+                "id": "sscf-con-003_obj",
+                "name": "objective",
+                "prose": "Verify that all API credentials are inventoried, rotation schedules are enforced, no long-lived credentials exceed policy limits, and revocation procedures are documented and tested."
+              }
             ]
           },
           {
             "id": "sscf-con-004",
             "title": "Platform Hardening and Security Settings Verification",
+            "params": [
+              {
+                "id": "sscf-con-004_prm_1",
+                "label": "hardening-review-frequency",
+                "usage": "Frequency at which platform hardening settings are reviewed and updated",
+                "values": [
+                  "after each major platform update, and at minimum annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-CON-004" },
-              { "name": "sort-id", "value": "con-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "CCC-02,CCC-03" }
+              {
+                "name": "label",
+                "value": "SSCF-CON-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "CCC-02,CCC-03"
+              }
             ],
             "parts": [
-              { "id": "sscf-con-004_smt", "name": "statement", "prose": "Verify that vendor-published hardening guidance and security settings are applied to each SaaS platform, including disabling insecure defaults and enabling platform-native security features." },
-              { "id": "sscf-con-004_gdn", "name": "guidance", "prose": "Hardening must address: disabling legacy authentication protocols, enabling encryption-at-rest and in-transit for all tenant data, configuring platform-native DLP rules, disabling unused features and integrations, and applying IP allowlisting where the platform supports it. Hardening settings must be documented in a platform runbook and reviewed after each major platform update." },
-              { "id": "sscf-con-004_obj", "name": "objective", "prose": "Verify that vendor hardening guidance has been applied, insecure defaults are disabled, and platform-native security features are enabled and configured per policy." }
+              {
+                "id": "sscf-con-004_smt",
+                "name": "statement",
+                "prose": "Verify that vendor-published hardening guidance and security settings are applied to each SaaS platform, including disabling insecure defaults and enabling platform-native security features, reviewed {{ insert: param, sscf-con-004_prm_1 }}."
+              },
+              {
+                "id": "sscf-con-004_gdn",
+                "name": "guidance",
+                "prose": "Hardening must address: disabling legacy authentication protocols, enabling encryption-at-rest and in-transit for all tenant data, configuring platform-native DLP rules, disabling unused features and integrations, and applying IP allowlisting where the platform supports it. Hardening settings must be documented in a platform runbook and reviewed after each major platform update."
+              },
+              {
+                "id": "sscf-con-004_obj",
+                "name": "objective",
+                "prose": "Verify that vendor hardening guidance has been applied, insecure defaults are disabled, and platform-native security features are enabled and configured per policy."
+              }
             ]
           },
           {
             "id": "sscf-con-005",
             "title": "Third-Party Integration and Supply Chain Security",
+            "params": [
+              {
+                "id": "sscf-con-005_prm_1",
+                "label": "oauth-app-review-frequency",
+                "usage": "Frequency of reviews for OAuth-connected applications",
+                "values": [
+                  "quarterly"
+                ]
+              },
+              {
+                "id": "sscf-con-005_prm_2",
+                "label": "unused-integration-revocation-period",
+                "usage": "Inactivity period after which an unused integration must be revoked",
+                "values": [
+                  "90 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-CON-005" },
-              { "name": "sort-id", "value": "con-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "STA-09,AIS-01" }
+              {
+                "name": "label",
+                "value": "SSCF-CON-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "STA-09,AIS-01"
+              }
             ],
             "parts": [
-              { "id": "sscf-con-005_smt", "name": "statement", "prose": "Inventory and assess the security posture of all third-party integrations and OAuth-connected applications accessing the SaaS platform." },
-              { "id": "sscf-con-005_gdn", "name": "guidance", "prose": "All third-party integrations must be inventoried with documented business justification, data access scope, and security assessment status. OAuth-connected apps must be reviewed quarterly; apps without documented approval must be revoked. High-risk integrations (those with write access to sensitive data) require annual security review. Integrations that have not been used in 90 days must be revoked." },
-              { "id": "sscf-con-005_obj", "name": "objective", "prose": "Verify that a current integration inventory exists, all integrations have documented approvals and scoped permissions, unauthorized or unused integrations are revoked, and high-risk integrations have current security assessments." }
+              {
+                "id": "sscf-con-005_smt",
+                "name": "statement",
+                "prose": "Inventory and assess the security posture of all third-party integrations and OAuth-connected applications accessing the SaaS platform, with {{ insert: param, sscf-con-005_prm_1 }} reviews and revocation of integrations unused for {{ insert: param, sscf-con-005_prm_2 }}."
+              },
+              {
+                "id": "sscf-con-005_gdn",
+                "name": "guidance",
+                "prose": "All third-party integrations must be inventoried with documented business justification, data access scope, and security assessment status. OAuth-connected apps must be reviewed quarterly; apps without documented approval must be revoked. High-risk integrations (those with write access to sensitive data) require annual security review. Integrations that have not been used in 90 days must be revoked."
+              },
+              {
+                "id": "sscf-con-005_obj",
+                "name": "objective",
+                "prose": "Verify that a current integration inventory exists, all integrations have documented approvals and scoped permissions, unauthorized or unused integrations are revoked, and high-risk integrations have current security assessments."
+              }
             ]
           },
           {
             "id": "sscf-con-006",
             "title": "Patch and Version Management Assurance",
+            "params": [
+              {
+                "id": "sscf-con-006_prm_1",
+                "label": "critical-patch-sla",
+                "usage": "Maximum time to apply a critical security patch after vendor release",
+                "values": [
+                  "30 days"
+                ]
+              },
+              {
+                "id": "sscf-con-006_prm_2",
+                "label": "high-severity-patch-sla",
+                "usage": "Maximum time to apply a high-severity security patch after vendor release",
+                "values": [
+                  "90 days"
+                ]
+              },
+              {
+                "id": "sscf-con-006_prm_3",
+                "label": "eol-feature-disable-period",
+                "usage": "Maximum time to disable end-of-life or deprecated features after vendor EOL notice",
+                "values": [
+                  "60 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-CON-006" },
-              { "name": "sort-id", "value": "con-06" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "CCC-08,TVM-06" }
+              {
+                "name": "label",
+                "value": "SSCF-CON-006"
+              },
+              {
+                "name": "sort-id",
+                "value": "con-06"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "CCC-08,TVM-06"
+              }
             ],
             "parts": [
-              { "id": "sscf-con-006_smt", "name": "statement", "prose": "Track and assure the application of security-relevant vendor patches, updates, and deprecation of end-of-life SaaS platform versions or features." },
-              { "id": "sscf-con-006_gdn", "name": "guidance", "prose": "Application owners must monitor vendor security bulletins and release notes. Critical security patches must be applied within 30 days of release; high-severity within 90 days. End-of-life or deprecated features must be disabled within 60 days of vendor EOL notice. Patch application status must be documented in the platform runbook and reported to Security Team quarterly." },
-              { "id": "sscf-con-006_obj", "name": "objective", "prose": "Verify that vendor security bulletins are monitored, critical patches are applied within SLA, no EOL features are in active use, and patch status is documented and reported." }
+              {
+                "id": "sscf-con-006_smt",
+                "name": "statement",
+                "prose": "Track and assure the application of security-relevant vendor patches within: {{ insert: param, sscf-con-006_prm_1 }} for critical patches, {{ insert: param, sscf-con-006_prm_2 }} for high-severity patches, and {{ insert: param, sscf-con-006_prm_3 }} for end-of-life feature disablement."
+              },
+              {
+                "id": "sscf-con-006_gdn",
+                "name": "guidance",
+                "prose": "Application owners must monitor vendor security bulletins and release notes. Critical security patches must be applied within 30 days of release; high-severity within 90 days. End-of-life or deprecated features must be disabled within 60 days of vendor EOL notice. Patch application status must be documented in the platform runbook and reported to Security Team quarterly."
+              },
+              {
+                "id": "sscf-con-006_obj",
+                "name": "objective",
+                "prose": "Verify that vendor security bulletins are monitored, critical patches are applied within SLA, no EOL features are in active use, and patch status is documented and reported."
+              }
             ]
           }
         ]
@@ -151,106 +460,348 @@
         "class": "domain",
         "title": "Data Security and Privacy",
         "props": [
-          { "name": "ccm-domain", "value": "DSP" },
-          { "name": "domain-description", "value": "Controls protecting sensitive business and personal data stored in, processed by, or transiting through SaaS platforms." }
+          {
+            "name": "ccm-domain",
+            "value": "DSP"
+          },
+          {
+            "name": "domain-description",
+            "value": "Controls protecting sensitive business and personal data stored in, processed by, or transiting through SaaS platforms."
+          }
         ],
         "controls": [
           {
             "id": "sscf-dsp-001",
             "title": "Sensitive Data Access Control",
+            "params": [
+              {
+                "id": "sscf-dsp-001_prm_1",
+                "label": "sensitive-data-access-review-frequency",
+                "usage": "Frequency of access reviews for roles with sensitive data permissions",
+                "values": [
+                  "quarterly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-DSP-001" },
-              { "name": "sort-id", "value": "dsp-01" },
-              { "name": "severity", "value": "critical" },
-              { "name": "owner-team", "value": "data_security" },
-              { "name": "ccm-controls", "value": "DSP-04,DSP-05" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-DSP-001" }
+              {
+                "name": "label",
+                "value": "SSCF-DSP-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-01"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "owner-team",
+                "value": "data_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-04,DSP-05"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-DSP-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-dsp-001_smt", "name": "statement", "prose": "Restrict and continuously monitor access to sensitive business and personal data fields within SaaS platforms, aligned to data classification policy." },
-              { "id": "sscf-dsp-001_gdn", "name": "guidance", "prose": "Sensitive data categories include: PII (SSN, DOB, government ID), financial data (compensation, account numbers), health data (PHI), and credentials. Access must be scoped to business need with documented justification. Field-level masking or encryption is required where the platform supports it. Access reviews must occur quarterly for roles with sensitive data permissions." },
-              { "id": "sscf-dsp-001_obj", "name": "objective", "prose": "Verify that sensitive data fields are identified in the platform, access is restricted to documented roles, field-level controls are enabled where available, and access is reviewed quarterly." }
+              {
+                "id": "sscf-dsp-001_smt",
+                "name": "statement",
+                "prose": "Restrict and continuously monitor access to sensitive business and personal data fields within SaaS platforms, aligned to data classification policy, with access reviews at minimum {{ insert: param, sscf-dsp-001_prm_1 }}."
+              },
+              {
+                "id": "sscf-dsp-001_gdn",
+                "name": "guidance",
+                "prose": "Sensitive data categories include: PII (SSN, DOB, government ID), financial data (compensation, account numbers), health data (PHI), and credentials. Access must be scoped to business need with documented justification. Field-level masking or encryption is required where the platform supports it. Access reviews must occur quarterly for roles with sensitive data permissions."
+              },
+              {
+                "id": "sscf-dsp-001_obj",
+                "name": "objective",
+                "prose": "Verify that sensitive data fields are identified in the platform, access is restricted to documented roles, field-level controls are enabled where available, and access is reviewed quarterly."
+              }
             ]
           },
           {
             "id": "sscf-dsp-002",
             "title": "Data Export and Exfiltration Controls",
+            "params": [
+              {
+                "id": "sscf-dsp-002_prm_1",
+                "label": "external-sharing-max-duration",
+                "usage": "Maximum duration for external sharing links before mandatory expiry",
+                "values": [
+                  "30 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-DSP-002" },
-              { "name": "sort-id", "value": "dsp-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "data_security" },
-              { "name": "ccm-controls", "value": "DSP-07,DSP-08" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-DSP-002" }
+              {
+                "name": "label",
+                "value": "SSCF-DSP-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "data_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-07,DSP-08"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-DSP-002"
+              }
             ],
             "parts": [
-              { "id": "sscf-dsp-002_smt", "name": "statement", "prose": "Prevent unauthorized bulk data exports, report downloads, and API-based exfiltration from SaaS platforms." },
-              { "id": "sscf-dsp-002_gdn", "name": "guidance", "prose": "Controls must include: export volume thresholds with automated alerts, restriction of export permissions to documented roles, prohibition of exports to personal storage (Dropbox, personal email), and logging of all bulk export events. External sharing links must have expiry dates and require authentication." },
-              { "id": "sscf-dsp-002_obj", "name": "objective", "prose": "Verify that export permissions are restricted, volume-based alerts are active, exports are logged with user attribution, and external sharing controls prevent unauthenticated or indefinite access." }
+              {
+                "id": "sscf-dsp-002_smt",
+                "name": "statement",
+                "prose": "Prevent unauthorized bulk data exports, report downloads, and API-based exfiltration from SaaS platforms, with external sharing links limited to {{ insert: param, sscf-dsp-002_prm_1 }} duration and requiring authentication."
+              },
+              {
+                "id": "sscf-dsp-002_gdn",
+                "name": "guidance",
+                "prose": "Controls must include: export volume thresholds with automated alerts, restriction of export permissions to documented roles, prohibition of exports to personal storage (Dropbox, personal email), and logging of all bulk export events. External sharing links must have expiry dates and require authentication."
+              },
+              {
+                "id": "sscf-dsp-002_obj",
+                "name": "objective",
+                "prose": "Verify that export permissions are restricted, volume-based alerts are active, exports are logged with user attribution, and external sharing controls prevent unauthenticated or indefinite access."
+              }
             ]
           },
           {
             "id": "sscf-dsp-003",
             "title": "Data Classification and Inventory",
+            "params": [
+              {
+                "id": "sscf-dsp-003_prm_1",
+                "label": "classification-inventory-review-frequency",
+                "usage": "Frequency at which the data classification inventory is reviewed and updated",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-DSP-003" },
-              { "name": "sort-id", "value": "dsp-03" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "data_security" },
-              { "name": "ccm-controls", "value": "DSP-01,DSP-02" }
+              {
+                "name": "label",
+                "value": "SSCF-DSP-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-03"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "data_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-01,DSP-02"
+              }
             ],
             "parts": [
-              { "id": "sscf-dsp-003_smt", "name": "statement", "prose": "Maintain a current data inventory and classification map for all data stored or processed within each SaaS platform, aligned to the organization's data classification policy." },
-              { "id": "sscf-dsp-003_gdn", "name": "guidance", "prose": "Data classification must identify: data types present (PII, financial, health, proprietary), applicable regulations per data type, data owner and steward, and sensitivity tier (public, internal, confidential, restricted). Classification must be updated when new data flows are introduced or platform features change the data processing scope. Data stewards are responsible for maintaining accuracy." },
-              { "id": "sscf-dsp-003_obj", "name": "objective", "prose": "Verify that a current data inventory exists for the platform, all data types are classified per policy, ownership is assigned, and the inventory is reviewed at least annually." }
+              {
+                "id": "sscf-dsp-003_smt",
+                "name": "statement",
+                "prose": "Maintain a current data inventory and classification map for all data stored or processed within each SaaS platform, aligned to the organization's data classification policy, reviewed at minimum {{ insert: param, sscf-dsp-003_prm_1 }}."
+              },
+              {
+                "id": "sscf-dsp-003_gdn",
+                "name": "guidance",
+                "prose": "Data classification must identify: data types present (PII, financial, health, proprietary), applicable regulations per data type, data owner and steward, and sensitivity tier (public, internal, confidential, restricted). Classification must be updated when new data flows are introduced or platform features change the data processing scope. Data stewards are responsible for maintaining accuracy."
+              },
+              {
+                "id": "sscf-dsp-003_obj",
+                "name": "objective",
+                "prose": "Verify that a current data inventory exists for the platform, all data types are classified per policy, ownership is assigned, and the inventory is reviewed at least annually."
+              }
             ]
           },
           {
             "id": "sscf-dsp-004",
             "title": "Cross-Border Data Transfer and Residency Controls",
+            "params": [
+              {
+                "id": "sscf-dsp-004_prm_1",
+                "label": "transfer-mechanism-review-frequency",
+                "usage": "Frequency of review for cross-border transfer mechanisms and vendor DPAs",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-DSP-004" },
-              { "name": "sort-id", "value": "dsp-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "data_security" },
-              { "name": "ccm-controls", "value": "DSP-19,IPY-01" }
+              {
+                "name": "label",
+                "value": "SSCF-DSP-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "data_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-19,IPY-01"
+              }
             ],
             "parts": [
-              { "id": "sscf-dsp-004_smt", "name": "statement", "prose": "Ensure that cross-border data transfers comply with applicable data sovereignty requirements, and that SaaS platform data residency settings align with organizational policy and regulatory obligations." },
-              { "id": "sscf-dsp-004_gdn", "name": "guidance", "prose": "For regulated data (GDPR personal data, HIPAA PHI, data subject to export controls): data residency must be configured to the approved jurisdiction, cross-border transfer mechanisms (SCCs, BCRs, adequacy decisions) must be documented and current. SaaS vendor's data processing agreements must specify processing locations. Annual review required when vendor infrastructure changes." },
-              { "id": "sscf-dsp-004_obj", "name": "objective", "prose": "Verify that data residency is configured per policy, cross-border transfer legal mechanisms are in place and current, and vendor DPAs accurately reflect processing locations." }
+              {
+                "id": "sscf-dsp-004_smt",
+                "name": "statement",
+                "prose": "Ensure that cross-border data transfers comply with applicable data sovereignty requirements, and that SaaS platform data residency settings align with organizational policy and regulatory obligations, with transfer mechanisms and vendor DPAs reviewed {{ insert: param, sscf-dsp-004_prm_1 }}."
+              },
+              {
+                "id": "sscf-dsp-004_gdn",
+                "name": "guidance",
+                "prose": "For regulated data (GDPR personal data, HIPAA PHI, data subject to export controls): data residency must be configured to the approved jurisdiction, cross-border transfer mechanisms (SCCs, BCRs, adequacy decisions) must be documented and current. SaaS vendor's data processing agreements must specify processing locations. Annual review required when vendor infrastructure changes."
+              },
+              {
+                "id": "sscf-dsp-004_obj",
+                "name": "objective",
+                "prose": "Verify that data residency is configured per policy, cross-border transfer legal mechanisms are in place and current, and vendor DPAs accurately reflect processing locations."
+              }
             ]
           },
           {
             "id": "sscf-dsp-005",
             "title": "Data Retention and Secure Disposal",
+            "params": [
+              {
+                "id": "sscf-dsp-005_prm_1",
+                "label": "minimum-retention-period",
+                "usage": "Minimum data retention period before secure deletion is permitted (may be extended by regulation-specific schedules)",
+                "values": [
+                  "12 months"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-DSP-005" },
-              { "name": "sort-id", "value": "dsp-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "data_security" },
-              { "name": "ccm-controls", "value": "DSP-16,DSP-20" }
+              {
+                "name": "label",
+                "value": "SSCF-DSP-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "data_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-16,DSP-20"
+              }
             ],
             "parts": [
-              { "id": "sscf-dsp-005_smt", "name": "statement", "prose": "Apply and enforce data retention schedules and secure deletion procedures for data stored in SaaS platforms, ensuring data is not retained beyond its authorized lifecycle." },
-              { "id": "sscf-dsp-005_gdn", "name": "guidance", "prose": "Retention schedules must be defined per data classification and regulation (e.g., HIPAA: 6 years, SOX: 7 years, GDPR: storage limitation principle). SaaS platforms must support or integrate with automated deletion workflows. At retention expiry, data must be cryptographically erased or documented as destroyed. Retention holds for legal proceedings must override scheduled deletion and be tracked." },
-              { "id": "sscf-dsp-005_obj", "name": "objective", "prose": "Verify that retention schedules are defined, automated deletion is configured or documented, secure deletion is cryptographic, and retention holds are tracked separately." }
+              {
+                "id": "sscf-dsp-005_smt",
+                "name": "statement",
+                "prose": "Apply and enforce data retention schedules with a minimum retention period of {{ insert: param, sscf-dsp-005_prm_1 }} and secure deletion procedures for data stored in SaaS platforms, ensuring data is not retained beyond its authorized lifecycle."
+              },
+              {
+                "id": "sscf-dsp-005_gdn",
+                "name": "guidance",
+                "prose": "Retention schedules must be defined per data classification and regulation (e.g., HIPAA: 6 years, SOX: 7 years, GDPR: storage limitation principle). SaaS platforms must support or integrate with automated deletion workflows. At retention expiry, data must be cryptographically erased or documented as destroyed. Retention holds for legal proceedings must override scheduled deletion and be tracked."
+              },
+              {
+                "id": "sscf-dsp-005_obj",
+                "name": "objective",
+                "prose": "Verify that retention schedules are defined, automated deletion is configured or documented, secure deletion is cryptographic, and retention holds are tracked separately."
+              }
             ]
           },
           {
             "id": "sscf-dsp-006",
             "title": "Privacy Rights and Data Subject Access Management",
+            "params": [
+              {
+                "id": "sscf-dsp-006_prm_1",
+                "label": "gdpr-dsar-response-sla",
+                "usage": "Maximum response time for GDPR data subject access requests",
+                "values": [
+                  "30 days"
+                ]
+              },
+              {
+                "id": "sscf-dsp-006_prm_2",
+                "label": "ccpa-dsar-response-sla",
+                "usage": "Maximum response time for CCPA deletion and opt-out requests",
+                "values": [
+                  "45 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-DSP-006" },
-              { "name": "sort-id", "value": "dsp-06" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "data_security" },
-              { "name": "ccm-controls", "value": "DSP-12,DSP-17" }
+              {
+                "name": "label",
+                "value": "SSCF-DSP-006"
+              },
+              {
+                "name": "sort-id",
+                "value": "dsp-06"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "data_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-12,DSP-17"
+              }
             ],
             "parts": [
-              { "id": "sscf-dsp-006_smt", "name": "statement", "prose": "Ensure SaaS platform data handling supports organizational obligations to fulfill data subject rights requests (access, correction, deletion, portability) within regulatory timeframes." },
-              { "id": "sscf-dsp-006_gdn", "name": "guidance", "prose": "Platform data flows must be mapped to support DSAR fulfillment. For GDPR-regulated data: access, rectification, erasure, and portability requests must be fulfillable within 30 days. For CCPA: deletion and opt-out requests within 45 days. Platforms must support data export in machine-readable format for portability requests. Privacy team must be documented as the responsible owner for DSAR coordination." },
-              { "id": "sscf-dsp-006_obj", "name": "objective", "prose": "Verify that DSAR fulfillment procedures are documented, data flows support data subject access and deletion, and response time SLAs meet regulatory requirements." }
+              {
+                "id": "sscf-dsp-006_smt",
+                "name": "statement",
+                "prose": "Ensure SaaS platform data handling supports organizational obligations to fulfill data subject rights requests within regulatory timeframes: GDPR {{ insert: param, sscf-dsp-006_prm_1 }}, CCPA {{ insert: param, sscf-dsp-006_prm_2 }}."
+              },
+              {
+                "id": "sscf-dsp-006_gdn",
+                "name": "guidance",
+                "prose": "Platform data flows must be mapped to support DSAR fulfillment. For GDPR-regulated data: access, rectification, erasure, and portability requests must be fulfillable within 30 days. For CCPA: deletion and opt-out requests within 45 days. Platforms must support data export in machine-readable format for portability requests. Privacy team must be documented as the responsible owner for DSAR coordination."
+              },
+              {
+                "id": "sscf-dsp-006_obj",
+                "name": "objective",
+                "prose": "Verify that DSAR fulfillment procedures are documented, data flows support data subject access and deletion, and response time SLAs meet regulatory requirements."
+              }
             ]
           }
         ]
@@ -260,139 +811,506 @@
         "class": "domain",
         "title": "Identity and Access Management",
         "props": [
-          { "name": "ccm-domain", "value": "IAM" },
-          { "name": "domain-description", "value": "Controls governing who can access SaaS platforms, under what conditions, and with what level of privilege — from workforce federation through service account lifecycle." }
+          {
+            "name": "ccm-domain",
+            "value": "IAM"
+          },
+          {
+            "name": "domain-description",
+            "value": "Controls governing who can access SaaS platforms, under what conditions, and with what level of privilege \u2014 from workforce federation through service account lifecycle."
+          }
         ],
         "controls": [
           {
             "id": "sscf-iam-001",
             "title": "Multi-Factor Authentication Enforcement",
+            "params": [
+              {
+                "id": "sscf-iam-001_prm_1",
+                "label": "mfa-exception-review-frequency",
+                "usage": "Frequency of mandatory review for documented MFA exemptions",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-001" },
-              { "name": "sort-id", "value": "iam-01" },
-              { "name": "severity", "value": "critical" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-02" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-IAM-001" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-01"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-02"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-IAM-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-001_smt", "name": "statement", "prose": "Require multi-factor authentication (MFA) for all privileged accounts and all workforce accounts accessing SaaS platforms." },
-              { "id": "sscf-iam-001_gdn", "name": "guidance", "prose": "MFA must be enforced at the IdP or platform level, not merely offered as optional. Exemptions require documented risk acceptance with compensating controls and time-bound review. FIDO2/WebAuthn or authenticator-app OTP are preferred; SMS OTP is discouraged for privileged roles." },
-              { "id": "sscf-iam-001_obj", "name": "objective", "prose": "Verify that MFA is enforced (not optional) for all interactive user sessions accessing the assessed SaaS platform, and that no active user accounts have MFA disabled without documented exception." }
+              {
+                "id": "sscf-iam-001_smt",
+                "name": "statement",
+                "prose": "Require multi-factor authentication (MFA) for all privileged accounts and all workforce accounts accessing SaaS platforms, with MFA exemptions subject to time-bound risk acceptance reviewed {{ insert: param, sscf-iam-001_prm_1 }}."
+              },
+              {
+                "id": "sscf-iam-001_gdn",
+                "name": "guidance",
+                "prose": "MFA must be enforced at the IdP or platform level, not merely offered as optional. Exemptions require documented risk acceptance with compensating controls and time-bound review. FIDO2/WebAuthn or authenticator-app OTP are preferred; SMS OTP is discouraged for privileged roles."
+              },
+              {
+                "id": "sscf-iam-001_obj",
+                "name": "objective",
+                "prose": "Verify that MFA is enforced (not optional) for all interactive user sessions accessing the assessed SaaS platform, and that no active user accounts have MFA disabled without documented exception."
+              }
             ]
           },
           {
             "id": "sscf-iam-002",
             "title": "Privileged Access Governance and Review",
+            "params": [
+              {
+                "id": "sscf-iam-002_prm_1",
+                "label": "privileged-access-recertification-frequency",
+                "usage": "Minimum frequency for privileged role recertification campaigns",
+                "values": [
+                  "annually"
+                ]
+              },
+              {
+                "id": "sscf-iam-002_prm_2",
+                "label": "orphaned-privileged-account-disable-period",
+                "usage": "Maximum time before an orphaned privileged account must be disabled after role owner departure",
+                "values": [
+                  "30 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-002" },
-              { "name": "sort-id", "value": "iam-02" },
-              { "name": "severity", "value": "critical" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-04,IAM-05" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-IAM-002" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-02"
+              },
+              {
+                "name": "severity",
+                "value": "critical"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-04,IAM-05"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-IAM-002"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-002_smt", "name": "statement", "prose": "Enforce formal approval, least-privilege assignment, and periodic recertification (at minimum annually) for all privileged roles in SaaS platforms." },
-              { "id": "sscf-iam-002_gdn", "name": "guidance", "prose": "Privileged roles include any role granting administrative access, data export capability, security configuration changes, or access to sensitive personal or financial data. Recertification must be performed by a role owner who is not the account holder. Orphaned privileged accounts must be disabled within 30 days of the role owner's departure." },
-              { "id": "sscf-iam-002_obj", "name": "objective", "prose": "Verify that all privileged role assignments have documented approvals, are scoped to least privilege, and have been recertified within the past 12 months." }
+              {
+                "id": "sscf-iam-002_smt",
+                "name": "statement",
+                "prose": "Enforce formal approval, least-privilege assignment, and periodic recertification at minimum {{ insert: param, sscf-iam-002_prm_1 }} for all privileged roles in SaaS platforms, with orphaned privileged accounts disabled within {{ insert: param, sscf-iam-002_prm_2 }} of role owner departure."
+              },
+              {
+                "id": "sscf-iam-002_gdn",
+                "name": "guidance",
+                "prose": "Privileged roles include any role granting administrative access, data export capability, security configuration changes, or access to sensitive personal or financial data. Recertification must be performed by a role owner who is not the account holder. Orphaned privileged accounts must be disabled within 30 days of the role owner's departure."
+              },
+              {
+                "id": "sscf-iam-002_obj",
+                "name": "objective",
+                "prose": "Verify that all privileged role assignments have documented approvals, are scoped to least privilege, and have been recertified within the past 12 months."
+              }
             ]
           },
           {
             "id": "sscf-iam-003",
             "title": "Federation and SSO Assurance",
+            "params": [
+              {
+                "id": "sscf-iam-003_prm_1",
+                "label": "break-glass-account-review-frequency",
+                "usage": "Frequency of inventory review and credential rotation for break-glass accounts",
+                "values": [
+                  "quarterly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-003" },
-              { "name": "sort-id", "value": "iam-03" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-01,IAM-07" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-IAM-003" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-03"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-01,IAM-07"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-IAM-003"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-003_smt", "name": "statement", "prose": "Enforce enterprise IdP federation and harden SSO policy posture. Local authentication bypass paths must be disabled or restricted to break-glass accounts only." },
-              { "id": "sscf-iam-003_gdn", "name": "guidance", "prose": "SSO must route through the enterprise IdP (e.g., Okta, Azure AD, Ping). Local password login must be disabled for normal user accounts. Break-glass accounts require documented inventory, individual passwords stored in PAM, and quarterly review. SAML assertions must be signed; SCIM provisioning is strongly preferred over manual provisioning." },
-              { "id": "sscf-iam-003_obj", "name": "objective", "prose": "Verify that SSO is enforced via enterprise IdP, that local login is disabled or restricted to break-glass accounts with PAM-managed credentials, and that break-glass accounts are inventoried and reviewed quarterly." }
+              {
+                "id": "sscf-iam-003_smt",
+                "name": "statement",
+                "prose": "Enforce enterprise IdP federation and harden SSO policy posture. Local authentication bypass paths must be disabled or restricted to break-glass accounts only, with break-glass accounts inventoried and reviewed {{ insert: param, sscf-iam-003_prm_1 }}."
+              },
+              {
+                "id": "sscf-iam-003_gdn",
+                "name": "guidance",
+                "prose": "SSO must route through the enterprise IdP (e.g., Okta, Azure AD, Ping). Local password login must be disabled for normal user accounts. Break-glass accounts require documented inventory, individual passwords stored in PAM, and quarterly review. SAML assertions must be signed; SCIM provisioning is strongly preferred over manual provisioning."
+              },
+              {
+                "id": "sscf-iam-003_obj",
+                "name": "objective",
+                "prose": "Verify that SSO is enforced via enterprise IdP, that local login is disabled or restricted to break-glass accounts with PAM-managed credentials, and that break-glass accounts are inventoried and reviewed quarterly."
+              }
             ]
           },
           {
             "id": "sscf-iam-004",
             "title": "User Lifecycle and Offboarding Controls",
+            "params": [
+              {
+                "id": "sscf-iam-004_prm_1",
+                "label": "offboarding-access-revocation-sla",
+                "usage": "Maximum time to revoke all SaaS access after employee termination",
+                "values": [
+                  "24 hours"
+                ]
+              },
+              {
+                "id": "sscf-iam-004_prm_2",
+                "label": "role-change-access-revocation-sla",
+                "usage": "Maximum time to revoke access not required in new role after a role change",
+                "values": [
+                  "7 days"
+                ]
+              },
+              {
+                "id": "sscf-iam-004_prm_3",
+                "label": "stale-account-inactivity-period",
+                "usage": "Inactivity period after which an account is flagged as stale for review or removal",
+                "values": [
+                  "90 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-004" },
-              { "name": "sort-id", "value": "iam-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-08,IAM-09" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-08,IAM-09"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-004_smt", "name": "statement", "prose": "Ensure timely and complete revocation of SaaS platform access upon employee termination, role change, or contract end — and that regular access recertification identifies and removes stale accounts." },
-              { "id": "sscf-iam-004_gdn", "name": "guidance", "prose": "Offboarding: all SaaS access must be revoked within 24 hours of termination (HR trigger to IdP/SCIM deprovisioning is preferred). For role changes, access not required in the new role must be revoked within 7 days. Quarterly access reviews must identify accounts that have not logged in within 90 days for review/removal. Shared or team accounts are prohibited." },
-              { "id": "sscf-iam-004_obj", "name": "objective", "prose": "Verify that offboarding deprovisioning is automated or completed within 24 hours, that role-change access reviews occur, and that stale account detection and removal is operational." }
+              {
+                "id": "sscf-iam-004_smt",
+                "name": "statement",
+                "prose": "Ensure timely and complete revocation of SaaS platform access upon employee termination within {{ insert: param, sscf-iam-004_prm_1 }}, role change within {{ insert: param, sscf-iam-004_prm_2 }}, and regular access recertification identifying accounts inactive beyond {{ insert: param, sscf-iam-004_prm_3 }} for review and removal."
+              },
+              {
+                "id": "sscf-iam-004_gdn",
+                "name": "guidance",
+                "prose": "Offboarding: all SaaS access must be revoked within 24 hours of termination (HR trigger to IdP/SCIM deprovisioning is preferred). For role changes, access not required in the new role must be revoked within 7 days. Quarterly access reviews must identify accounts that have not logged in within 90 days for review/removal. Shared or team accounts are prohibited."
+              },
+              {
+                "id": "sscf-iam-004_obj",
+                "name": "objective",
+                "prose": "Verify that offboarding deprovisioning is automated or completed within 24 hours, that role-change access reviews occur, and that stale account detection and removal is operational."
+              }
             ]
           },
           {
             "id": "sscf-iam-005",
             "title": "Service Account and Non-Human Identity Governance",
+            "params": [
+              {
+                "id": "sscf-iam-005_prm_1",
+                "label": "ownerless-service-account-disable-period",
+                "usage": "Maximum time before a service account without an active owner must be disabled",
+                "values": [
+                  "30 days"
+                ]
+              },
+              {
+                "id": "sscf-iam-005_prm_2",
+                "label": "service-account-review-frequency",
+                "usage": "Minimum frequency for full service account inventory reviews",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-005" },
-              { "name": "sort-id", "value": "iam-05" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "IAM-03,IAM-16" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-05"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-03,IAM-16"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-005_smt", "name": "statement", "prose": "Maintain a complete inventory of all non-human identities (service accounts, integration users, automation identities) accessing SaaS platforms, with documented owners and scoped permissions." },
-              { "id": "sscf-iam-005_gdn", "name": "guidance", "prose": "Every service account must have a named human owner, a documented business purpose, scoped permissions (least privilege), and a defined rotation schedule for associated credentials. Service accounts must not have interactive login capability unless documented with compensating controls. Accounts without an active owner must be disabled within 30 days. Annual review of all service accounts is mandatory." },
-              { "id": "sscf-iam-005_obj", "name": "objective", "prose": "Verify that a service account inventory exists, all accounts have named owners and documented purposes, permissions are least-privilege, and annual review has occurred within the past 12 months." }
+              {
+                "id": "sscf-iam-005_smt",
+                "name": "statement",
+                "prose": "Maintain a complete inventory of all non-human identities (service accounts, integration users, automation identities) accessing SaaS platforms, with documented owners and scoped permissions, ownerless accounts disabled within {{ insert: param, sscf-iam-005_prm_1 }}, and {{ insert: param, sscf-iam-005_prm_2 }} full inventory reviews."
+              },
+              {
+                "id": "sscf-iam-005_gdn",
+                "name": "guidance",
+                "prose": "Every service account must have a named human owner, a documented business purpose, scoped permissions (least privilege), and a defined rotation schedule for associated credentials. Service accounts must not have interactive login capability unless documented with compensating controls. Accounts without an active owner must be disabled within 30 days. Annual review of all service accounts is mandatory."
+              },
+              {
+                "id": "sscf-iam-005_obj",
+                "name": "objective",
+                "prose": "Verify that a service account inventory exists, all accounts have named owners and documented purposes, permissions are least-privilege, and annual review has occurred within the past 12 months."
+              }
             ]
           },
           {
             "id": "sscf-iam-006",
             "title": "Session Security and Timeout Controls",
+            "params": [
+              {
+                "id": "sscf-iam-006_prm_1",
+                "label": "standard-user-session-timeout",
+                "usage": "Maximum idle session timeout for standard (non-privileged) users",
+                "values": [
+                  "8 hours"
+                ]
+              },
+              {
+                "id": "sscf-iam-006_prm_2",
+                "label": "privileged-user-session-timeout",
+                "usage": "Maximum idle session timeout for privileged users",
+                "values": [
+                  "30 minutes"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-006" },
-              { "name": "sort-id", "value": "iam-06" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-06,IAM-11" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-006"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-06"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-06,IAM-11"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-006_smt", "name": "statement", "prose": "Configure SaaS platform session controls to enforce idle timeout, limit concurrent sessions, and restrict session tokens to authorized devices or networks." },
-              { "id": "sscf-iam-006_gdn", "name": "guidance", "prose": "Session idle timeout must be configured to no more than 8 hours for standard users and 30 minutes for privileged users. Session tokens must be invalidated on logout (not just cleared client-side). Token lifetime must align with MFA re-authentication requirements. Concurrent session limits must be enforced where the platform supports it. Sessions from unmanaged devices or unapproved geolocations must require step-up authentication." },
-              { "id": "sscf-iam-006_obj", "name": "objective", "prose": "Verify that idle timeout is configured per policy, session tokens are server-side invalidated on logout, and step-up authentication is triggered for high-risk session attributes." }
+              {
+                "id": "sscf-iam-006_smt",
+                "name": "statement",
+                "prose": "Configure SaaS platform session controls to enforce idle timeout of {{ insert: param, sscf-iam-006_prm_1 }} for standard users and {{ insert: param, sscf-iam-006_prm_2 }} for privileged users, limit concurrent sessions, and restrict session tokens to authorized devices or networks."
+              },
+              {
+                "id": "sscf-iam-006_gdn",
+                "name": "guidance",
+                "prose": "Session idle timeout must be configured to no more than 8 hours for standard users and 30 minutes for privileged users. Session tokens must be invalidated on logout (not just cleared client-side). Token lifetime must align with MFA re-authentication requirements. Concurrent session limits must be enforced where the platform supports it. Sessions from unmanaged devices or unapproved geolocations must require step-up authentication."
+              },
+              {
+                "id": "sscf-iam-006_obj",
+                "name": "objective",
+                "prose": "Verify that idle timeout is configured per policy, session tokens are server-side invalidated on logout, and step-up authentication is triggered for high-risk session attributes."
+              }
             ]
           },
           {
             "id": "sscf-iam-007",
             "title": "Just-in-Time Access and Temporary Privilege Elevation",
+            "params": [
+              {
+                "id": "sscf-iam-007_prm_1",
+                "label": "jit-standard-max-duration",
+                "usage": "Maximum JIT session duration for standard operational tasks",
+                "values": [
+                  "4 hours"
+                ]
+              },
+              {
+                "id": "sscf-iam-007_prm_2",
+                "label": "jit-absolute-max-duration",
+                "usage": "Absolute maximum JIT session duration under any circumstances",
+                "values": [
+                  "24 hours"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-007" },
-              { "name": "sort-id", "value": "iam-07" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-13,IAM-14" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-007"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-07"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-13,IAM-14"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-007_smt", "name": "statement", "prose": "Govern temporary privilege elevation through a formal request-approve-expire workflow, avoiding standing privileged access for operational tasks." },
-              { "id": "sscf-iam-007_gdn", "name": "guidance", "prose": "JIT access controls must require: a business justification, approval from a role owner or security delegate, a maximum session duration (4 hours for most tasks, 24 hours maximum), and automatic revocation at expiry without manual intervention. All JIT sessions must generate audit log entries. PAM tooling is preferred for SaaS platforms that support SCIM or API-based role assignment." },
-              { "id": "sscf-iam-007_obj", "name": "objective", "prose": "Verify that JIT workflows are in place, temporary privileges expire automatically, all JIT sessions are logged, and standing privileged access is minimized with documented exceptions." }
+              {
+                "id": "sscf-iam-007_smt",
+                "name": "statement",
+                "prose": "Govern temporary privilege elevation through a formal request-approve-expire workflow, with maximum session duration of {{ insert: param, sscf-iam-007_prm_1 }} for most tasks and {{ insert: param, sscf-iam-007_prm_2 }} absolute maximum, avoiding standing privileged access for operational tasks."
+              },
+              {
+                "id": "sscf-iam-007_gdn",
+                "name": "guidance",
+                "prose": "JIT access controls must require: a business justification, approval from a role owner or security delegate, a maximum session duration (4 hours for most tasks, 24 hours maximum), and automatic revocation at expiry without manual intervention. All JIT sessions must generate audit log entries. PAM tooling is preferred for SaaS platforms that support SCIM or API-based role assignment."
+              },
+              {
+                "id": "sscf-iam-007_obj",
+                "name": "objective",
+                "prose": "Verify that JIT workflows are in place, temporary privileges expire automatically, all JIT sessions are logged, and standing privileged access is minimized with documented exceptions."
+              }
             ]
           },
           {
             "id": "sscf-iam-008",
             "title": "External and Guest Access Controls",
+            "params": [
+              {
+                "id": "sscf-iam-008_prm_1",
+                "label": "external-access-max-duration",
+                "usage": "Maximum duration for external party access before mandatory renewal",
+                "values": [
+                  "12 months"
+                ]
+              },
+              {
+                "id": "sscf-iam-008_prm_2",
+                "label": "external-access-review-frequency",
+                "usage": "Frequency of recertification for external user access",
+                "values": [
+                  "quarterly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IAM-008" },
-              { "name": "sort-id", "value": "iam-08" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "IAM-15,IAM-09" }
+              {
+                "name": "label",
+                "value": "SSCF-IAM-008"
+              },
+              {
+                "name": "sort-id",
+                "value": "iam-08"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IAM-15,IAM-09"
+              }
             ],
             "parts": [
-              { "id": "sscf-iam-008_smt", "name": "statement", "prose": "Govern access granted to external parties (contractors, partners, auditors) including scoped permissions, time-bound access, MFA requirements, and regular recertification." },
-              { "id": "sscf-iam-008_gdn", "name": "guidance", "prose": "External users must be provisioned via a separate identity pool or clearly labeled in the directory. Access must be scoped to the minimum data and function required. MFA is mandatory for all external accounts. Access must have an explicit expiry date (maximum 12 months, renewable with re-approval). Quarterly review must verify continued business need. External access must never include administrative or privileged roles without CISO-level approval." },
-              { "id": "sscf-iam-008_obj", "name": "objective", "prose": "Verify that all external accounts are identifiable, time-bound, MFA-enforced, and have been recertified within the past quarter." }
+              {
+                "id": "sscf-iam-008_smt",
+                "name": "statement",
+                "prose": "Govern access granted to external parties (contractors, partners, auditors) including scoped permissions, time-bound access limited to {{ insert: param, sscf-iam-008_prm_1 }}, MFA requirements, and {{ insert: param, sscf-iam-008_prm_2 }} recertification."
+              },
+              {
+                "id": "sscf-iam-008_gdn",
+                "name": "guidance",
+                "prose": "External users must be provisioned via a separate identity pool or clearly labeled in the directory. Access must be scoped to the minimum data and function required. MFA is mandatory for all external accounts. Access must have an explicit expiry date (maximum 12 months, renewable with re-approval). Quarterly review must verify continued business need. External access must never include administrative or privileged roles without CISO-level approval."
+              },
+              {
+                "id": "sscf-iam-008_obj",
+                "name": "objective",
+                "prose": "Verify that all external accounts are identifiable, time-bound, MFA-enforced, and have been recertified within the past quarter."
+              }
             ]
           }
         ]
@@ -402,88 +1320,279 @@
         "class": "domain",
         "title": "Interoperability and Portability",
         "props": [
-          { "name": "ccm-domain", "value": "IPY" },
-          { "name": "domain-description", "value": "Controls ensuring SaaS platforms support data portability, open API standards, integration security, and continuity of access without vendor lock-in risk." }
+          {
+            "name": "ccm-domain",
+            "value": "IPY"
+          },
+          {
+            "name": "domain-description",
+            "value": "Controls ensuring SaaS platforms support data portability, open API standards, integration security, and continuity of access without vendor lock-in risk."
+          }
         ],
         "controls": [
           {
             "id": "sscf-ipy-001",
             "title": "Data Portability and Export Standards",
+            "params": [
+              {
+                "id": "sscf-ipy-001_prm_1",
+                "label": "export-capability-test-frequency",
+                "usage": "Frequency at which data export capabilities are tested as part of business continuity planning",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IPY-001" },
-              { "name": "sort-id", "value": "ipy-01" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "IPY-04,IPY-09" }
+              {
+                "name": "label",
+                "value": "SSCF-IPY-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "ipy-01"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "IPY-04,IPY-09"
+              }
             ],
             "parts": [
-              { "id": "sscf-ipy-001_smt", "name": "statement", "prose": "Verify that SaaS platforms support data export in open, machine-readable formats sufficient to enable migration, regulatory fulfillment, and business continuity without proprietary lock-in." },
-              { "id": "sscf-ipy-001_gdn", "name": "guidance", "prose": "Platforms must provide: bulk data export in standard formats (CSV, JSON, XML, or OSCAL where applicable), documented export API endpoints with rate limits, export of complete audit logs in a portable format, and a vendor-exit data migration procedure. Export capabilities must be tested at least annually as part of business continuity planning. Vendor contracts must specify data return SLAs on termination." },
-              { "id": "sscf-ipy-001_obj", "name": "objective", "prose": "Verify that standard-format export is available and tested, vendor-exit data return SLAs are contractually defined, and export procedures are documented in the platform runbook." }
+              {
+                "id": "sscf-ipy-001_smt",
+                "name": "statement",
+                "prose": "Verify that SaaS platforms support data export in open, machine-readable formats sufficient to enable migration, regulatory fulfillment, and business continuity, with export capabilities tested {{ insert: param, sscf-ipy-001_prm_1 }}."
+              },
+              {
+                "id": "sscf-ipy-001_gdn",
+                "name": "guidance",
+                "prose": "Platforms must provide: bulk data export in standard formats (CSV, JSON, XML, or OSCAL where applicable), documented export API endpoints with rate limits, export of complete audit logs in a portable format, and a vendor-exit data migration procedure. Export capabilities must be tested at least annually as part of business continuity planning. Vendor contracts must specify data return SLAs on termination."
+              },
+              {
+                "id": "sscf-ipy-001_obj",
+                "name": "objective",
+                "prose": "Verify that standard-format export is available and tested, vendor-exit data return SLAs are contractually defined, and export procedures are documented in the platform runbook."
+              }
             ]
           },
           {
             "id": "sscf-ipy-002",
             "title": "API Security and Open Interface Governance",
+            "params": [
+              {
+                "id": "sscf-ipy-002_prm_1",
+                "label": "deprecated-api-disable-period",
+                "usage": "Maximum time to disable deprecated or legacy API versions after successor release",
+                "values": [
+                  "90 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IPY-002" },
-              { "name": "sort-id", "value": "ipy-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "AIS-04,IPY-01" }
+              {
+                "name": "label",
+                "value": "SSCF-IPY-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "ipy-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "AIS-04,IPY-01"
+              }
             ],
             "parts": [
-              { "id": "sscf-ipy-002_smt", "name": "statement", "prose": "Govern all API access to SaaS platforms to ensure that APIs enforce authentication, authorization, rate limiting, and input validation consistent with OWASP API Security standards." },
-              { "id": "sscf-ipy-002_gdn", "name": "guidance", "prose": "API access must use short-lived tokens (OAuth 2.0 Client Credentials or Bearer tokens). Unauthenticated API endpoints must not expose sensitive data. Rate limiting must be configured to prevent enumeration and DoS. API usage must be logged with sufficient detail to support forensic investigation. Deprecated or legacy API versions must be disabled within 90 days of successor release." },
-              { "id": "sscf-ipy-002_obj", "name": "objective", "prose": "Verify that all API access is authenticated via short-lived tokens, rate limiting is configured, API calls are logged, and deprecated API versions are disabled." }
+              {
+                "id": "sscf-ipy-002_smt",
+                "name": "statement",
+                "prose": "Govern all API access to SaaS platforms to ensure that APIs enforce authentication, authorization, rate limiting, and input validation, with deprecated or legacy API versions disabled within {{ insert: param, sscf-ipy-002_prm_1 }} of successor release."
+              },
+              {
+                "id": "sscf-ipy-002_gdn",
+                "name": "guidance",
+                "prose": "API access must use short-lived tokens (OAuth 2.0 Client Credentials or Bearer tokens). Unauthenticated API endpoints must not expose sensitive data. Rate limiting must be configured to prevent enumeration and DoS. API usage must be logged with sufficient detail to support forensic investigation. Deprecated or legacy API versions must be disabled within 90 days of successor release."
+              },
+              {
+                "id": "sscf-ipy-002_obj",
+                "name": "objective",
+                "prose": "Verify that all API access is authenticated via short-lived tokens, rate limiting is configured, API calls are logged, and deprecated API versions are disabled."
+              }
             ]
           },
           {
             "id": "sscf-ipy-003",
             "title": "Integration Inventory and Third-Party Connector Risk Assessment",
+            "params": [
+              {
+                "id": "sscf-ipy-003_prm_1",
+                "label": "high-risk-integration-assessment-frequency",
+                "usage": "Frequency of vendor security assessments (SOC 2, ISO 27001, or equivalent) for high-risk integrations",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IPY-003" },
-              { "name": "sort-id", "value": "ipy-03" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "STA-07,STA-09" }
+              {
+                "name": "label",
+                "value": "SSCF-IPY-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "ipy-03"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "STA-07,STA-09"
+              }
             ],
             "parts": [
-              { "id": "sscf-ipy-003_smt", "name": "statement", "prose": "Maintain an inventory of all integrations connecting to SaaS platforms and assess the security risk of data flows between connected systems." },
-              { "id": "sscf-ipy-003_gdn", "name": "guidance", "prose": "The integration inventory must capture: connected system name and owner, data exchanged (types and sensitivity), authentication method, data flow direction, and security assessment status. Integrations transmitting sensitive data must use encrypted channels (TLS 1.2+). Annual vendor security assessments (SOC 2, ISO 27001, or equivalent) must be obtained for high-risk integrations. Webhook endpoints must require signature verification." },
-              { "id": "sscf-ipy-003_obj", "name": "objective", "prose": "Verify that an integration inventory exists and is current, sensitive data flows use encrypted channels, and high-risk integrations have current vendor security certifications." }
+              {
+                "id": "sscf-ipy-003_smt",
+                "name": "statement",
+                "prose": "Maintain an inventory of all integrations connecting to SaaS platforms and assess the security risk of data flows between connected systems, with {{ insert: param, sscf-ipy-003_prm_1 }} vendor security assessments for high-risk integrations."
+              },
+              {
+                "id": "sscf-ipy-003_gdn",
+                "name": "guidance",
+                "prose": "The integration inventory must capture: connected system name and owner, data exchanged (types and sensitivity), authentication method, data flow direction, and security assessment status. Integrations transmitting sensitive data must use encrypted channels (TLS 1.2+). Annual vendor security assessments (SOC 2, ISO 27001, or equivalent) must be obtained for high-risk integrations. Webhook endpoints must require signature verification."
+              },
+              {
+                "id": "sscf-ipy-003_obj",
+                "name": "objective",
+                "prose": "Verify that an integration inventory exists and is current, sensitive data flows use encrypted channels, and high-risk integrations have current vendor security certifications."
+              }
             ]
           },
           {
             "id": "sscf-ipy-004",
             "title": "Vendor Lock-In Mitigation and SaaS Exit Planning",
+            "params": [
+              {
+                "id": "sscf-ipy-004_prm_1",
+                "label": "exit-plan-review-frequency",
+                "usage": "Minimum frequency for reviewing the SaaS platform exit plan",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IPY-004" },
-              { "name": "sort-id", "value": "ipy-04" },
-              { "name": "severity", "value": "low" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "BCR-04,IPY-04" }
+              {
+                "name": "label",
+                "value": "SSCF-IPY-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "ipy-04"
+              },
+              {
+                "name": "severity",
+                "value": "low"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "BCR-04,IPY-04"
+              }
             ],
             "parts": [
-              { "id": "sscf-ipy-004_smt", "name": "statement", "prose": "Document a SaaS platform exit plan that includes data retrieval procedures, migration timelines, and dependency mapping to enable continuity of business operations in the event of vendor exit." },
-              { "id": "sscf-ipy-004_gdn", "name": "guidance", "prose": "Exit planning must address: all data stored in the platform (including metadata and audit history), downstream systems dependent on the platform's data or APIs, contractual data-return obligations and timelines, and an estimated migration effort. Exit plans must be reviewed annually or upon significant platform contract renewal. Critical-path platforms must have an alternate vendor or interim solution identified." },
-              { "id": "sscf-ipy-004_obj", "name": "objective", "prose": "Verify that a documented exit plan exists for the platform, it addresses all stored data and downstream dependencies, and the plan has been reviewed within the past 12 months." }
+              {
+                "id": "sscf-ipy-004_smt",
+                "name": "statement",
+                "prose": "Document a SaaS platform exit plan that includes data retrieval procedures, migration timelines, and dependency mapping, reviewed {{ insert: param, sscf-ipy-004_prm_1 }} or upon significant platform contract renewal."
+              },
+              {
+                "id": "sscf-ipy-004_gdn",
+                "name": "guidance",
+                "prose": "Exit planning must address: all data stored in the platform (including metadata and audit history), downstream systems dependent on the platform's data or APIs, contractual data-return obligations and timelines, and an estimated migration effort. Exit plans must be reviewed annually or upon significant platform contract renewal. Critical-path platforms must have an alternate vendor or interim solution identified."
+              },
+              {
+                "id": "sscf-ipy-004_obj",
+                "name": "objective",
+                "prose": "Verify that a documented exit plan exists for the platform, it addresses all stored data and downstream dependencies, and the plan has been reviewed within the past 12 months."
+              }
             ]
           },
           {
             "id": "sscf-ipy-005",
             "title": "Multi-Cloud Data Residency and Sovereignty Controls",
+            "params": [
+              {
+                "id": "sscf-ipy-005_prm_1",
+                "label": "sub-processor-verification-frequency",
+                "usage": "Frequency of verification of vendor sub-processor locations against approved jurisdictions",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-IPY-005" },
-              { "name": "sort-id", "value": "ipy-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "platform_security" },
-              { "name": "ccm-controls", "value": "DSP-19,IPY-03" }
+              {
+                "name": "label",
+                "value": "SSCF-IPY-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "ipy-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "platform_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "DSP-19,IPY-03"
+              }
             ],
             "parts": [
-              { "id": "sscf-ipy-005_smt", "name": "statement", "prose": "Ensure that SaaS platform configurations enforce data residency requirements and that data synchronized across cloud environments or geographies complies with applicable sovereignty regulations." },
-              { "id": "sscf-ipy-005_gdn", "name": "guidance", "prose": "Where regulated data is present: platform must be configured to restrict processing to approved jurisdictions. Vendor documentation must confirm sub-processor locations. Any multi-cloud synchronization (backup, disaster recovery replication) must remain within the approved data residency zone. Annual verification of vendor sub-processor list against approved jurisdictions is required." },
-              { "id": "sscf-ipy-005_obj", "name": "objective", "prose": "Verify that data residency is enforced at the platform configuration level, sub-processor locations are documented and within approved jurisdictions, and annual verification has occurred." }
+              {
+                "id": "sscf-ipy-005_smt",
+                "name": "statement",
+                "prose": "Ensure that SaaS platform configurations enforce data residency requirements and that data synchronized across cloud environments complies with applicable sovereignty regulations, with sub-processor locations verified {{ insert: param, sscf-ipy-005_prm_1 }}."
+              },
+              {
+                "id": "sscf-ipy-005_gdn",
+                "name": "guidance",
+                "prose": "Where regulated data is present: platform must be configured to restrict processing to approved jurisdictions. Vendor documentation must confirm sub-processor locations. Any multi-cloud synchronization (backup, disaster recovery replication) must remain within the approved data residency zone. Annual verification of vendor sub-processor list against approved jurisdictions is required."
+              },
+              {
+                "id": "sscf-ipy-005_obj",
+                "name": "objective",
+                "prose": "Verify that data residency is enforced at the platform configuration level, sub-processor locations are documented and within approved jurisdictions, and annual verification has occurred."
+              }
             ]
           }
         ]
@@ -493,107 +1602,384 @@
         "class": "domain",
         "title": "Logging and Monitoring",
         "props": [
-          { "name": "ccm-domain", "value": "LOG" },
-          { "name": "domain-description", "value": "Controls ensuring SaaS platform activities are logged sufficiently to support detection, investigation, compliance, and audit — forwarded to centralized monitoring infrastructure." }
+          {
+            "name": "ccm-domain",
+            "value": "LOG"
+          },
+          {
+            "name": "domain-description",
+            "value": "Controls ensuring SaaS platform activities are logged sufficiently to support detection, investigation, compliance, and audit \u2014 forwarded to centralized monitoring infrastructure."
+          }
         ],
         "controls": [
           {
             "id": "sscf-log-001",
             "title": "Security Telemetry Enablement",
+            "params": [
+              {
+                "id": "sscf-log-001_prm_1",
+                "label": "log-forwarding-sla",
+                "usage": "Maximum delay between log generation and forwarding to centralized SIEM",
+                "values": [
+                  "24 hours"
+                ]
+              },
+              {
+                "id": "sscf-log-001_prm_2",
+                "label": "minimum-accessible-log-retention",
+                "usage": "Minimum period of logs that must be immediately accessible for investigation",
+                "values": [
+                  "90 days"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-LOG-001" },
-              { "name": "sort-id", "value": "log-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "LOG-06,LOG-07" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-LOG-001" }
+              {
+                "name": "label",
+                "value": "SSCF-LOG-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "LOG-06,LOG-07"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-LOG-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-log-001_smt", "name": "statement", "prose": "Enable all required audit and security logs in SaaS platforms sufficient to support detection, forensics, and compliance reporting." },
-              { "id": "sscf-log-001_gdn", "name": "guidance", "prose": "Required log types include: authentication events (success and failure), privileged action audit, data export/download, configuration changes, and API access. Logs must be forwarded to a centralized SIEM within 24 hours of generation. Native logging must not be the only copy." },
-              { "id": "sscf-log-001_obj", "name": "objective", "prose": "Verify that all required log categories are enabled in the platform, that logs are forwarded to a centralized SIEM, and that at least 90 days of logs are accessible for investigation." }
+              {
+                "id": "sscf-log-001_smt",
+                "name": "statement",
+                "prose": "Enable all required audit and security logs in SaaS platforms sufficient to support detection, forensics, and compliance reporting, forwarded to a centralized SIEM within {{ insert: param, sscf-log-001_prm_1 }} of generation with at minimum {{ insert: param, sscf-log-001_prm_2 }} of logs accessible for investigation."
+              },
+              {
+                "id": "sscf-log-001_gdn",
+                "name": "guidance",
+                "prose": "Required log types include: authentication events (success and failure), privileged action audit, data export/download, configuration changes, and API access. Logs must be forwarded to a centralized SIEM within 24 hours of generation. Native logging must not be the only copy."
+              },
+              {
+                "id": "sscf-log-001_obj",
+                "name": "objective",
+                "prose": "Verify that all required log categories are enabled in the platform, that logs are forwarded to a centralized SIEM, and that at least 90 days of logs are accessible for investigation."
+              }
             ]
           },
           {
             "id": "sscf-log-002",
             "title": "Administrative and Configuration Audit Logging",
+            "params": [
+              {
+                "id": "sscf-log-002_prm_1",
+                "label": "admin-log-review-frequency",
+                "usage": "Minimum frequency for reviewing administrative and configuration change audit logs",
+                "values": [
+                  "monthly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-LOG-002" },
-              { "name": "sort-id", "value": "log-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "LOG-01,LOG-02" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-LOG-002" }
+              {
+                "name": "label",
+                "value": "SSCF-LOG-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "LOG-01,LOG-02"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-LOG-002"
+              }
             ],
             "parts": [
-              { "id": "sscf-log-002_smt", "name": "statement", "prose": "Capture and monitor all administrative actions and security configuration changes within SaaS platforms." },
-              { "id": "sscf-log-002_gdn", "name": "guidance", "prose": "Admin audit logs must capture: who made the change, what was changed, the before and after state where supported, and timestamp in UTC. Alerts must be configured for high-risk admin actions (e.g., disabling MFA, changing security policies, granting privileged roles). Log tampering controls must be in place." },
-              { "id": "sscf-log-002_obj", "name": "objective", "prose": "Verify that admin action logging is enabled, that alerts fire on high-risk config changes, and that audit logs are stored in a tamper-evident system." }
+              {
+                "id": "sscf-log-002_smt",
+                "name": "statement",
+                "prose": "Capture and monitor all administrative actions and security configuration changes within SaaS platforms, with log review at minimum {{ insert: param, sscf-log-002_prm_1 }} and alerts configured for high-risk admin actions."
+              },
+              {
+                "id": "sscf-log-002_gdn",
+                "name": "guidance",
+                "prose": "Admin audit logs must capture: who made the change, what was changed, the before and after state where supported, and timestamp in UTC. Alerts must be configured for high-risk admin actions (e.g., disabling MFA, changing security policies, granting privileged roles). Log tampering controls must be in place."
+              },
+              {
+                "id": "sscf-log-002_obj",
+                "name": "objective",
+                "prose": "Verify that admin action logging is enabled, that alerts fire on high-risk config changes, and that audit logs are stored in a tamper-evident system."
+              }
             ]
           },
           {
             "id": "sscf-log-003",
             "title": "Audit Retention and Integrity",
+            "params": [
+              {
+                "id": "sscf-log-003_prm_1",
+                "label": "log-retention-hot",
+                "usage": "Minimum hot (immediately queryable) log retention period",
+                "values": [
+                  "12 months"
+                ]
+              },
+              {
+                "id": "sscf-log-003_prm_2",
+                "label": "log-retention-cold",
+                "usage": "Minimum cold (archival) log retention period",
+                "values": [
+                  "36 months"
+                ]
+              },
+              {
+                "id": "sscf-log-003_prm_3",
+                "label": "cold-storage-restoration-test-frequency",
+                "usage": "Frequency of testing restoration from cold log storage",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-LOG-003" },
-              { "name": "sort-id", "value": "log-03" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "security_engineering" },
-              { "name": "ccm-controls", "value": "LOG-08,LOG-09" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-LOG-003" }
+              {
+                "name": "label",
+                "value": "SSCF-LOG-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-03"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_engineering"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "LOG-08,LOG-09"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-LOG-003"
+              }
             ],
             "parts": [
-              { "id": "sscf-log-003_smt", "name": "statement", "prose": "Retain audit logs per organizational policy (minimum 12 months hot, 36 months cold) and preserve log integrity to support investigations and regulatory requests." },
-              { "id": "sscf-log-003_gdn", "name": "guidance", "prose": "Retention requirements may vary by data classification and regulation (HIPAA: 6 years; SOX: 7 years; SOC2: per audit cycle). Hash-based or write-once log storage is required for integrity. Log deletion must require dual approval. Restoration from cold storage must be tested annually." },
-              { "id": "sscf-log-003_obj", "name": "objective", "prose": "Verify that retention policies meet the highest applicable regulatory requirement, that integrity controls prevent unauthorized deletion or modification, and that restoration has been tested." }
+              {
+                "id": "sscf-log-003_smt",
+                "name": "statement",
+                "prose": "Retain audit logs per organizational policy with a minimum of {{ insert: param, sscf-log-003_prm_1 }} hot retention and {{ insert: param, sscf-log-003_prm_2 }} cold retention, preserving log integrity to support investigations, with cold storage restoration tested {{ insert: param, sscf-log-003_prm_3 }}."
+              },
+              {
+                "id": "sscf-log-003_gdn",
+                "name": "guidance",
+                "prose": "Retention requirements may vary by data classification and regulation (HIPAA: 6 years; SOX: 7 years; SOC2: per audit cycle). Hash-based or write-once log storage is required for integrity. Log deletion must require dual approval. Restoration from cold storage must be tested annually."
+              },
+              {
+                "id": "sscf-log-003_obj",
+                "name": "objective",
+                "prose": "Verify that retention policies meet the highest applicable regulatory requirement, that integrity controls prevent unauthorized deletion or modification, and that restoration has been tested."
+              }
             ]
           },
           {
             "id": "sscf-log-004",
             "title": "Real-Time Security Monitoring and Alerting",
+            "params": [
+              {
+                "id": "sscf-log-004_prm_1",
+                "label": "alert-routing-sla",
+                "usage": "Maximum time for high-risk event alerts to reach the Security Operations queue after detection",
+                "values": [
+                  "5 minutes"
+                ]
+              },
+              {
+                "id": "sscf-log-004_prm_2",
+                "label": "alert-suppression-review-frequency",
+                "usage": "Frequency of review for alert suppression rules",
+                "values": [
+                  "quarterly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-LOG-004" },
-              { "name": "sort-id", "value": "log-04" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "LOG-10,LOG-13" }
+              {
+                "name": "label",
+                "value": "SSCF-LOG-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-04"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "LOG-10,LOG-13"
+              }
             ],
             "parts": [
-              { "id": "sscf-log-004_smt", "name": "statement", "prose": "Configure real-time monitoring rules and alerts for high-risk events in SaaS platforms, routed to the Security Operations team within defined SLA thresholds." },
-              { "id": "sscf-log-004_gdn", "name": "guidance", "prose": "Mandatory alert conditions include: failed authentication exceeding threshold, privilege escalation events, bulk data access or export, configuration changes to security settings, and access from anomalous geolocations or impossible travel. Alert routing must reach the SOC queue within 5 minutes of event detection. Alert suppression rules must be documented and reviewed quarterly." },
-              { "id": "sscf-log-004_obj", "name": "objective", "prose": "Verify that mandatory alert conditions are configured, alert routing delivers to SOC within 5 minutes, and suppression rules are documented and reviewed." }
+              {
+                "id": "sscf-log-004_smt",
+                "name": "statement",
+                "prose": "Configure real-time monitoring rules and alerts for high-risk events in SaaS platforms, routed to the Security Operations team within {{ insert: param, sscf-log-004_prm_1 }} of event detection, with alert suppression rules reviewed {{ insert: param, sscf-log-004_prm_2 }}."
+              },
+              {
+                "id": "sscf-log-004_gdn",
+                "name": "guidance",
+                "prose": "Mandatory alert conditions include: failed authentication exceeding threshold, privilege escalation events, bulk data access or export, configuration changes to security settings, and access from anomalous geolocations or impossible travel. Alert routing must reach the SOC queue within 5 minutes of event detection. Alert suppression rules must be documented and reviewed quarterly."
+              },
+              {
+                "id": "sscf-log-004_obj",
+                "name": "objective",
+                "prose": "Verify that mandatory alert conditions are configured, alert routing delivers to SOC within 5 minutes, and suppression rules are documented and reviewed."
+              }
             ]
           },
           {
             "id": "sscf-log-005",
             "title": "SIEM Integration and Cross-Platform Log Correlation",
+            "params": [
+              {
+                "id": "sscf-log-005_prm_1",
+                "label": "integration-health-alert-sla",
+                "usage": "Maximum time for integration health monitoring to alert on log source outages",
+                "values": [
+                  "1 hour"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-LOG-005" },
-              { "name": "sort-id", "value": "log-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "LOG-03,LOG-05" }
+              {
+                "name": "label",
+                "value": "SSCF-LOG-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "LOG-03,LOG-05"
+              }
             ],
             "parts": [
-              { "id": "sscf-log-005_smt", "name": "statement", "prose": "Integrate SaaS platform logs into the centralized SIEM to enable cross-platform correlation, incident investigation, and compliance reporting." },
-              { "id": "sscf-log-005_gdn", "name": "guidance", "prose": "SIEM integration must deliver all required log types (see SSCF-LOG-001) in a normalized format (CEF, LEEF, or native SIEM connector). SaaS log sources must be documented in the SIEM asset inventory. Correlation rules linking SaaS events to identity data (IdP logs) and endpoint telemetry must exist for high-risk scenarios. Integration health monitoring must alert on log source outages within 1 hour." },
-              { "id": "sscf-log-005_obj", "name": "objective", "prose": "Verify that the SaaS platform is integrated with the SIEM, logs are normalized and searchable, cross-platform correlation rules exist, and integration health monitoring is active." }
+              {
+                "id": "sscf-log-005_smt",
+                "name": "statement",
+                "prose": "Integrate SaaS platform logs into the centralized SIEM to enable cross-platform correlation, incident investigation, and compliance reporting, with integration health monitoring alerting on log source outages within {{ insert: param, sscf-log-005_prm_1 }}."
+              },
+              {
+                "id": "sscf-log-005_gdn",
+                "name": "guidance",
+                "prose": "SIEM integration must deliver all required log types (see SSCF-LOG-001) in a normalized format (CEF, LEEF, or native SIEM connector). SaaS log sources must be documented in the SIEM asset inventory. Correlation rules linking SaaS events to identity data (IdP logs) and endpoint telemetry must exist for high-risk scenarios. Integration health monitoring must alert on log source outages within 1 hour."
+              },
+              {
+                "id": "sscf-log-005_obj",
+                "name": "objective",
+                "prose": "Verify that the SaaS platform is integrated with the SIEM, logs are normalized and searchable, cross-platform correlation rules exist, and integration health monitoring is active."
+              }
             ]
           },
           {
             "id": "sscf-log-006",
             "title": "Anomalous Behavior Detection and Insider Threat Monitoring",
+            "params": [
+              {
+                "id": "sscf-log-006_prm_1",
+                "label": "ueba-rule-review-frequency",
+                "usage": "Frequency of review and tuning for behavioral analytics and UEBA rules",
+                "values": [
+                  "semi-annually"
+                ]
+              },
+              {
+                "id": "sscf-log-006_prm_2",
+                "label": "data-access-anomaly-threshold",
+                "usage": "Threshold for data access volume above baseline that triggers an anomaly alert",
+                "values": [
+                  "10x above baseline"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-LOG-006" },
-              { "name": "sort-id", "value": "log-06" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "LOG-11,LOG-12" }
+              {
+                "name": "label",
+                "value": "SSCF-LOG-006"
+              },
+              {
+                "name": "sort-id",
+                "value": "log-06"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "LOG-11,LOG-12"
+              }
             ],
             "parts": [
-              { "id": "sscf-log-006_smt", "name": "statement", "prose": "Apply behavioral analytics or UEBA capabilities to detect anomalous user activity patterns within SaaS platforms that may indicate insider threat, account compromise, or data misuse." },
-              { "id": "sscf-log-006_gdn", "name": "guidance", "prose": "Behavioral baselines must be established for: normal data access volumes, working hours patterns, and typical API usage. Deviations exceeding defined thresholds (e.g., data access 10x above baseline, access outside business hours from new IP) must generate alerts. UEBA rules must be reviewed and tuned semi-annually. High-risk employees (e.g., those under HR investigation or in offboarding) may require enhanced monitoring with appropriate legal and HR review." },
-              { "id": "sscf-log-006_obj", "name": "objective", "prose": "Verify that behavioral baselines are established, anomaly detection alerts are configured and operational, and UEBA rules are reviewed semi-annually." }
+              {
+                "id": "sscf-log-006_smt",
+                "name": "statement",
+                "prose": "Apply behavioral analytics or UEBA capabilities to detect anomalous user activity patterns within SaaS platforms, with data access anomaly threshold at {{ insert: param, sscf-log-006_prm_2 }} and UEBA rules reviewed and tuned {{ insert: param, sscf-log-006_prm_1 }}."
+              },
+              {
+                "id": "sscf-log-006_gdn",
+                "name": "guidance",
+                "prose": "Behavioral baselines must be established for: normal data access volumes, working hours patterns, and typical API usage. Deviations exceeding defined thresholds (e.g., data access 10x above baseline, access outside business hours from new IP) must generate alerts. UEBA rules must be reviewed and tuned semi-annually. High-risk employees (e.g., those under HR investigation or in offboarding) may require enhanced monitoring with appropriate legal and HR review."
+              },
+              {
+                "id": "sscf-log-006_obj",
+                "name": "objective",
+                "prose": "Verify that behavioral baselines are established, anomaly detection alerts are configured and operational, and UEBA rules are reviewed semi-annually."
+              }
             ]
           }
         ]
@@ -603,91 +1989,315 @@
         "class": "domain",
         "title": "Security Incident Management",
         "props": [
-          { "name": "ccm-domain", "value": "SEF" },
-          { "name": "domain-description", "value": "Controls governing detection, response, forensics, and governance of security incidents and policy exceptions involving SaaS platforms." }
+          {
+            "name": "ccm-domain",
+            "value": "SEF"
+          },
+          {
+            "name": "domain-description",
+            "value": "Controls governing detection, response, forensics, and governance of security incidents and policy exceptions involving SaaS platforms."
+          }
         ],
         "controls": [
           {
             "id": "sscf-sef-001",
             "title": "Real-Time Threat Policy Enforcement",
+            "params": [
+              {
+                "id": "sscf-sef-001_prm_1",
+                "label": "threat-policy-review-frequency",
+                "usage": "Frequency of review for automated threat policy rules",
+                "values": [
+                  "quarterly"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-SEF-001" },
-              { "name": "sort-id", "value": "sef-01" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "TVM-09,SEF-01" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-TDR-001" }
+              {
+                "name": "label",
+                "value": "SSCF-SEF-001"
+              },
+              {
+                "name": "sort-id",
+                "value": "sef-01"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "TVM-09,SEF-01"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-TDR-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-sef-001_smt", "name": "statement", "prose": "Detect and automatically block or quarantine high-risk behaviors within SaaS platforms through policy-driven controls." },
-              { "id": "sscf-sef-001_gdn", "name": "guidance", "prose": "At minimum, automated controls must cover: login from impossible travel, bulk data export exceeding defined thresholds, access from blocked IP ranges, and authentication from unmanaged devices. Policies must be reviewed quarterly. Automated blocks must generate SIEM alerts." },
-              { "id": "sscf-sef-001_obj", "name": "objective", "prose": "Verify that automated threat policies are active, configured for the required risk scenarios, and that triggered events generate alerts routed to the security operations team." }
+              {
+                "id": "sscf-sef-001_smt",
+                "name": "statement",
+                "prose": "Detect and automatically block or quarantine high-risk behaviors within SaaS platforms through policy-driven controls, with threat policies reviewed {{ insert: param, sscf-sef-001_prm_1 }} and automated blocks generating SIEM alerts."
+              },
+              {
+                "id": "sscf-sef-001_gdn",
+                "name": "guidance",
+                "prose": "At minimum, automated controls must cover: login from impossible travel, bulk data export exceeding defined thresholds, access from blocked IP ranges, and authentication from unmanaged devices. Policies must be reviewed quarterly. Automated blocks must generate SIEM alerts."
+              },
+              {
+                "id": "sscf-sef-001_obj",
+                "name": "objective",
+                "prose": "Verify that automated threat policies are active, configured for the required risk scenarios, and that triggered events generate alerts routed to the security operations team."
+              }
             ]
           },
           {
             "id": "sscf-sef-002",
             "title": "Security Alert Triage and Escalation",
+            "params": [
+              {
+                "id": "sscf-sef-002_prm_1",
+                "label": "critical-alert-acknowledge-sla",
+                "usage": "Maximum time to acknowledge a critical security alert",
+                "values": [
+                  "15 minutes"
+                ]
+              },
+              {
+                "id": "sscf-sef-002_prm_2",
+                "label": "critical-alert-triage-sla",
+                "usage": "Maximum time to complete triage of a critical security alert",
+                "values": [
+                  "1 hour"
+                ]
+              },
+              {
+                "id": "sscf-sef-002_prm_3",
+                "label": "high-alert-acknowledge-sla",
+                "usage": "Maximum time to acknowledge a high-severity security alert",
+                "values": [
+                  "1 hour"
+                ]
+              },
+              {
+                "id": "sscf-sef-002_prm_4",
+                "label": "high-alert-triage-sla",
+                "usage": "Maximum time to complete triage of a high-severity security alert",
+                "values": [
+                  "4 hours"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-SEF-002" },
-              { "name": "sort-id", "value": "sef-02" },
-              { "name": "severity", "value": "high" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "SEF-02,SEF-03" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-TDR-002" }
+              {
+                "name": "label",
+                "value": "SSCF-SEF-002"
+              },
+              {
+                "name": "sort-id",
+                "value": "sef-02"
+              },
+              {
+                "name": "severity",
+                "value": "high"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "SEF-02,SEF-03"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-TDR-002"
+              }
             ],
             "parts": [
-              { "id": "sscf-sef-002_smt", "name": "statement", "prose": "Ensure all high-risk SaaS security alerts are triaged within SLA and escalated to the appropriate incident response team." },
-              { "id": "sscf-sef-002_gdn", "name": "guidance", "prose": "SLA targets: Critical alerts — 15 minutes to acknowledge, 1 hour to triage; High alerts — 1 hour to acknowledge, 4 hours to triage. All alerts must route through the SIEM to the on-call SOC queue. Unacknowledged alerts must auto-escalate." },
-              { "id": "sscf-sef-002_obj", "name": "objective", "prose": "Verify that alert routing from SaaS platforms to SIEM/SOC is functional, that SLA targets are defined, and that mean-time-to-acknowledge (MTTA) for critical alerts is within target." }
+              {
+                "id": "sscf-sef-002_smt",
+                "name": "statement",
+                "prose": "Ensure all high-risk SaaS security alerts are triaged within SLA and escalated to the appropriate incident response team: Critical alerts acknowledged within {{ insert: param, sscf-sef-002_prm_1 }} and triaged within {{ insert: param, sscf-sef-002_prm_2 }}; High alerts acknowledged within {{ insert: param, sscf-sef-002_prm_3 }} and triaged within {{ insert: param, sscf-sef-002_prm_4 }}."
+              },
+              {
+                "id": "sscf-sef-002_gdn",
+                "name": "guidance",
+                "prose": "SLA targets: Critical alerts \u2014 15 minutes to acknowledge, 1 hour to triage; High alerts \u2014 1 hour to acknowledge, 4 hours to triage. All alerts must route through the SIEM to the on-call SOC queue. Unacknowledged alerts must auto-escalate."
+              },
+              {
+                "id": "sscf-sef-002_obj",
+                "name": "objective",
+                "prose": "Verify that alert routing from SaaS platforms to SIEM/SOC is functional, that SLA targets are defined, and that mean-time-to-acknowledge (MTTA) for critical alerts is within target."
+              }
             ]
           },
           {
             "id": "sscf-sef-003",
             "title": "Incident Response Plan and Tabletop Testing",
+            "params": [
+              {
+                "id": "sscf-sef-003_prm_1",
+                "label": "tabletop-exercise-frequency",
+                "usage": "Minimum frequency for incident response tabletop exercises or simulations",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-SEF-003" },
-              { "name": "sort-id", "value": "sef-03" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "SEF-04,SEF-06" }
+              {
+                "name": "label",
+                "value": "SSCF-SEF-003"
+              },
+              {
+                "name": "sort-id",
+                "value": "sef-03"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "SEF-04,SEF-06"
+              }
             ],
             "parts": [
-              { "id": "sscf-sef-003_smt", "name": "statement", "prose": "Maintain a documented incident response plan covering SaaS platform security events and conduct tabletop exercises or simulations at least annually." },
-              { "id": "sscf-sef-003_gdn", "name": "guidance", "prose": "The IR plan must address: SaaS-specific scenarios (account takeover, bulk data exfiltration, OAuth token compromise, vendor breach), escalation paths to application owners and legal, regulatory notification obligations by regulation and timeline, and evidence preservation procedures for SaaS-hosted data. Annual tabletop exercises must include at least one SaaS-specific scenario. Exercise results must be documented with identified gaps tracked to closure." },
-              { "id": "sscf-sef-003_obj", "name": "objective", "prose": "Verify that a SaaS-inclusive IR plan exists, annual tabletop exercises have occurred, and gaps identified in exercises are tracked and remediated." }
+              {
+                "id": "sscf-sef-003_smt",
+                "name": "statement",
+                "prose": "Maintain a documented incident response plan covering SaaS platform security events and conduct tabletop exercises or simulations at minimum {{ insert: param, sscf-sef-003_prm_1 }}."
+              },
+              {
+                "id": "sscf-sef-003_gdn",
+                "name": "guidance",
+                "prose": "The IR plan must address: SaaS-specific scenarios (account takeover, bulk data exfiltration, OAuth token compromise, vendor breach), escalation paths to application owners and legal, regulatory notification obligations by regulation and timeline, and evidence preservation procedures for SaaS-hosted data. Annual tabletop exercises must include at least one SaaS-specific scenario. Exercise results must be documented with identified gaps tracked to closure."
+              },
+              {
+                "id": "sscf-sef-003_obj",
+                "name": "objective",
+                "prose": "Verify that a SaaS-inclusive IR plan exists, annual tabletop exercises have occurred, and gaps identified in exercises are tracked and remediated."
+              }
             ]
           },
           {
             "id": "sscf-sef-004",
             "title": "Evidence Preservation and Cloud Forensics Readiness",
+            "params": [
+              {
+                "id": "sscf-sef-004_prm_1",
+                "label": "forensic-preservation-test-frequency",
+                "usage": "Frequency of testing forensic evidence preservation and chain-of-custody procedures",
+                "values": [
+                  "annually"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-SEF-004" },
-              { "name": "sort-id", "value": "sef-04" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "security_operations" },
-              { "name": "ccm-controls", "value": "SEF-07,SEF-08" }
+              {
+                "name": "label",
+                "value": "SSCF-SEF-004"
+              },
+              {
+                "name": "sort-id",
+                "value": "sef-04"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "security_operations"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "SEF-07,SEF-08"
+              }
             ],
             "parts": [
-              { "id": "sscf-sef-004_smt", "name": "statement", "prose": "Ensure that SaaS platform audit logs and forensic artifacts can be preserved in a legally defensible manner to support incident investigations and e-discovery requests." },
-              { "id": "sscf-sef-004_gdn", "name": "guidance", "prose": "Evidence preservation procedures must include: legal hold capability for SaaS-hosted data (email, files, records), chain-of-custody documentation for exported evidence, SIEM log preservation at original fidelity without modification, and SaaS vendor cooperation procedures for law enforcement requests. Log exports used as evidence must include cryptographic hash verification. Preservation procedures must be tested annually." },
-              { "id": "sscf-sef-004_obj", "name": "objective", "prose": "Verify that legal hold procedures cover SaaS-hosted data, exported evidence includes chain-of-custody documentation, and forensic preservation procedures are tested annually." }
+              {
+                "id": "sscf-sef-004_smt",
+                "name": "statement",
+                "prose": "Ensure that SaaS platform audit logs and forensic artifacts can be preserved in a legally defensible manner to support incident investigations and e-discovery requests, with preservation procedures tested {{ insert: param, sscf-sef-004_prm_1 }}."
+              },
+              {
+                "id": "sscf-sef-004_gdn",
+                "name": "guidance",
+                "prose": "Evidence preservation procedures must include: legal hold capability for SaaS-hosted data (email, files, records), chain-of-custody documentation for exported evidence, SIEM log preservation at original fidelity without modification, and SaaS vendor cooperation procedures for law enforcement requests. Log exports used as evidence must include cryptographic hash verification. Preservation procedures must be tested annually."
+              },
+              {
+                "id": "sscf-sef-004_obj",
+                "name": "objective",
+                "prose": "Verify that legal hold procedures cover SaaS-hosted data, exported evidence includes chain-of-custody documentation, and forensic preservation procedures are tested annually."
+              }
             ]
           },
           {
             "id": "sscf-sef-005",
             "title": "Exception Governance and Risk Acceptance",
+            "params": [
+              {
+                "id": "sscf-sef-005_prm_1",
+                "label": "exception-max-duration",
+                "usage": "Maximum duration for a security control exception before mandatory renewal or remediation",
+                "values": [
+                  "12 months"
+                ]
+              }
+            ],
             "props": [
-              { "name": "label", "value": "SSCF-SEF-005" },
-              { "name": "sort-id", "value": "sef-05" },
-              { "name": "severity", "value": "moderate" },
-              { "name": "owner-team", "value": "information_security" },
-              { "name": "ccm-controls", "value": "GRC-01,GRC-04" },
-              { "name": "sscf-v0-equivalent", "value": "SSCF-GOV-001" }
+              {
+                "name": "label",
+                "value": "SSCF-SEF-005"
+              },
+              {
+                "name": "sort-id",
+                "value": "sef-05"
+              },
+              {
+                "name": "severity",
+                "value": "moderate"
+              },
+              {
+                "name": "owner-team",
+                "value": "information_security"
+              },
+              {
+                "name": "ccm-controls",
+                "value": "GRC-01,GRC-04"
+              },
+              {
+                "name": "sscf-v0-equivalent",
+                "value": "SSCF-GOV-001"
+              }
             ],
             "parts": [
-              { "id": "sscf-sef-005_smt", "name": "statement", "prose": "Enforce time-bound, formally approved exceptions to security baseline controls, with documented compensating controls and periodic review." },
-              { "id": "sscf-sef-005_gdn", "name": "guidance", "prose": "All exceptions to SSCF baseline controls must be: approved by the Security Team and the platform owner, documented with business justification and compensating controls, time-limited (maximum 12 months with mandatory renewal), and tracked in the risk register. Exceptions must not be used to defer indefinitely — unrenewed exceptions must revert to the baseline control." },
-              { "id": "sscf-sef-005_obj", "name": "objective", "prose": "Verify that all active exceptions have documented approvals, compensating controls, expiry dates within 12 months, and are tracked in the risk register." }
+              {
+                "id": "sscf-sef-005_smt",
+                "name": "statement",
+                "prose": "Enforce time-bound, formally approved exceptions to security baseline controls, with maximum exception duration of {{ insert: param, sscf-sef-005_prm_1 }}, documented compensating controls, and tracking in the risk register."
+              },
+              {
+                "id": "sscf-sef-005_gdn",
+                "name": "guidance",
+                "prose": "All exceptions to SSCF baseline controls must be: approved by the Security Team and the platform owner, documented with business justification and compensating controls, time-limited (maximum 12 months with mandatory renewal), and tracked in the risk register. Exceptions must not be used to defer indefinitely \u2014 unrenewed exceptions must revert to the baseline control."
+              },
+              {
+                "id": "sscf-sef-005_obj",
+                "name": "objective",
+                "prose": "Verify that all active exceptions have documented approvals, compensating controls, expiry dates within 12 months, and are tracked in the risk register."
+              }
             ]
           }
         ]
@@ -699,28 +2309,36 @@
           "uuid": "c3d4e5f6-a7b8-9012-cdef-123456789012",
           "title": "CSA Cloud Controls Matrix v4.1",
           "rlinks": [
-            { "href": "https://cloudsecurityalliance.org/artifacts/cloud-controls-matrix-v4-1" }
+            {
+              "href": "https://cloudsecurityalliance.org/artifacts/cloud-controls-matrix-v4-1"
+            }
           ]
         },
         {
           "uuid": "e5f6a7b8-c9d0-1234-efab-345678901234",
           "title": "CSA CCM v4.1 Machine-Readable Bundle (OSCAL/JSON/YAML)",
           "rlinks": [
-            { "href": "https://cloudsecurityalliance.org/artifacts/ccm-machine-readable-bundle-json-yaml-oscal" }
+            {
+              "href": "https://cloudsecurityalliance.org/artifacts/ccm-machine-readable-bundle-json-yaml-oscal"
+            }
           ]
         },
         {
           "uuid": "d4e5f6a7-b8c9-0123-defa-234567890123",
           "title": "SSCF to CCM Mapping",
           "rlinks": [
-            { "href": "../sscf/sscf_to_ccm_mapping.yaml" }
+            {
+              "href": "../sscf/sscf_to_ccm_mapping.yaml"
+            }
           ]
         },
         {
           "uuid": "f6a7b8c9-d0e1-2345-fabc-456789012345",
-          "title": "SSCF v0 Catalog (14-control baseline — backward compatibility reference)",
+          "title": "SSCF v0 Catalog (14-control baseline \u2014 backward compatibility reference)",
           "rlinks": [
-            { "href": "../sscf/sscf_catalog.json" }
+            {
+              "href": "../sscf/sscf_catalog.json"
+            }
           ]
         }
       ]
