@@ -134,13 +134,19 @@ Human ──► agent-loop run (harness/loop.py)
                │
                └──► Orchestrator (gpt-5.3-chat-latest)
                          │
-                         ├── 1. sfdc_connect_collect     → sfdc_raw.json
-                         ├── 2. oscal_assess_assess      → gap_analysis.json
-                         ├── 3. oscal_gap_map            → backlog.json + matrix.md
-                         ├── 4. sscf_benchmark_benchmark → sscf_report.json
-                         ├── 5. nist_review_assess       → nist_review.json
-                         ├── 6a. report_gen_generate     (audience=app-owner)
-                         └── 6b. report_gen_generate     (audience=security) → .md + .docx
+                         ├── 1a. sfdc_connect_collect      → sfdc_raw.json        (Salesforce)
+                         ├── 1b. workday_connect_collect   → workday_raw.json     (Workday)
+                         ├── 1.5 backlog_diff              → drift_report.json    (re-assessments only)
+                         ├── 2.  oscal_assess_assess       → gap_analysis.json
+                         ├── 3.  oscal_gap_map             → backlog.json + matrix.md
+                         ├── 4.  sscf_benchmark_benchmark  → sscf_report.json
+                         ├── 5.  nist_review_assess        → nist_review.json     (AI RMF gate)
+                         ├── 5d. gen_aicm_crosswalk        → aicm_coverage.json   (AICM v1.0.3)
+                         ├── 5e. gen_poam                  → poam.json            (OSCAL POA&M)
+                         ├── 5f. gen_assessment_results    → assessment_results.json
+                         ├── 5g. gen_ssp                   → ssp.json             (System Security Plan)
+                         ├── 6a. report_gen_generate       → *_remediation_report.md   (app-owner)
+                         └── 6b. report_gen_generate       → *_security_assessment.md + .docx
 ```
 
 All agents are OpenAI models. The orchestrator dispatches numbered tool calls to skills (Python CLIs). Agents communicate through JSON evidence files on disk — no shared state or MCP.
