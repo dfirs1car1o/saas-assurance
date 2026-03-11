@@ -1108,11 +1108,20 @@ def _call_llm(system_prompt: str, user_msg: str, model: str, mock: bool = False)
         sys.exit(1)
 
     api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        click.echo("ERROR: OPENAI_API_KEY not set.", err=True)
+    azure_key = os.getenv("AZURE_OPENAI_API_KEY")
+    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    if not api_key and not (azure_key and azure_endpoint):
+        click.echo("ERROR: set OPENAI_API_KEY or both AZURE_OPENAI_API_KEY + AZURE_OPENAI_ENDPOINT.", err=True)
         sys.exit(1)
 
-    client = openai.OpenAI(api_key=api_key)
+    if azure_key and azure_endpoint:
+        client = openai.AzureOpenAI(
+            api_key=azure_key,
+            azure_endpoint=azure_endpoint,
+            api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01"),
+        )
+    else:
+        client = openai.OpenAI(api_key=api_key)
     response = client.chat.completions.create(
         model=model,
         max_completion_tokens=4096,

@@ -164,6 +164,28 @@ All platform controls chain through SSCF → CCM v4.1 → regulatory crosswalk (
 | NIST AI RMF | 1.0 | Applied by `nist-review` skill |
 | **CSA AI Controls Matrix (AICM)** | **v1.0.3** | **`config/aicm/sscf_to_aicm_mapping.yaml`** (36 SSCF → 18 AICM domains; 11 covered/partial, 7 gaps; maps to EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) |
 
+## Pipeline Evolution
+
+What expanded from the original six-step pipeline to the current seven-phase pipeline:
+
+```
+Original Pipeline               Current Pipeline
+──────────────────────          ──────────────────────────────────────────
+1. sfdc_connect_collect         1a. sfdc_connect_collect    (Salesforce)
+                                1b. workday_connect_collect (Workday)
+                                1.5 backlog_diff            (re-assessments only)
+2. oscal_assess_assess          2.  oscal_assess_assess
+3. oscal_gap_map                3.  oscal_gap_map
+4. sscf_benchmark               4.  sscf_benchmark
+5. nist_review_assess           5.  nist_review_assess      (AI RMF gate)
+                                5d. gen_aicm_crosswalk      (AICM v1.0.3)
+                                5e. gen_poam                (OSCAL POA&M)
+                                5f. gen_assessment_results  (OSCAL AR)
+                                5g. gen_ssp                 (OSCAL SSP)
+6a/6b. report_gen_generate      6a/6b. report_gen_generate
+                                7.  export_to_opensearch    (dashboards)
+```
+
 ## Repository Layout
 
 ```

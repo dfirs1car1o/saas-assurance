@@ -220,6 +220,14 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                     "description": "Platform being assessed — drives OSCAL provenance table",
                 },
                 "dry_run": {"type": "boolean", "description": "Print plan without writing files"},
+                "mock_llm": {
+                    "type": "boolean",
+                    "description": "Use deterministic template output — no API call. Required for CI/offline testing.",
+                },
+                "drift_report": {
+                    "type": "string",
+                    "description": "Path to drift_report.json from backlog_diff — adds regression section to report",
+                },
             },
             "required": ["backlog", "audience", "out"],
         },
@@ -530,6 +538,10 @@ def _dispatch_report_gen(inp: dict[str, Any], out_dir: Path) -> str:
         args += ["--platform", inp["platform"]]
     if inp.get("dry_run"):
         args.append("--dry-run")
+    if inp.get("mock_llm"):
+        args.append("--mock-llm")
+    if inp.get("drift_report"):
+        args += ["--drift-report", inp["drift_report"]]
     _run(args)
     return json.dumps({"status": "ok", "output_file": out_path})
 

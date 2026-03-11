@@ -30,6 +30,30 @@ from harness.tools import ALL_TOOLS, dispatch
 
 _REPO = Path(__file__).resolve().parents[1]
 
+
+def _make_openai_client(api_key: str | None = None, max_retries: int = 5):
+    """Return an AzureOpenAI or OpenAI client based on environment variables.
+
+    Azure is selected when both AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT
+    are present. All other callers fall back to the standard OpenAI client.
+    """
+    import openai  # lazy import — keeps startup fast when openai is not installed
+
+    azure_key = os.getenv("AZURE_OPENAI_API_KEY")
+    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    if azure_key and azure_endpoint:
+        return openai.AzureOpenAI(
+            api_key=azure_key,
+            azure_endpoint=azure_endpoint,
+            api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01"),
+            max_retries=max_retries,
+        )
+    return openai.OpenAI(
+        api_key=api_key or os.getenv("OPENAI_API_KEY"),
+        max_retries=max_retries,
+    )
+
+
 # Load .env at import time so OPENAI_API_KEY and SF_* vars are in os.environ
 # before Click reads envvar= options or os.getenv() is called anywhere.
 load_dotenv(_REPO / ".env")
@@ -169,12 +193,7 @@ def _run_loop(  # NOSONAR
     api_key: str | None,
 ) -> dict[str, Any]:
     """Core agentic loop. Returns result dict with score, status, output paths."""
-    try:
-        import openai
-    except ImportError as exc:
-        raise RuntimeError("openai package not installed. Run: pip install openai") from exc
-
-    client = openai.OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"), max_retries=5)
+    client = _make_openai_client(api_key=api_key or os.getenv("OPENAI_API_KEY"), max_retries=5)
 
     # --- Memory: load prior assessments for this org ---
     mem_client = None
