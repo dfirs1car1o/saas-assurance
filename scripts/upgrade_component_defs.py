@@ -15,6 +15,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+_REPO = Path(__file__).resolve().parents[1]
+
+
+def _safe_write_path(p: Path) -> Path:
+    """Resolve *p* and assert it stays within the repo tree."""
+    resolved = p.resolve()
+    if not resolved.is_relative_to(_REPO):
+        raise ValueError(f"Output path '{resolved}' escapes the repository root.")
+    return resolved
+
+
 # ── Origination map: control-id → origination type ───────────────────────────
 # FedRAMP origination types:
 #   customer-configured  — org configures settings in the SaaS platform
@@ -215,7 +226,7 @@ def upgrade_component_def(
         )
     root["metadata"] = meta
 
-    path.resolve().write_text(json.dumps(comp_def, indent=2))
+    _safe_write_path(path).write_text(json.dumps(comp_def, indent=2))
     impl_count = sum(
         len(ctrl.get("implemented-requirements", []))
         for comp in root.get("components", [])

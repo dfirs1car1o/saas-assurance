@@ -17,7 +17,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+_REPO = Path(__file__).resolve().parents[1]
 CATALOG_PATH = Path("config/sscf/sscf_v1_catalog.json")
+
+
+def _safe_write_path(p: Path) -> Path:
+    """Resolve *p* and assert it stays within the repo tree."""
+    resolved = p.resolve()
+    if not resolved.is_relative_to(_REPO):
+        raise ValueError(f"Output path '{resolved}' escapes the repository root.")
+    return resolved
+
 
 # ── Shared ODP value constants (SonarCloud S1192 — avoid duplicated literals) ─
 _SLA_24H = "24 hours"
@@ -804,7 +814,7 @@ def main() -> None:
         "patterns. Platform profiles (SBS/WSCC) set-parameters override defaults."
     )
 
-    CATALOG_PATH.resolve().write_text(json.dumps(catalog, indent=2))
+    _safe_write_path(CATALOG_PATH).write_text(json.dumps(catalog, indent=2))
     print(f"Updated {updated_count} controls with ODP params in {CATALOG_PATH}")
     print("Next steps:")
     print("  1. Review: git diff config/sscf/sscf_v1_catalog.json")

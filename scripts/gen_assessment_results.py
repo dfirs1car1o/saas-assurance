@@ -24,6 +24,16 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
+_REPO = Path(__file__).resolve().parents[1]
+
+
+def _safe_write_path(p: Path) -> Path:
+    """Resolve *p* and assert it stays within the repo tree."""
+    resolved = p.resolve()
+    if not resolved.is_relative_to(_REPO):
+        raise ValueError(f"Output path '{resolved}' escapes the repository root.")
+    return resolved
+
 
 def _uuid() -> str:
     return str(uuid.uuid4())
@@ -288,7 +298,7 @@ def main() -> None:
         resolved_catalog_path=args.resolved_catalog,
     )
 
-    out_path = Path(args.out)
+    out_path = _safe_write_path(Path(args.out))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(results, indent=2))
 

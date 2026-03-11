@@ -86,7 +86,6 @@ def _worst_status(statuses: list[str]) -> str:
 
 
 def _compute_domain_verdict(
-    domain_abbrev: str,
     mapping_verdict: str,
     sscf_controls: list[dict],
     findings_index: dict[str, dict],
@@ -144,22 +143,8 @@ def _compute_domain_verdict(
 # ── core ──────────────────────────────────────────────────────────────────────
 
 
-def build_aicm_coverage(
-    backlog: dict,
-    mapping: dict,
-    catalog: dict,
-    org: str,
-    platform: str,
-) -> dict:
-    """Build the full AICM coverage report."""
-    findings_index = _index_backlog(backlog)
-    catalog_domains = _index_catalog_domains(catalog)
-
-    controls_map = mapping.get("controls", {})
-    uncovered_domains: list[str] = [d["abbrev"] for d in mapping.get("uncovered_aicm_domains", [])]
-
-    # Build per-AICM-domain coverage: aggregate all SSCF controls that touch each domain
-    # {aicm_abbrev: {mapping_verdict, [sscf_ctrl_entries]}}
+def _build_domain_sscf_map(controls_map: dict, uncovered_domains: list[str]) -> dict[str, dict]:
+    """Aggregate SSCF controls per AICM domain and mark uncovered domains."""
     domain_sscf: dict[str, dict] = {}
 
     for sscf_id, ctrl_data in controls_map.items():
@@ -185,16 +170,32 @@ def build_aicm_coverage(
                 }
             )
 
-    # Add uncovered domains (not referenced by any SSCF control)
     for abbrev in uncovered_domains:
         if abbrev not in domain_sscf:
             domain_sscf[abbrev] = {"mapping_verdict": "not_covered", "sscf_controls": []}
+
+    return domain_sscf
+
+
+def build_aicm_coverage(
+    backlog: dict,
+    mapping: dict,
+    catalog: dict,
+    org: str,
+    platform: str,
+) -> dict:
+    """Build the full AICM coverage report."""
+    findings_index = _index_backlog(backlog)
+    catalog_domains = _index_catalog_domains(catalog)
+
+    controls_map = mapping.get("controls", {})
+    uncovered_domains: list[str] = [d["abbrev"] for d in mapping.get("uncovered_aicm_domains", [])]
+    domain_sscf = _build_domain_sscf_map(controls_map, uncovered_domains)
 
     # Compute per-domain results
     domain_results: dict[str, dict] = {}
     for abbrev, data in sorted(domain_sscf.items()):
         result = _compute_domain_verdict(
-            abbrev,
             data["mapping_verdict"],
             data["sscf_controls"],
             findings_index,

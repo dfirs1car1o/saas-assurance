@@ -1248,7 +1248,7 @@ def generate(  # NOSONAR
         return
 
     backlog_data = _load_json(backlog)
-    platform = backlog_data.get("platform", "salesforce")
+    platform = platform or backlog_data.get("platform", "salesforce")
     _platform_titles = {
         "salesforce": f"Salesforce Security Governance Assessment — {org}",
         "workday": f"Workday Security Governance Assessment — {org}",

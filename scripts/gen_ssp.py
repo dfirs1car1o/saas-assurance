@@ -29,6 +29,7 @@ import sys
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 TEMPLATE_PATH = Path("config/ssp/commercial_saas_ssp_template.json")
 
@@ -71,7 +72,7 @@ def _score_to_sensitivity(score: float, status: str) -> str:
     return "low"
 
 
-def _fill_placeholders(obj: object, replacements: dict[str, str]) -> object:
+def _fill_placeholders(obj: object, replacements: dict[str, str]) -> Any:
     """Recursively replace placeholder strings in nested JSON structure."""
     if isinstance(obj, str):
         for placeholder, value in replacements.items():
