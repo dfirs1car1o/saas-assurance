@@ -166,7 +166,7 @@ config_items = [
     ("SSCF v1.0 Catalog\n36 controls · 6 domains", 1.5),
     ("SBS v1.0 Profile\n35 Salesforce controls", 3.8),
     ("WSCC v1.0 Profile\n30 Workday controls", 6.1),
-    ("CCM v4.1 → ISO 27001\nRegulatory crosswalk", 8.4),
+    ("CCM v4.1 · AICM v1.0.3\nISO 27001 · AI Act", 8.4),
 ]
 for text, cx in config_items:
     box(SEC2_X + cx - 1.0, SEC2_Y + 0.35, 2.1, 1.15, C_PURPLE_LIGHT, C_PURPLE, lw=0.8)
@@ -272,7 +272,7 @@ artifacts = [
     ("gap_analysis.json\nbacklog.json", "Phase 2-3 — Assess", 3.55),
     ("sscf_report.json", "Phase 4 — Score", 5.7),
     ("nist_review.json", "Phase 5 — Gate", 7.85),
-    ("report_*.md/.docx\nannex + method", "Phase 6 — Report", 10.0),
+    ("report_*.md/.docx\naicm_coverage.json", "Phase 5-6 — Report+AI", 10.0),
 ]
 for text, phase, cx in artifacts:
     artifact_box(SEC5_X + cx - 1.1, SEC5_Y + 0.4, 2.0, 1.9, text, phase)
@@ -345,8 +345,8 @@ ax.add_patch(
 label(
     9,
     chain_y,
-    "Framework chain:  Platform control  →  SSCF domain  →  CCM v4.1"
-    "  →  ISO 27001:2022 Annex A  →  SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR",
+    "Framework chain:  Platform control  →  SSCF domain  →  CCM v4.1 / AICM v1.0.3"
+    "  →  ISO 27001:2022 Annex A  →  SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR / EU AI Act",
     size=6.8,
     color="#283593",
     bold=False,
