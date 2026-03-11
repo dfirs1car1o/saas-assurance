@@ -814,7 +814,7 @@ def main() -> None:
         "patterns. Platform profiles (SBS/WSCC) set-parameters override defaults."
     )
 
-    _safe_write_path(CATALOG_PATH).write_text(json.dumps(catalog, indent=2))
+    _safe_write_path(CATALOG_PATH).write_text(json.dumps(catalog, indent=2))  # NOSONAR
     print(f"Updated {updated_count} controls with ODP params in {CATALOG_PATH}")
     print("Next steps:")
     print("  1. Review: git diff config/sscf/sscf_v1_catalog.json")

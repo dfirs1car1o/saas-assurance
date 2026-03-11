@@ -300,7 +300,7 @@ def main() -> None:
 
     out_path = _safe_write_path(Path(args.out))
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(results, indent=2))
+    out_path.write_text(json.dumps(results, indent=2))  # NOSONAR — path validated by _safe_write_path
 
     root = results["assessment-results"]
     result = root["results"][0]

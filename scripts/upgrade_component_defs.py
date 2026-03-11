@@ -226,7 +226,7 @@ def upgrade_component_def(
         )
     root["metadata"] = meta
 
-    _safe_write_path(path).write_text(json.dumps(comp_def, indent=2))
+    _safe_write_path(path).write_text(json.dumps(comp_def, indent=2))  # NOSONAR — path validated by _safe_write_path
     impl_count = sum(
         len(ctrl.get("implemented-requirements", []))
         for comp in root.get("components", [])

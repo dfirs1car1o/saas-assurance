@@ -143,6 +143,13 @@ def _compute_domain_verdict(
 # ── core ──────────────────────────────────────────────────────────────────────
 
 
+def _weaken_verdict(existing: str, new_v: str) -> str:
+    """Return the weaker of two coverage verdicts (covered < partial < not_covered)."""
+    if existing == "covered" and new_v != "covered":
+        return new_v
+    return existing
+
+
 def _build_domain_sscf_map(controls_map: dict, uncovered_domains: list[str]) -> dict[str, dict]:
     """Aggregate SSCF controls per AICM domain and mark uncovered domains."""
     domain_sscf: dict[str, dict] = {}
@@ -157,11 +164,10 @@ def _build_domain_sscf_map(controls_map: dict, uncovered_domains: list[str]) -> 
                     "mapping_verdict": aicm_domain_entry.get("coverage_verdict", "partial"),
                     "sscf_controls": [],
                 }
-            # Use the weakest coverage_verdict if multiple SSCF controls hit same domain
-            existing = domain_sscf[abbrev]["mapping_verdict"]
             new_v = aicm_domain_entry.get("coverage_verdict", "partial")
-            if existing == "covered" and new_v != "covered":
-                domain_sscf[abbrev]["mapping_verdict"] = new_v
+            domain_sscf[abbrev]["mapping_verdict"] = _weaken_verdict(
+                domain_sscf[abbrev]["mapping_verdict"], new_v
+            )
             domain_sscf[abbrev]["sscf_controls"].append(
                 {
                     "sscf_id": sscf_id,

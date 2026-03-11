@@ -497,6 +497,28 @@ def _dispatch_gap_map(inp: dict[str, Any], out_dir: Path) -> str:
     return json.dumps({"status": "ok", "output_file": out_json})
 
 
+def _report_gen_optional_args(inp: dict[str, Any]) -> list[str]:
+    """Build the optional CLI flags for report-gen from the tool input dict."""
+    extras: list[str] = []
+    if inp.get("sscf_benchmark"):
+        extras += ["--sscf-benchmark", inp["sscf_benchmark"]]
+    if inp.get("nist_review"):
+        extras += ["--nist-review", inp["nist_review"]]
+    if inp.get("org_alias"):
+        extras += ["--org-alias", inp["org_alias"]]
+    if inp.get("title"):
+        extras += ["--title", inp["title"]]
+    if inp.get("platform"):
+        extras += ["--platform", inp["platform"]]
+    if inp.get("dry_run"):
+        extras.append("--dry-run")
+    if inp.get("mock_llm"):
+        extras.append("--mock-llm")
+    if inp.get("drift_report"):
+        extras += ["--drift-report", inp["drift_report"]]
+    return extras
+
+
 def _dispatch_report_gen(inp: dict[str, Any], out_dir: Path) -> str:
     raw_out = inp.get("out")
     if raw_out:
@@ -525,23 +547,8 @@ def _dispatch_report_gen(inp: dict[str, Any], out_dir: Path) -> str:
         audience,
         "--out",
         out_path,
+        *_report_gen_optional_args(inp),
     ]
-    if inp.get("sscf_benchmark"):
-        args += ["--sscf-benchmark", inp["sscf_benchmark"]]
-    if inp.get("nist_review"):
-        args += ["--nist-review", inp["nist_review"]]
-    if inp.get("org_alias"):
-        args += ["--org-alias", inp["org_alias"]]
-    if inp.get("title"):
-        args += ["--title", inp["title"]]
-    if inp.get("platform"):
-        args += ["--platform", inp["platform"]]
-    if inp.get("dry_run"):
-        args.append("--dry-run")
-    if inp.get("mock_llm"):
-        args.append("--mock-llm")
-    if inp.get("drift_report"):
-        args += ["--drift-report", inp["drift_report"]]
     _run(args)
     return json.dumps({"status": "ok", "output_file": out_path})
 
