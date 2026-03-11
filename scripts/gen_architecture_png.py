@@ -241,12 +241,13 @@ SEC4_X, SEC4_Y, SEC4_W, SEC4_H = 11.6, 6.8, 6.1, 14.0
 section(SEC4_X, SEC4_Y, SEC4_W, SEC4_H, "Skills  (Python CLIs  ·  read-only)", C_TEAL_LIGHT, C_TEAL, C_TEAL, 8.5)
 
 skills = [
-    ("workday-connect", "OAuth 2.0 · REST · RaaS · manual", 19.4),
-    ("sfdc-connect", "JWT Bearer · REST · Tooling · Meta", 17.5),
-    ("oscal-assess", "OSCAL gap analysis", 15.6),
-    ("sscf-benchmark", "RED / AMBER / GREEN scoring", 13.7),
-    ("nist-review", "AI RMF govern/map/measure/manage", 11.8),
-    ("report-gen", "Markdown + DOCX packages", 9.9),
+    ("workday-connect", "OAuth 2.0 · REST · RaaS · manual", 19.8),
+    ("sfdc-connect", "JWT Bearer · REST · Tooling · Meta", 18.1),
+    ("oscal-assess", "OSCAL gap analysis", 16.4),
+    ("sscf-benchmark", "RED / AMBER / GREEN scoring", 14.7),
+    ("nist-review", "AI RMF govern/map/measure/manage", 13.0),
+    ("report-gen", "Markdown + DOCX packages", 11.3),
+    ("gen_aicm_crosswalk", "SSCF → AICM v1.0.3 · 243 controls", 9.6),
 ]
 for name, sub, y_pos in skills:
     skill_box(SEC4_X + 0.3, y_pos - 0.45, 5.5, 0.82, name, sub)
@@ -302,12 +303,12 @@ label(SEC6_X + 3.05, SEC6_Y + 0.57, "Score trend · POA&M · Domain risk · Seve
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Orchestrator ↔ skills (right)
-for y_pos in [19.4 - 0.04, 17.5 - 0.04, 15.6 - 0.04, 13.7 - 0.04, 11.8 - 0.04, 9.9 - 0.04]:
+for y_pos in [19.8 - 0.04, 18.1 - 0.04, 16.4 - 0.04, 14.7 - 0.04, 13.0 - 0.04, 11.3 - 0.04, 9.6 - 0.04]:
     arrow(SEC3_X + SEC3_W, y_pos, SEC4_X, y_pos, color=C_TEAL, lw=1.0)
 
 # Skills ↔ SaaS platforms
-arrow(SEC4_X + 2.75, 19.4 - 0.04, SEC1_X + 1.6, SEC1_Y, color=C_ORANGE, lw=1.2)  # workday-connect → Workday
-arrow(SEC4_X + 2.75, 17.5 - 0.04, SEC1_X + 4.65, SEC1_Y, color=C_ORANGE, lw=1.2)  # sfdc-connect → Salesforce
+arrow(SEC4_X + 2.75, 19.8 - 0.04, SEC1_X + 1.6, SEC1_Y, color=C_ORANGE, lw=1.2)  # workday-connect → Workday
+arrow(SEC4_X + 2.75, 18.1 - 0.04, SEC1_X + 4.65, SEC1_Y, color=C_ORANGE, lw=1.2)  # sfdc-connect → Salesforce
 
 # Config → Assessor / Collector (left)
 arrow(

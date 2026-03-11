@@ -9,29 +9,30 @@
 ## System Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│        agent-loop (gpt-5.3-chat-latest orchestrator)                │
-│        OpenAI tool_use ReAct loop, max 14 turns                     │
-└──┬──────────┬──────────┬──────────┬──────────┬──────────┬───────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│         agent-loop  (gpt-5.3-chat-latest orchestrator)                      │
+│         OpenAI tool_use ReAct loop · max 14 turns · 9 agents                │
+└──┬──────────┬──────────┬──────────┬──────────┬──────────┬────────────────────┘
    │          │          │          │          │          │
- ┌─▼──────┐ ┌─▼──────┐ ┌─▼──────┐ ┌─▼──────┐ ┌─▼──────┐ ┌─▼──────────┐
- │sfdc-   │ │workday-│ │oscal-  │ │oscal_  │ │sscf-   │ │nist-       │
- │connect │ │connect │ │assess  │ │gap_map │ │bench-  │ │review      │
- │(collect│ │(collect│ │(assess)│ │ (map)  │ │mark    │ │(validate)  │
- │ SFDC)  │ │  WD)   │ │        │ │        │ │(score) │ │            │
- └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └────┬───┘ └──┬─────────┘
-      │          │          │           │          │          │
- sfdc_raw   workday_raw  gap_analysis backlog  sscf_report nist_review
-  .json       .json        .json       .json     .json       .json
-      └──────────┴──────────┴───────────┴──────────┘
-                                    │
-                          ┌─────────▼──────────┐
-                          │   report-gen        │
-                          │  (gpt-5.3-chat-     │
-                          │   latest)           │
-                          │  app-owner MD       │
-                          │  security MD + DOCX │
-                          └────────────────────┘
+   │ Phase 1  │ Phase 2  │ Phase 3  │ Phase 4  │Phase 5-6 │ Phase 5 (OSCAL docs)
+   ▼          ▼          ▼          ▼          ▼          ▼
+sfdc-      workday-   oscal-     oscal_    sscf-      nist-
+connect    connect    assess     gap_map   benchmark  review
+(SFDC)     (WD)       (assess)   (map)     (score)    (gate)
+   │          │          │           │          │          │
+sfdc_raw  workday_raw gap_analysis backlog  sscf_report nist_review
+ .json      .json       .json       .json     .json       .json
+   └──────────┴──────────┴───────────┴──────────┘
+                              │
+              ┌───────────────┼───────────────────────────────┐
+              │               │                               │
+    ┌─────────▼──────┐ ┌──────▼──────────┐ ┌────────────────▼──────┐
+    │   report-gen    │ │  gen_poam +     │ │  gen_aicm_crosswalk   │
+    │  app-owner MD   │ │  gen_assessment │ │  SSCF → AICM v1.0.3   │
+    │  security MD    │ │  _results +     │ │  243 controls         │
+    │  + DOCX         │ │  gen_ssp        │ │  18 domains           │
+    └─────────────────┘ │  (OSCAL 1.1.2)  │ │  aicm_coverage.json   │
+                        └─────────────────┘ └───────────────────────┘
 ```
 
 ---
@@ -43,7 +44,7 @@
 | Agent | Model | Role | Tools |
 |---|---|---|---|
 | `orchestrator` | gpt-5.3-chat-latest | Routes tasks, manages the ReAct loop, quality gates | All CLI tools |
-| `collector` | gpt-5.3-chat-latest | Extracts Salesforce org config via REST/Metadata API | sfdc-connect |
+| `collector` | gpt-5.3-chat-latest | Extracts Salesforce org config (REST/Metadata) and Workday config (OAuth 2.0/RaaS/REST) | sfdc-connect, workday-connect |
 | `assessor` | gpt-5.3-chat-latest | Maps findings to OSCAL/SBS/SSCF controls | oscal-assess, oscal_gap_map |
 | `reporter` | gpt-5.3-chat-latest | Generates DOCX/MD governance outputs | report-gen |
 | `nist-reviewer` | gpt-5.3-chat-latest | Validates outputs against NIST AI RMF | None (text analysis) |
@@ -72,6 +73,7 @@
 | `sscf-benchmark` | `skills/sscf_benchmark/sscf_benchmark.py` | Both | Maps findings to SSCF domains; calculates domain scores and overall posture (RED/AMBER/GREEN) |
 | `nist-review` | `skills/nist_review/nist_review.py` | Both | Validates assessment outputs against NIST AI RMF 1.0; issues pass/flag/block verdict |
 | `report-gen` | `skills/report_gen/report_gen.py` | Both | Generates audience-specific outputs: app-owner Markdown, security Markdown + DOCX |
+| `gen_aicm_crosswalk` | `scripts/gen_aicm_crosswalk.py` | Both | Maps SSCF findings to CSA AICM v1.0.3 (243 controls, 18 domains); produces `aicm_coverage.json` with per-domain posture and gap analysis |
 
 ---
 
