@@ -70,63 +70,6 @@ python3 -m skills.report_gen.report_gen generate \
   --mock-llm
 ```
 
-## Optional: Containerized Stack + Continuous Monitoring
-
-> **Not required for standard use.** The pipeline runs fine as plain Python.
-> This is for teams who want continuous monitoring with trending dashboards over time.
-
-If you want the full containerized platform (OpenSearch + pre-built Dashboards + agent in Docker):
-
-```bash
-docker compose up -d        # starts OpenSearch + OpenSearch Dashboards
-open http://localhost:5601  # three dashboards auto-imported and ready
-```
-
-Three pre-built dashboards are imported automatically on first start — no manual setup:
-
-| Dashboard | URL | Use for |
-|---|---|---|
-| **SSCF Security Posture Overview** | `/app/dashboards#/view/sscf-main-dashboard` | Combined cross-platform view — Salesforce + Workday side-by-side |
-| **Salesforce Security Posture** | `/app/dashboards#/view/sfdc-dashboard` | Salesforce-only findings, SBS quarterly review |
-| **Workday Security Posture** | `/app/dashboards#/view/workday-dashboard` | Workday-only findings, WSCC compliance review |
-
-**Salesforce Security Posture dashboard:**
-
-![Salesforce Dashboard](docs/screenshots/sfdc-dashboard.png)
-
-**Workday Security Posture dashboard:**
-
-![Workday Dashboard](docs/screenshots/workday-dashboard.png)
-
-Each platform dashboard contains **13 panels**, all platform-filtered by KQL (`platform : salesforce` / `platform : workday`):
-
-```
-Row 1  Score tile (RED/AMBER/GREEN)  ·  Pass count  ·  Fail count
-Row 2  Top Failing Controls (horizontal bar, colored by severity)  —  full width
-Row 3  Control Status donut  ·  Risk by Domain (stacked bar, fail/partial only)
-Row 4  Findings by Severity (stacked by status)  ·  Open Items by Owner (accountability bar)
-Row 5  Score Over Time (trend line)  —  full width
-Row 6  Critical & High failures table  —  full width
-Row 7  POA&M open items table  —  full width
-Row 8  Failing Controls  —  full-width document search, sortable
-Row 9  Partial Controls  —  full-width document search with remediation notes
-```
-
-After each assessment, export results to populate the dashboards:
-
-```bash
-# Export after a live or dry-run assessment
-python scripts/export_to_opensearch.py --auto --org <org-alias> --date $(date +%Y-%m-%d)
-
-# Or use the interactive runner (handles export automatically)
-python scripts/run_assessment.py
-```
-
-The **Docker stack and dashboards are optional** — if your organization already uses Splunk, Elastic,
-Grafana, or a GRC tool, adapt the sink in `scripts/export_to_opensearch.py` to match.
-See [`docs/wiki/OpenSearch-Dashboards.md`](docs/wiki/OpenSearch-Dashboards.md) for the full panel reference,
-navigation guide, and [`docs/wiki/Continuous-Monitoring.md`](docs/wiki/Continuous-Monitoring.md) for scheduling.
-
 ## Multi-Agent Architecture
 
 ```
@@ -306,3 +249,60 @@ pytest tests/ -v               # 44 tests, fully offline (no API key needed)
 CI stack: ruff · bandit · pip-audit · gitleaks · pytest · CodeQL · CodeRabbit Pro · dependency-review.
 
 All PRs require one reviewer approval. Branch protection enforces no force pushes to `main`.
+
+## Optional: Containerized Stack + Continuous Monitoring
+
+> **Not required for standard use.** The pipeline runs fine as plain Python.
+> This is for teams who want continuous monitoring with trending dashboards over time.
+
+If you want the full containerized platform (OpenSearch + pre-built Dashboards + agent in Docker):
+
+```bash
+docker compose up -d        # starts OpenSearch + OpenSearch Dashboards
+open http://localhost:5601  # three dashboards auto-imported and ready
+```
+
+Three pre-built dashboards are imported automatically on first start — no manual setup:
+
+| Dashboard | URL | Use for |
+|---|---|---|
+| **SSCF Security Posture Overview** | `/app/dashboards#/view/sscf-main-dashboard` | Combined cross-platform view — Salesforce + Workday side-by-side |
+| **Salesforce Security Posture** | `/app/dashboards#/view/sfdc-dashboard` | Salesforce-only findings, SBS quarterly review |
+| **Workday Security Posture** | `/app/dashboards#/view/workday-dashboard` | Workday-only findings, WSCC compliance review |
+
+**Salesforce Security Posture dashboard:**
+
+![Salesforce Dashboard](docs/screenshots/sfdc-dashboard.png)
+
+**Workday Security Posture dashboard:**
+
+![Workday Dashboard](docs/screenshots/workday-dashboard.png)
+
+Each platform dashboard contains **13 panels**, all platform-filtered by KQL (`platform : salesforce` / `platform : workday`):
+
+```
+Row 1  Score tile (RED/AMBER/GREEN)  ·  Pass count  ·  Fail count
+Row 2  Top Failing Controls (horizontal bar, colored by severity)  —  full width
+Row 3  Control Status donut  ·  Risk by Domain (stacked bar, fail/partial only)
+Row 4  Findings by Severity (stacked by status)  ·  Open Items by Owner (accountability bar)
+Row 5  Score Over Time (trend line)  —  full width
+Row 6  Critical & High failures table  —  full width
+Row 7  POA&M open items table  —  full width
+Row 8  Failing Controls  —  full-width document search, sortable
+Row 9  Partial Controls  —  full-width document search with remediation notes
+```
+
+After each assessment, export results to populate the dashboards:
+
+```bash
+# Export after a live or dry-run assessment
+python scripts/export_to_opensearch.py --auto --org <org-alias> --date $(date +%Y-%m-%d)
+
+# Or use the interactive runner (handles export automatically)
+python scripts/run_assessment.py
+```
+
+The **Docker stack and dashboards are optional** — if your organization already uses Splunk, Elastic,
+Grafana, or a GRC tool, adapt the sink in `scripts/export_to_opensearch.py` to match.
+See [`docs/wiki/OpenSearch-Dashboards.md`](docs/wiki/OpenSearch-Dashboards.md) for the full panel reference,
+navigation guide, and [`docs/wiki/Continuous-Monitoring.md`](docs/wiki/Continuous-Monitoring.md) for scheduling.
