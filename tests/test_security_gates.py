@@ -13,7 +13,6 @@ import pytest
 
 from harness.tools import _ARTIFACT_ROOT, _safe_inp_path, _sanitize_org, dispatch
 
-
 # ---------------------------------------------------------------------------
 # _safe_inp_path
 # ---------------------------------------------------------------------------

@@ -247,14 +247,14 @@ def test_audit_log_written_with_correct_events(tmp_path: Path) -> None:
     )
     assert audit_path.exists(), f"audit.jsonl not created at {audit_path}"
 
-    lines = [json.loads(l) for l in audit_path.read_text().strip().splitlines()]
-    events = [l["event"] for l in lines]
+    lines = [json.loads(row) for row in audit_path.read_text().strip().splitlines()]
+    events = [row["event"] for row in lines]
 
     assert events[0] == "loop_start"
     assert "tool_call" in events
     assert events[-1] == "loop_end"
 
-    tool_call = next(l for l in lines if l["event"] == "tool_call")
+    tool_call = next(row for row in lines if row["event"] == "tool_call")
     assert tool_call["tool"] == "sfdc_connect_collect"
     assert "duration_ms" in tool_call
     assert tool_call["status"] == "ok"

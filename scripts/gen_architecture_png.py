@@ -128,7 +128,11 @@ TOP = 25.7
 
 # ── Title ─────────────────────────────────────────────────────────────────────
 label(9, TOP - 0.05, "saas-posture — Reference Architecture", size=13, bold=True, color=C_BLUE_DARK)
-label(9, TOP - 0.42, "Read-only · JWT Bearer (Salesforce) · OAuth 2.0 (Workday) · OWASP Agentic App Top 10 hardened · 64 tests", size=8, color=C_GREY)
+label(
+    9, TOP - 0.42,
+    "Read-only · JWT Bearer (SFDC) · OAuth 2.0 (Workday) · OWASP Agentic App Top 10 · 64 tests",
+    size=8, color=C_GREY,
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 1 — SaaS Platforms  (top right)
@@ -238,9 +242,21 @@ arrow(1.65, 19.3, ORC_X + ORC_W / 2, ORC_Y + ORC_H, color="#283593", lw=1.2)
 C_AMBER = "#F57F17"
 C_AMBER_LIGHT = "#FFF8E1"
 box(SEC3_X + 0.3, 7.15, SEC3_W - 0.6, 1.35, C_AMBER_LIGHT, C_AMBER, lw=0.9, radius=0.15)
-label(SEC3_X + SEC3_W / 2, 7.15 + 1.02, "Security Controls  (harness/loop.py · harness/tools.py)", size=7.0, bold=True, color=C_AMBER)
-label(SEC3_X + SEC3_W / 2, 7.15 + 0.68, "_TOOL_REQUIRES sequencing gate  ·  Memory guard (injection patterns)  ·  _sanitize_org / _safe_inp_path", size=6.0, color=C_GREY)
-label(SEC3_X + SEC3_W / 2, 7.15 + 0.36, "audit.jsonl per run (tool / args / status / duration_ms)  ·  OWASP A1–A9 mitigated  ·  shell=False everywhere", size=6.0, color=C_GREY)
+label(
+    SEC3_X + SEC3_W / 2, 7.15 + 1.02,
+    "Security Controls  (harness/loop.py · harness/tools.py)",
+    size=7.0, bold=True, color=C_AMBER,
+)
+label(
+    SEC3_X + SEC3_W / 2, 7.15 + 0.68,
+    "_TOOL_REQUIRES sequencing gate  ·  Memory guard  ·  _sanitize_org / _safe_inp_path",
+    size=6.0, color=C_GREY,
+)
+label(
+    SEC3_X + SEC3_W / 2, 7.15 + 0.36,
+    "audit.jsonl per run (tool / args / status / duration_ms)  ·  OWASP A1–A9  ·  shell=False",
+    size=6.0, color=C_GREY,
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 4 — Skills / CLIs
