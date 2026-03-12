@@ -11,28 +11,32 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │         agent-loop  (gpt-5.3-chat-latest orchestrator)                      │
-│         OpenAI tool_use ReAct loop · max 14 turns · 9 agents                │
-└──┬──────────┬──────────┬──────────┬──────────┬──────────┬────────────────────┘
+│         OpenAI tool_use ReAct loop · max 14 turns · 9 agents · 7 tools      │
+│                                                                              │
+│  Security Harness (harness/loop.py · harness/tools.py)                      │
+│    _TOOL_REQUIRES sequencing gate · memory guard · audit.jsonl · path valid  │
+│    OWASP Agentic App Top 10 hardened (A1-A9 mitigated)                       │
+└──┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────────────┘
    │          │          │          │          │          │
-   │ Phase 1  │ Phase 2  │ Phase 3  │ Phase 4  │Phase 5-6 │ Phase 5 (OSCAL docs)
+   │ Phase 1  │ Phase 2  │ Phase 3  │ Phase 4  │ Phase 5  │ Phase 5b
    ▼          ▼          ▼          ▼          ▼          ▼
-sfdc-      workday-   oscal-     oscal_    sscf-      nist-
-connect    connect    assess     gap_map   benchmark  review
-(SFDC)     (WD)       (assess)   (map)     (score)    (gate)
-   │          │          │           │          │          │
-sfdc_raw  workday_raw gap_analysis backlog  sscf_report nist_review
- .json      .json       .json       .json     .json       .json
-   └──────────┴──────────┴───────────┴──────────┘
+sfdc-      workday-   oscal-     oscal_    sscf-      nist-      gen_aicm_
+connect    connect    assess     gap_map   benchmark  review     crosswalk
+(SFDC)     (WD)       (assess)   (map)     (score)    (gate)     (AICM v1.0.3)
+   │          │          │           │          │          │          │
+sfdc_raw  workday_raw gap_analysis backlog  sscf_report nist_review aicm_coverage
+ .json      .json       .json       .json     .json       .json       .json
+   └──────────┴──────────┴───────────┴──────────┴───────────┴──────────┘
                               │
               ┌───────────────┼───────────────────────────────┐
               │               │                               │
-    ┌─────────▼──────┐ ┌──────▼──────────┐ ┌────────────────▼──────┐
-    │   report-gen    │ │  gen_poam +     │ │  gen_aicm_crosswalk   │
-    │  app-owner MD   │ │  gen_assessment │ │  SSCF → AICM v1.0.3   │
-    │  security MD    │ │  _results +     │ │  243 controls         │
-    │  + DOCX         │ │  gen_ssp        │ │  18 domains           │
-    └─────────────────┘ │  (OSCAL 1.1.2)  │ │  aicm_coverage.json   │
-                        └─────────────────┘ └───────────────────────┘
+    ┌─────────▼──────┐ ┌──────▼──────────┐    audit.jsonl (per run)
+    │   report-gen    │ │  gen_poam +     │    loop_result.json
+    │  app-owner MD   │ │  gen_assessment │
+    │  security MD    │ │  _results +     │
+    │  + DOCX         │ │  gen_ssp        │
+    │  + AICM annex   │ │  (OSCAL 1.1.2)  │
+    └─────────────────┘ └─────────────────┘
 ```
 
 ---
@@ -63,7 +67,7 @@ sfdc_raw  workday_raw gap_analysis backlog  sscf_report nist_review
 
 ---
 
-## 6 Skills (CLI Tools)
+## 7 Skills (CLI Tools)
 
 | Skill | Binary | Platform | Purpose |
 |---|---|---|---|
@@ -90,12 +94,14 @@ sfdc-connect collect (--platform salesforce)
                     → backlog.json (SSCF-mapped remediation items)
                         → sscf-benchmark benchmark
                             → sscf_report.json (RED/AMBER/GREEN per domain)
-                                → nist-review assess
-                                    → nist_review.json (pass/flag/block verdict)
-                                        → report-gen generate (×2)
-                                            → {org}_remediation_report.md   (app-owner)
-                                            → {org}_security_assessment.md  (security)
-                                            → {org}_security_assessment.docx
+                        [Step 5]  → nist-review assess
+                                      → nist_review.json (clear/flag/block verdict)
+                        [Step 5b] → gen_aicm_crosswalk.py
+                                      → aicm_coverage.json (243 controls, 18 AICM domains)
+                                          → report-gen generate (×2)
+                                              → {org}_remediation_report.md   (app-owner)
+                                              → {org}_security_assessment.md  (security + AICM annex)
+                                              → {org}_security_assessment.docx
 ```
 
 ### Workday Pipeline
@@ -109,9 +115,11 @@ workday-connect collect (--platform workday)
                     → backlog.json
                         → sscf-benchmark benchmark
                             → sscf_report.json
-                                → nist-review assess (--platform workday)
-                                    → nist_review.json
-                                        → report-gen generate (×2)
+                        [Step 5]  → nist-review assess (--platform workday)
+                                      → nist_review.json
+                        [Step 5b] → gen_aicm_crosswalk.py
+                                      → aicm_coverage.json
+                                          → report-gen generate (×2)
 ```
 
 ### Drift Detection (Re-assessment)
@@ -183,7 +191,9 @@ Session memory uses **Mem0 + Qdrant**. By default:
 - Each new assessment loads prior org context as prefix to the first user message
 - This allows the orchestrator to detect regression ("score dropped from 48% to 34%")
 
-For persistent cross-session memory, run a Qdrant container and set `QDRANT_HOST=localhost`.
+**Memory guard (OWASP A1/A3):** Before Qdrant-loaded memories are injected into the orchestrator prompt, `_INJECTION_PATTERNS` strips any known prompt injection phrases. If a prior adversarial run poisoned the store, this gate prevents the stored content from overriding orchestrator instructions.
+
+For persistent cross-session memory, run a Qdrant container and set `QDRANT_HOST=localhost`. Set `QDRANT_API_KEY` for non-local deployments (R3 threat model — Qdrant auth).
 
 ---
 
@@ -215,6 +225,35 @@ Platform Config (Salesforce or Workday)
 
 ---
 
+## Security Controls Architecture
+
+The pipeline is hardened against OWASP Top 10 for Agentic Applications 2026 at the harness layer:
+
+```
+Every tool call in agent loop:
+    ┌──────────────────────────────────────────────────────────┐
+    │  1. _sanitize_org(org)       — [a-zA-Z0-9_-]{1,64}       │  A5
+    │  2. Sequencing gate          — _TOOL_REQUIRES map check   │  A2
+    │     If missing prerequisites → structured error JSON,     │
+    │     skip dispatch, continue (LLM sees error + retries)    │
+    │  3. dispatch(name, inp)      — allowlist enforced         │  A7
+    │  4. _safe_inp_path(raw)      — artifact root boundary    │  A5
+    │     subprocess.run(..., shell=False)                      │  A5
+    │  5. _append_audit(...)       — JSONL audit log            │  A9
+    │     {event, ts, turn, tool, args, status, duration_ms}   │
+    └──────────────────────────────────────────────────────────┘
+
+Before first user message:
+    ┌──────────────────────────────────────────────────────────┐
+    │  Memory guard — _INJECTION_PATTERNS strip                 │  A1/A3
+    │  "ignore previous instructions", "act as", "system:"...  │
+    └──────────────────────────────────────────────────────────┘
+```
+
+Full threat model: [`docs/security/threat-model.md`](../security/threat-model.md)
+
+---
+
 ## Key File Locations
 
 | Location | Purpose |
@@ -232,3 +271,5 @@ Platform Config (Salesforce or Workday)
 | `scripts/export_to_opensearch.py` | Exports assessment data to OpenSearch for dashboards |
 | `docs/oscal-salesforce-poc/generated/` | All assessment outputs |
 | `docs/architecture.png` | Auto-generated reference architecture diagram |
+| `docs/security/threat-model.md` | OWASP Top 10 for Agentic Applications 2026 — full threat model |
+| `docs/oscal-salesforce-poc/generated/<org>/<date>/audit.jsonl` | Structured JSONL audit trail per run |
