@@ -128,7 +128,7 @@ TOP = 25.7
 
 # ── Title ─────────────────────────────────────────────────────────────────────
 label(9, TOP - 0.05, "saas-posture — Reference Architecture", size=13, bold=True, color=C_BLUE_DARK)
-label(9, TOP - 0.42, "Read-only · JWT Bearer (Salesforce) · OAuth 2.0 (Workday) · No SOAP", size=8, color=C_GREY)
+label(9, TOP - 0.42, "Read-only · JWT Bearer (Salesforce) · OAuth 2.0 (Workday) · OWASP Agentic App Top 10 hardened · 64 tests", size=8, color=C_GREY)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 1 — SaaS Platforms  (top right)
@@ -234,6 +234,14 @@ label(1.65, 19.7, "Human / CI", size=7.5, bold=True, color="#283593")
 label(1.65, 19.42, "agent-loop run", size=6.2, color=C_GREY)
 arrow(1.65, 19.3, ORC_X + ORC_W / 2, ORC_Y + ORC_H, color="#283593", lw=1.2)
 
+# Security controls strip inside agent section (OWASP hardening)
+C_AMBER = "#F57F17"
+C_AMBER_LIGHT = "#FFF8E1"
+box(SEC3_X + 0.3, 7.15, SEC3_W - 0.6, 1.35, C_AMBER_LIGHT, C_AMBER, lw=0.9, radius=0.15)
+label(SEC3_X + SEC3_W / 2, 7.15 + 1.02, "Security Controls  (harness/loop.py · harness/tools.py)", size=7.0, bold=True, color=C_AMBER)
+label(SEC3_X + SEC3_W / 2, 7.15 + 0.68, "_TOOL_REQUIRES sequencing gate  ·  Memory guard (injection patterns)  ·  _sanitize_org / _safe_inp_path", size=6.0, color=C_GREY)
+label(SEC3_X + SEC3_W / 2, 7.15 + 0.36, "audit.jsonl per run (tool / args / status / duration_ms)  ·  OWASP A1–A9 mitigated  ·  shell=False everywhere", size=6.0, color=C_GREY)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # SECTION 4 — Skills / CLIs
 # ─────────────────────────────────────────────────────────────────────────────
@@ -271,9 +279,9 @@ section(
 artifacts = [
     ("sfdc_raw.json\nworkday_raw.json", "Phase 1 — Collect", 1.4),
     ("gap_analysis.json\nbacklog.json", "Phase 2-3 — Assess", 3.55),
-    ("sscf_report.json", "Phase 4 — Score", 5.7),
-    ("nist_review.json", "Phase 5 — Gate", 7.85),
-    ("report_*.md/.docx\naicm_coverage.json", "Phase 5-6 — Report+AI", 10.0),
+    ("sscf_report.json\nnist_review.json", "Phase 3-4 — Score+Gate", 5.7),
+    ("aicm_coverage.json\npoam.json / ssp.json", "Phase 5 — OSCAL+AICM", 7.85),
+    ("report_*.md/.docx\naudit.jsonl", "Phase 6-7 — Report+Audit", 10.0),
 ]
 for text, phase, cx in artifacts:
     artifact_box(SEC5_X + cx - 1.1, SEC5_Y + 0.4, 2.0, 1.9, text, phase)
@@ -347,7 +355,8 @@ label(
     9,
     chain_y,
     "Framework chain:  Platform control  →  SSCF domain  →  CCM v4.1 / AICM v1.0.3"
-    "  →  ISO 27001:2022 Annex A  →  SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR / EU AI Act",
+    "  →  ISO 27001:2022 Annex A  →  SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR / EU AI Act"
+    "     Security: OWASP Top 10 for Agentic Applications 2026  ·  NIST AI RMF 1.0",
     size=6.8,
     color="#283593",
     bold=False,

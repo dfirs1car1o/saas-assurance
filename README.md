@@ -12,7 +12,7 @@ SaaS Security multi-agent AI system for OSCAL and CSA SSCF assessments across Sa
 
 ## What This Is
 
-A six-phase, read-only security assessment pipeline powered by multi-agent AI. Each phase produces a structured artifact that feeds the next.
+A seven-phase, read-only security assessment pipeline powered by multi-agent AI with enforced tool sequencing and OWASP Agentic App Top 10 hardening. Each phase produces a structured artifact that feeds the next.
 
 ```
 Phase 1 — Collect      sfdc-connect / workday-connect    →  sfdc_raw.json / workday_raw.json
@@ -92,7 +92,7 @@ Human ──► agent-loop run (harness/loop.py)
                          └── 6b. report_gen_generate       → *_security_assessment.md + .docx
 ```
 
-All agents are OpenAI models. The orchestrator dispatches numbered tool calls to skills (Python CLIs). Agents communicate through JSON evidence files on disk — no shared state or MCP.
+All agents are OpenAI models. The orchestrator dispatches numbered tool calls to skills (Python CLIs). Agents communicate through JSON evidence files on disk — no shared state or MCP. **Tool sequencing is enforced in code** via `_TOOL_REQUIRES` in `harness/loop.py` — every call is validated against prerequisites before dispatch.
 
 | Agent | Model | Role |
 |---|---|---|
@@ -116,8 +116,9 @@ All tools are CLI-based Python scripts. Each supports `--help` and `--dry-run`.
 | `oscal-assess` | `skills/oscal_assess/` | Gaps findings against the SBS OSCAL control catalog |
 | `sscf-benchmark` | `skills/sscf_benchmark/` | Scores findings by CSA SSCF domain (red/amber/green) |
 | `nist-review` | `skills/nist_review/` | NIST AI RMF 1.0 governance gate (govern/map/measure/manage) |
-| `report-gen` | `skills/report_gen/` | Generates executive Markdown + DOCX reports |
+| `report-gen` | `skills/report_gen/` | Generates executive Markdown + DOCX reports with AICM annex |
 | `workday-connect` | `skills/workday_connect/` | Workday HCM/Finance collector — OAuth 2.0, 30 controls, RaaS/REST/manual |
+| `gen-aicm-crosswalk` | `scripts/gen_aicm_crosswalk.py` | CSA AICM v1.0.3 coverage crosswalk — 243 controls, 18 domains; registered agent tool |
 
 ### Report Structure
 
@@ -217,7 +218,8 @@ skills/
   nist_review/            ← NIST AI RMF gate (--platform salesforce|workday)
   report_gen/             ← Governance report generator (MD + DOCX)
   workday_connect/        ← Workday HCM/Finance collector (OAuth 2.0, 30 controls, 21 tests)
-tests/                    ← pytest suite (44 tests, fully offline with --mock-llm)
+tests/                    ← pytest suite (64 tests, fully offline with --mock-llm)
+docs/security/            ← threat-model.md — OWASP Top 10 for Agentic Applications 2026
 ```
 
 ## Authentication
@@ -251,12 +253,16 @@ MEMORY_ENABLED=0               # Disable Mem0 by default
 
 ## Security
 
-- Read-only against all Salesforce orgs by default. No writes without explicit human approval.
+- Read-only against all SaaS orgs by default. No writes without explicit human approval.
 - Credentials sourced from environment only — never passed as CLI flags or logged.
 - All generated evidence written to `docs/oscal-salesforce-poc/generated/` — never to `/tmp`.
+- **Tool sequencing enforced in code** — `_TOOL_REQUIRES` map in `harness/loop.py` blocks out-of-order LLM tool calls (OWASP A2 Excessive Agency).
+- **Input path validation** — all LLM-provided file paths checked against artifact root before subprocess; org aliases restricted to `[a-zA-Z0-9_-]{1,64}` (OWASP A5).
+- **Memory guard** — injection patterns stripped from Qdrant-stored memories before reaching the orchestrator prompt (OWASP A3).
+- **Structured audit log** — every tool invocation logged to `audit.jsonl` (tool, args, status, duration_ms, turn) per run (OWASP A9).
 - AI outputs validated by the `nist-review` skill before delivery. Block verdict stops report distribution.
-- **All external API connections use HTTPS exclusively** — Salesforce, Workday, and OpenAI SDKs enforce TLS on every call. No plaintext HTTP to external endpoints.
-- `http://localhost` references in the Docker stack are container-internal only (`DISABLE_SECURITY_PLUGIN=true`, private bridge network, dev use only). Ports 9200 and 5601 must not be exposed externally.
+- **All external API connections use HTTPS exclusively** — Salesforce, Workday, and OpenAI SDKs enforce TLS on every call.
+- Full threat model: `docs/security/threat-model.md` — OWASP Top 10 for Agentic Applications 2026, 8 mitigated, 2 partial.
 
 ## Development
 
@@ -265,10 +271,10 @@ source .venv/bin/activate
 ruff check skills/ harness/    # lint
 bandit -r skills/ harness/     # SAST
 pip-audit                      # dependency CVEs
-pytest tests/ -v               # 44 tests, fully offline (no API key needed)
+pytest tests/ -v               # 64 tests, fully offline (no API key needed)
 ```
 
-CI stack: ruff · bandit · pip-audit · gitleaks · pytest · CodeQL · CodeRabbit Pro · dependency-review.
+CI stack: ruff · bandit · Semgrep (`p/python` + `p/owasp-top-ten`) · pip-audit · gitleaks · pytest · CodeQL · grype · zizmor · CodeRabbit Pro · dependency-review.
 
 All PRs require one reviewer approval. Branch protection enforces no force pushes to `main`.
 
