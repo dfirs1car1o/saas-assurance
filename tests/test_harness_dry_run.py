@@ -337,6 +337,64 @@ def test_sequencing_gate_blocks_report_gen_without_prerequisites(tmp_path: Path)
 
 
 # ---------------------------------------------------------------------------
+# Regression: malformed JSON result must NOT unlock downstream tools
+# ---------------------------------------------------------------------------
+
+
+def test_malformed_json_result_does_not_unlock_downstream(tmp_path: Path) -> None:
+    """A tool returning un-parseable JSON must not enter completed_tools.
+
+    The completed_tools.add() call lives inside the JSON-parsing try block.
+    If the result is malformed, the except branch fires, the add is skipped,
+    and downstream tools that depend on this tool must remain blocked.
+    """
+    fake_gap = str(tmp_path / "gap_analysis.json")
+    (tmp_path / "gap_analysis.json").write_text(json.dumps({"findings": []}))
+
+    mock_responses = [
+        _tool_use_response("oscal_assess_assess", "c01", {"dry_run": True, "out": fake_gap, "org": "seq-test-org"}),
+        # oscal_gap_map returns garbage — not valid JSON
+        _tool_use_response("oscal_gap_map", "c02", {"gap_analysis": fake_gap, "org": "seq-test-org"}),
+        # model immediately tries the dependent tool
+        _tool_use_response(
+            "sscf_benchmark_benchmark",
+            "c03",
+            {"backlog": str(tmp_path / "backlog.json"), "org": "seq-test-org"},
+        ),
+        _end_turn_response("Done."),
+    ]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = mock_responses
+
+    dispatched: list[str] = []
+
+    def fake_dispatch(name: str, inp: dict) -> str:  # noqa: ANN001
+        dispatched.append(name)
+        if name == "oscal_gap_map":
+            return "THIS IS NOT JSON {{{"  # malformed result
+        return json.dumps({"status": "ok", "output_file": fake_gap})
+
+    runner = CliRunner()
+    with (
+        patch("openai.OpenAI", return_value=mock_client),
+        patch("harness.loop.build_client", return_value=MagicMock()),
+        patch("harness.loop.load_memories", return_value=""),
+        patch("harness.loop.save_assessment"),
+        patch("harness.loop.dispatch", side_effect=fake_dispatch),
+    ):
+        result = runner.invoke(cli, ["run", "--dry-run", "--org", "seq-test-org", "--approve-critical"])
+
+    assert result.exit_code == 0, result.output
+    assert "oscal_gap_map" in dispatched
+    # sscf_benchmark must be blocked — gap_map never entered completed_tools
+    # because its result could not be parsed
+    assert "sscf_benchmark_benchmark" not in dispatched, (
+        "sscf_benchmark_benchmark should be blocked when oscal_gap_map returned malformed JSON"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Regression: failed tool must NOT unlock downstream tools (Finding 1)
 # ---------------------------------------------------------------------------
 

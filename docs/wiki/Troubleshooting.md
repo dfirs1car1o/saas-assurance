@@ -24,12 +24,7 @@ Then verify: `which agent-loop`
 
 ## `Salesforce login failed` / `SalesforceAuthenticationFailed`
 
-**For SOAP auth (username/password):**
-1. Check `SF_USERNAME`, `SF_PASSWORD`, `SF_SECURITY_TOKEN` are set correctly in `.env`
-2. For sandbox orgs: `SF_DOMAIN=test` (not `login`)
-3. Security token: append it to your password if your org's IP isn't trusted, or leave blank if it is
-
-**For JWT auth:**
+**For JWT auth (current supported method):**
 1. Check `SF_AUTH_METHOD=jwt`, `SF_CONSUMER_KEY`, and `SF_PRIVATE_KEY_PATH` are all set
 2. Verify the private key file exists and is readable: `ls -la $SF_PRIVATE_KEY_PATH`
 3. Verify the Connected App in Salesforce has "Use digital signatures" enabled and your certificate uploaded
@@ -113,7 +108,7 @@ Note: `[tool.uv]` dev-dependencies in `pyproject.toml` are not installed by plai
 
 This is expected in CI — the environment check job intentionally skips credential checks:
 ```python
-cred_skip = {"SF_USERNAME", "SF_PASSWORD", "SF_SECURITY_TOKEN", "OPENAI_API_KEY", ...}
+cred_skip = {"SF_USERNAME", "SF_CONSUMER_KEY", "SF_PRIVATE_KEY_PATH", "OPENAI_API_KEY", ...}
 ```
 
 If non-credential checks fail (e.g., `repo-layout`, `sfdc-connect-module`), run:

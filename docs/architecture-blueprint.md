@@ -250,7 +250,7 @@ See `scripts/validate_env.py --help` for the automated preflight check.
 | Python | >= 3.11 | `python3 --version` |
 | uv | latest | `uv --version` |
 | OpenAI API key | — | `OPENAI_API_KEY` in `.env` |
-| SF credentials | — | `SF_USERNAME`, `SF_PASSWORD`, `SF_SECURITY_TOKEN` in `.env` |
+| SF credentials | — | `SF_USERNAME`, `SF_CONSUMER_KEY`, `SF_PRIVATE_KEY_PATH` in `.env` (JWT auth) |
 | simple-salesforce | >= 1.12.6 | `pip show simple-salesforce` |
 | openai | >= 1.0.0 | `pip show openai` |
 | click | >= 8.1.0 | `pip show click` |

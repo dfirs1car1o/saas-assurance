@@ -64,13 +64,13 @@ That's it. No Docker, no Node.js, no container runtime required.
 git clone git@github.com:dfirs1car1o/saas-posture.git
 cd saas-posture
 
-# 2. Install Python dependencies (plain pip — no Docker, no Node)
-pip install -e .
-pip install pytest pytest-mock PyYAML click ruff bandit
+# 2. Install Python dependencies (includes all dev/test deps)
+pip install -e ".[dev]"
 
 # 3. Copy and fill .env
 cp .env.example .env
-# Edit .env — add SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN, OPENAI_API_KEY
+# Edit .env — add SF_USERNAME, SF_CONSUMER_KEY, SF_PRIVATE_KEY_PATH, OPENAI_API_KEY
+# (or AZURE_OPENAI_API_KEY + AZURE_OPENAI_ENDPOINT if using Azure OpenAI)
 
 # 4. Verify everything works
 python3 -m pytest tests/ -v
@@ -97,8 +97,9 @@ OPENAI_API_KEY=sk-...
 
 # Salesforce org credentials (required for live assessment — skip for dry-run)
 SF_USERNAME=your@email.com
-SF_PASSWORD=yourpassword
-SF_SECURITY_TOKEN=yourtoken
+SF_AUTH_METHOD=jwt
+SF_CONSUMER_KEY=your-connected-app-consumer-key
+SF_PRIVATE_KEY_PATH=/path/to/salesforce_jwt_private.pem
 SF_DOMAIN=login                    # or 'test' for sandbox
 SF_INSTANCE_URL=https://yourorg.salesforce.com  # optional override
 
