@@ -4,6 +4,10 @@ __pycache__/
 .env
 *.log
 
+# Test coverage artifacts
+.coverage
+coverage.xml
+
 .terraform/
 *.tfstate
 *.tfstate.*
