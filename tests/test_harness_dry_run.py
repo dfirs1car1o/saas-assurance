@@ -334,3 +334,142 @@ def test_sequencing_gate_blocks_report_gen_without_prerequisites(tmp_path: Path)
     assert "report_gen_generate" not in dispatch_called_with, (
         "report_gen_generate should have been blocked by sequencing gate"
     )
+
+
+# ---------------------------------------------------------------------------
+# Regression: failed tool must NOT unlock downstream tools (Finding 1)
+# ---------------------------------------------------------------------------
+
+
+def test_failed_tool_does_not_unlock_downstream(tmp_path: Path) -> None:
+    """A tool returning status=error must not be added to completed_tools.
+
+    oscal_gap_map fails → sscf_benchmark_benchmark must remain blocked.
+    Without the fix, completed_tools.add() was unconditional, allowing
+    downstream tools to run after a failed prerequisite.
+    """
+    fake_gap = str(tmp_path / "gap_analysis.json")
+    (tmp_path / "gap_analysis.json").write_text(json.dumps({"findings": []}))
+
+    mock_responses = [
+        # Turn 1: oscal_assess succeeds — populates completed_tools
+        _tool_use_response("oscal_assess_assess", "c01", {"dry_run": True, "out": fake_gap, "org": "weak-org-dry-run"}),
+        # Turn 2: oscal_gap_map returns an error payload (status=error)
+        _tool_use_response("oscal_gap_map", "c02", {"gap_analysis": fake_gap, "org": "weak-org-dry-run"}),
+        # Turn 3: model tries sscf_benchmark immediately after the failed gap_map
+        _tool_use_response(
+            "sscf_benchmark_benchmark",
+            "c03",
+            {"backlog": str(tmp_path / "backlog.json"), "org": "weak-org-dry-run"},
+        ),
+        _end_turn_response("Stopped after sequencing block."),
+    ]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = mock_responses
+
+    dispatched: list[str] = []
+
+    def fake_dispatch(name: str, inp: dict) -> str:  # noqa: ANN001
+        dispatched.append(name)
+        if name == "oscal_gap_map":
+            # Simulate tool failure: non-zero exit causes dispatch to return error payload
+            return json.dumps({"status": "error", "message": "gap map script crashed"})
+        return json.dumps({"status": "ok", "output_file": fake_gap})
+
+    runner = CliRunner()
+    with (
+        patch("openai.OpenAI", return_value=mock_client),
+        patch("harness.loop.build_client", return_value=MagicMock()),
+        patch("harness.loop.load_memories", return_value=""),
+        patch("harness.loop.save_assessment"),
+        patch("harness.loop.dispatch", side_effect=fake_dispatch),
+    ):
+        result = runner.invoke(cli, ["run", "--dry-run", "--org", "weak-org-dry-run", "--approve-critical"])
+
+    assert result.exit_code == 0, result.output
+    # gap_map was dispatched (and returned an error)
+    assert "oscal_gap_map" in dispatched
+    # sscf_benchmark must have been blocked by the sequencing gate because
+    # oscal_gap_map never entered completed_tools (it returned status=error)
+    assert "sscf_benchmark_benchmark" not in dispatched, (
+        "sscf_benchmark_benchmark should be blocked when oscal_gap_map returned an error"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Regression: finish() blocked when only app-owner report exists (Finding 2)
+# ---------------------------------------------------------------------------
+
+
+def test_finish_blocked_without_security_report(tmp_path: Path) -> None:
+    """finish() must be rejected if the security-audience report has not been written.
+
+    The sequencing gate allows finish() only after report_gen_generate[audience=security]
+    has succeeded. An app-owner-only run must not be able to call finish() and exit
+    without the security deliverable.
+
+    Prerequisites (oscal_gap_map, sscf_benchmark_benchmark) are satisfied via
+    fake_dispatch returning status=ok, advancing completed_tools normally.
+    """
+    fake_gap = str(tmp_path / "gap_analysis.json")
+    fake_backlog = str(tmp_path / "backlog.json")
+    fake_sscf = str(tmp_path / "sscf_report.json")
+    app_owner_out = str(tmp_path / "remediation.md")
+
+    for path, content in [
+        (fake_gap, {"findings": []}),
+        (fake_backlog, {"mapped_items": [], "summary": {}}),
+        (fake_sscf, {"overall_score": 0.5, "overall_status": "amber", "domains": []}),
+    ]:
+        Path(path).write_text(json.dumps(content))
+
+    mock_responses = [
+        # Run full prerequisite chain so completed_tools is populated correctly
+        _tool_use_response("oscal_assess_assess", "c01", {"dry_run": True, "out": fake_gap, "org": "seq-test-org"}),
+        _tool_use_response("oscal_gap_map", "c02", {"gap_analysis": fake_gap, "org": "seq-test-org"}),
+        _tool_use_response("sscf_benchmark_benchmark", "c03", {"backlog": fake_backlog, "org": "seq-test-org"}),
+        # Only the app-owner report is generated — security report is skipped
+        _tool_use_response(
+            "report_gen_generate",
+            "c04",
+            {"backlog": fake_backlog, "audience": "app-owner", "out": app_owner_out, "org": "seq-test-org"},
+        ),
+        # Model calls finish() without generating the security report
+        _tool_use_response("finish", "c05", {"summary": "Done — only app-owner report written."}),
+        _end_turn_response("Pipeline ended without security report."),
+    ]
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = mock_responses
+
+    dispatched: list[str] = []
+
+    def fake_dispatch(name: str, inp: dict) -> str:  # noqa: ANN001
+        dispatched.append(name)
+        out_map = {
+            "oscal_assess_assess": fake_gap,
+            "oscal_gap_map": fake_backlog,
+            "sscf_benchmark_benchmark": fake_sscf,
+            "report_gen_generate": app_owner_out,
+        }
+        return json.dumps({"status": "ok", "output_file": out_map.get(name, "")})
+
+    runner = CliRunner()
+    with (
+        patch("openai.OpenAI", return_value=mock_client),
+        patch("harness.loop.build_client", return_value=MagicMock()),
+        patch("harness.loop.load_memories", return_value=""),
+        patch("harness.loop.save_assessment"),
+        patch("harness.loop.dispatch", side_effect=fake_dispatch),
+    ):
+        result = runner.invoke(cli, ["run", "--dry-run", "--org", "seq-test-org", "--approve-critical"])
+
+    assert result.exit_code == 0, result.output
+    # app-owner report_gen was dispatched and succeeded
+    assert "report_gen_generate" in dispatched
+    # finish() must NOT have been dispatched — sequencing gate should have blocked it
+    # because state["report_security_md"] is None (only app-owner report was written)
+    assert "finish" not in dispatched, (
+        "finish() should be blocked when no security-audience report has been written"
+    )

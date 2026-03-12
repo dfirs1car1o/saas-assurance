@@ -365,6 +365,11 @@ def _run_loop(  # NOSONAR
             if inp.get("dry_run", dry_run):
                 _required = _required - {"sfdc_connect_collect", "workday_connect_collect"}
             _missing = _required - completed_tools
+            # finish() additionally requires the security-audience report to exist.
+            # Requiring only "some report_gen_generate" would allow finish() after an
+            # app-owner-only report, producing a run with no security deliverable.
+            if name == "finish" and not state.get("report_security_md"):
+                _missing = _missing | {"report_gen_generate[audience=security]"}
             if _missing:
                 _seq_msg = (
                     f"Sequencing violation: '{name}' requires {sorted(_missing)} to complete first. "
@@ -413,15 +418,17 @@ def _run_loop(  # NOSONAR
                     },
                 )
 
-            # Mark tool as completed so downstream sequencing checks pass
-            completed_tools.add(name)
-
-            # Track output files for downstream steps and final gate
+            # Track output files and mark tool as completed (on success only).
+            # Unconditionally adding here would allow a failed oscal_gap_map or
+            # sscf_benchmark to unlock downstream tools, producing misleading output.
             try:
                 result_data = json.loads(result_str)
                 if result_data.get("pipeline_complete"):
                     state["summary"] = result_data.get("summary", "Pipeline complete.")
                     pipeline_done = True
+                # Gate advancement: only mark complete when the tool itself succeeded.
+                if _call_status == "ok" and result_data.get("status") == "ok":
+                    completed_tools.add(name)
                 out_file = result_data.get("output_file")
                 if out_file:
                     if name == "oscal_assess_assess":

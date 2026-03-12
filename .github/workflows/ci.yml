@@ -144,7 +144,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: pip install -e . && pip install pytest pytest-mock pytest-cov PyYAML click qdrant-client mem0ai responses
+      - run: pip install -e ".[dev]"
       - name: Run tests with coverage
         env:
           QDRANT_IN_MEMORY: "1"
@@ -154,7 +154,7 @@ jobs:
               --cov=skills --cov=harness \
               --cov-report=xml:coverage.xml \
               --cov-report=term-missing \
-              --cov-fail-under=20
+              --cov-fail-under=25
           else
             echo "No tests directory yet — skipping"
           fi

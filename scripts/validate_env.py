@@ -178,44 +178,72 @@ def check_env_vars(suite: CheckSuite) -> None:  # NOSONAR
     for k, v in os.environ.items():
         env_values.setdefault(k, v)
 
-    checks = [
-        ("SF_USERNAME", "Salesforce username", True),
-        ("SF_PASSWORD", "Salesforce password", True),
-        ("SF_SECURITY_TOKEN", "Salesforce security token", True),
-        ("OPENAI_API_KEY", "OpenAI API key", True),
-        ("SF_DOMAIN", "Salesforce domain (optional)", False),
-        ("SF_INSTANCE_URL", "Salesforce instance URL (optional)", False),
-        ("SF_AUTH_METHOD", "Auth method: soap (default) or jwt (optional)", False),
-        ("SF_CONSUMER_KEY", "JWT: Connected App Consumer Key (optional)", False),
-        ("SF_PRIVATE_KEY_PATH", "JWT: RSA private key path (optional)", False),
-        ("LLM_MODEL_ORCHESTRATOR", "LLM orchestrator model override (optional)", False),
-        ("LLM_MODEL_ANALYST", "LLM analyst model override (optional)", False),
-        ("LLM_MODEL_REPORTER", "LLM reporter model override (optional)", False),
-        # Workday (optional — only required for --platform workday)
-        ("WD_TENANT", "Workday tenant ID (required for workday platform)", False),
-        ("WD_CLIENT_ID", "Workday OAuth 2.0 client ID (required for workday platform)", False),
-        ("WD_CLIENT_SECRET", "Workday OAuth 2.0 client secret (required for workday platform)", False),
-        ("WD_TOKEN_URL", "Workday OAuth 2.0 token URL (required for workday platform)", False),
-        ("WD_BASE_URL", "Workday REST/SOAP base URL (required for workday platform)", False),
-        ("WD_API_VERSION", "Workday API version (optional, default v42.0)", False),
-    ]
+    def _val(key: str) -> str:
+        v = env_values.get(key, "")
+        return "" if v.startswith("your") or v.startswith("sk-...") else v
 
-    for key, description, hard in checks:
-        val = env_values.get(key, "")
-        if val and not val.startswith("your") and not val.startswith("sk-..."):
-            masked = val[:4] + "****" if len(val) > 4 else "****"
+    def _add(key: str, description: str, hard: bool) -> None:
+        v = _val(key)
+        if v:
+            masked = v[:4] + "****" if len(v) > 4 else "****"
             suite.add(CheckResult(key, "pass", f"{description} — set ({masked})", hard=hard))
         elif hard:
-            suite.add(
-                CheckResult(
-                    key,
-                    "fail",
-                    f"{description} — not set. Add to .env.",
-                    hard=True,
-                )
-            )
+            suite.add(CheckResult(key, "fail", f"{description} — not set. Add to .env.", hard=True))
         else:
             suite.add(CheckResult(key, "warn", f"{description} — not set (optional)", hard=False))
+
+    # --- Salesforce auth (JWT-only; SOAP removed) ---
+    auth_method = _val("SF_AUTH_METHOD") or "jwt"
+    _add("SF_AUTH_METHOD", "Salesforce auth method (jwt recommended)", False)
+    _add("SF_USERNAME", "Salesforce username", True)
+    if auth_method == "jwt":
+        _add("SF_CONSUMER_KEY", "JWT: Connected App Consumer Key", True)
+        _add("SF_PRIVATE_KEY_PATH", "JWT: RSA private key path", True)
+    else:
+        suite.add(
+            CheckResult(
+                "SF_AUTH_METHOD",
+                "warn",
+                f"SF_AUTH_METHOD={auth_method!r} — SOAP auth has been removed. Set SF_AUTH_METHOD=jwt.",
+                hard=False,
+            )
+        )
+        _add("SF_CONSUMER_KEY", "JWT: Connected App Consumer Key (set SF_AUTH_METHOD=jwt)", True)
+        _add("SF_PRIVATE_KEY_PATH", "JWT: RSA private key path (set SF_AUTH_METHOD=jwt)", True)
+
+    _add("SF_DOMAIN", "Salesforce domain (optional)", False)
+    _add("SF_INSTANCE_URL", "Salesforce instance URL (optional)", False)
+
+    # --- OpenAI / Azure OpenAI ---
+    azure_key = _val("AZURE_OPENAI_API_KEY")
+    azure_endpoint = _val("AZURE_OPENAI_ENDPOINT")
+    if azure_key and azure_endpoint:
+        suite.add(
+            CheckResult(
+                "OPENAI_API_KEY",
+                "pass",
+                "Azure OpenAI configured — OPENAI_API_KEY not required",
+                hard=False,
+            )
+        )
+        _add("AZURE_OPENAI_API_KEY", "Azure OpenAI API key", False)
+        _add("AZURE_OPENAI_ENDPOINT", "Azure OpenAI endpoint", False)
+        _add("AZURE_OPENAI_API_VERSION", "Azure OpenAI API version (optional)", False)
+    else:
+        _add("OPENAI_API_KEY", "OpenAI API key", True)
+
+    # --- LLM model overrides (optional) ---
+    _add("LLM_MODEL_ORCHESTRATOR", "LLM orchestrator model override (optional)", False)
+    _add("LLM_MODEL_ANALYST", "LLM analyst model override (optional)", False)
+    _add("LLM_MODEL_REPORTER", "LLM reporter model override (optional)", False)
+
+    # --- Workday (optional — only required for --platform workday) ---
+    _add("WD_TENANT", "Workday tenant ID (required for workday platform)", False)
+    _add("WD_CLIENT_ID", "Workday OAuth 2.0 client ID (required for workday platform)", False)
+    _add("WD_CLIENT_SECRET", "Workday OAuth 2.0 client secret (required for workday platform)", False)
+    _add("WD_TOKEN_URL", "Workday OAuth 2.0 token URL (required for workday platform)", False)
+    _add("WD_BASE_URL", "Workday REST base URL (required for workday platform)", False)
+    _add("WD_API_VERSION", "Workday API version (optional, default v42.0)", False)
 
 
 def check_python_package(
@@ -424,13 +452,10 @@ def attempt_fix(suite: CheckSuite) -> None:
             "git",
             ".env",
             "SF_USERNAME",
-            "SF_PASSWORD",
-            "SF_SECURITY_TOKEN",
-            "OPENAI_API_KEY",
-            "repo-layout",
-            "SF_AUTH_METHOD",
             "SF_CONSUMER_KEY",
             "SF_PRIVATE_KEY_PATH",
+            "OPENAI_API_KEY",
+            "repo-layout",
         )
     ]
     if not failures:
