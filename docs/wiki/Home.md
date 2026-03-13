@@ -75,7 +75,7 @@ cd saas-posture
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env   # fill in OPENAI_API_KEY + Salesforce credentials
-pytest tests/ -v       # 64/64 should pass (offline, no API keys needed)
+pytest tests/ -v       # 94/94 should pass (offline, no API keys needed)
 agent-loop run --dry-run --env dev --org test-org
 ```
 
@@ -94,19 +94,19 @@ agent-loop run --dry-run --env dev --org test-org
 | NIST review | ✅ Done | nist-review skill, 7-step pipeline, gate logic |
 | JWT Auth | ✅ Done | JWT Bearer flow, live verified |
 | sfdc-expert | ✅ Done | On-call Apex/SFDC specialist agent |
-| SDK Migration | ✅ Done | Anthropic → OpenAI (gpt-5.3-chat-latest / gpt-4o-mini) |
+| All agents | ✅ Done | Unified model: all 9 agents use `gpt-5.3-chat-latest` |
 | Executive reports | ✅ Done | Python-rendered scorecard, domain chart, sorted matrix |
 | finish() tool | ✅ Done | Orchestrator exits cleanly; _MAX_TURNS→14 |
 | OSCAL Catalogs | ✅ Done | SSCF catalog, SBS catalog, Workday catalog — all OSCAL 1.1.2 |
 | Schema v2 | ✅ Done | `baseline_assessment_schema.json` v2 — platform-agnostic, CCM chains |
 | SSCF→CCM bridge | ✅ Done | 14 SSCF controls mapped to CCM v4.1; automatic regulatory crosswalk |
-| Workday Blueprint | ✅ Done | 30-control WSCC catalog, SSCF mapping, connector blueprint (Phase C) |
-| Workday Connector | ✅ Done | `skills/workday_connect/workday_connect.py` — OAuth 2.0, 30 controls, 21 tests (Phase E) |
-| Workday Agent-Loop | ✅ Done | `--platform workday` flag, workday_connect_collect tool, Workday task prompt (Phase F) |
-| Report: POA&M + Not Assessed | ✅ Done | POA&M (POAM-IDs, owners, milestones) + auditor appendix in security DOCX (Phase G) |
+| Workday Blueprint | ✅ Done | 30-control WSCC catalog, SSCF mapping, connector blueprint |
+| Workday Connector | ✅ Done | `skills/workday_connect/workday_connect.py` — OAuth 2.0, 30 controls, 21 tests |
+| Workday Agent-Loop | ✅ Done | `--platform workday` flag, workday_connect_collect tool, Workday task prompt |
+| Report: POA&M + Not Assessed | ✅ Done | POA&M (POAM-IDs, owners, milestones) + auditor appendix in security DOCX |
 | Report: OSCAL Provenance | ✅ Done | Catalog → Profile → Component Def → CCM chain table in every report |
 | Report: Table borders + Description | ✅ Done | Full single-line borders on all DOCX tables; Description column added |
-| **Phase H** | **✅ Done** | Docker stack + OpenSearch + 3 pre-built dashboards (combined, Salesforce, Workday) |
+| **OpenSearch** | **✅ Done** | Docker stack + OpenSearch + 3 pre-built dashboards (combined, Salesforce, Workday) |
 | **OSCAL P0** | **✅ Done** | ODP parameterization — all 36 SSCF controls carry `params`; SBS (59) + WSCC (50) `set-parameters` |
 | **OSCAL P1** | **✅ Done** | `gen_resolved_profile.py` — resolved catalogs for SBS (35 controls) and WSCC (30 controls); component def upgrades with `control-origination` + `responsibility` |
 | **OSCAL P2** | **✅ Done** | `gen_assessment_results.py` (OSCAL AR), `gen_ssp.py` (per-org SSP), commercial SSP template; all wired into CI |

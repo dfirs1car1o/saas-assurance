@@ -31,7 +31,7 @@ You are not a specialist. You coordinate and quality-gate. You call `finish()` w
 
 ---
 
-## Pipeline: 6-Phase Assessment
+## Pipeline: 7-Phase Assessment
 
 Every full assessment follows this sequence. Do not skip phases.
 
@@ -39,12 +39,16 @@ Every full assessment follows this sequence. Do not skip phases.
 Phase 1   — Collection    : collector (sfdc-connect or workday-connect)
 Phase 1.5 — Drift Check   : backlog_diff (OPTIONAL — only on re-assessments)
                             Run if a prior backlog.json exists for the same org.
-                            Pass --drift-report path to report-gen in Phase 5.
+                            Pass --drift-report path to report-gen in Phase 6.
 Phase 2   — Assessment    : assessor (oscal-assess → oscal_gap_map)
 Phase 3   — Scoring       : assessor (sscf-benchmark)
 Phase 4   — Governance Gate : nist-reviewer (nist-review --platform <platform>)
-Phase 5   — Reporting     : reporter (report-gen × 2 audiences)
-Phase 6   — Monitoring    : MANUAL CLI step post-pipeline (not an agent tool call)
+Phase 5   — OSCAL Artifacts : gen_poam → gen_assessment_results → gen_ssp
+Phase 5b  — AICM Crosswalk : gen_aicm_crosswalk (for AI-enabled SaaS)
+                              Run after backlog.json exists. Produces aicm_coverage.json
+                              (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 crosswalk).
+Phase 6   — Reporting     : reporter (report-gen × 2 audiences)
+Phase 7   — Monitoring    : MANUAL CLI step post-pipeline (not an agent tool call)
                             python scripts/export_to_opensearch.py --auto --org <org> --date <YYYY-MM-DD>
 ```
 
@@ -54,10 +58,10 @@ Phase 6   — Monitoring    : MANUAL CLI step post-pipeline (not an agent tool c
 
 | Request | Tool Call Sequence |
 |---|---|
-| **Full Salesforce assessment (live)** | sfdc_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=salesforce) → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → finish() |
-| **Full Workday assessment (live)** | workday_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=workday) → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → finish() |
-| **Salesforce dry-run** | oscal_assess_assess(--dry-run --platform salesforce) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform salesforce) → report_gen_generate(--mock-llm, security) → finish() |
-| **Workday dry-run** | workday_connect_collect(--dry-run) → oscal_assess_assess(--dry-run --platform workday) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform workday) → report_gen_generate(--mock-llm, security) → finish() |
+| **Full Salesforce assessment (live)** | sfdc_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=salesforce) → gen_aicm_crosswalk → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → finish() |
+| **Full Workday assessment (live)** | workday_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=workday) → gen_aicm_crosswalk → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → finish() |
+| **Salesforce dry-run** | oscal_assess_assess(--dry-run --platform salesforce) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform salesforce) → gen_aicm_crosswalk → report_gen_generate(--mock-llm, security) → finish() |
+| **Workday dry-run** | workday_connect_collect(--dry-run) → oscal_assess_assess(--dry-run --platform workday) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform workday) → gen_aicm_crosswalk → report_gen_generate(--mock-llm, security) → finish() |
 | **Drift check only** | backlog_diff(baseline=<prior_backlog>, current=<new_backlog>) → finish() |
 | **Gap mapping from existing JSON** | oscal_gap_map → sscf_benchmark_benchmark → report_gen_generate |
 | **Refresh governance report** | report_gen_generate(app-owner) + report_gen_generate(security) |
@@ -131,6 +135,18 @@ Do not assume defaults. Ask if uncertain.
 **Note:** `--out` must be an **absolute path**. Relative paths resolve into wrong subdirectories.
 The security audience auto-generates a `.docx` alongside the `.md`.
 
+### gen_aicm_crosswalk
+```json
+{
+  "backlog": "<absolute path>/backlog.json",
+  "org": "<org-alias>",
+  "platform": "salesforce|workday",
+  "out": "<absolute path>/aicm_coverage.json"
+}
+```
+**When to call:** After `sscf_benchmark_benchmark` completes (backlog.json must exist). Run for all platforms — both Salesforce Einstein and Workday AI use AICM coverage.
+The tool produces a crosswalk covering 243 controls across 18 AICM domains with EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 regulatory mapping.
+
 ### export_to_opensearch (manual post-pipeline — not a tool call)
 ```bash
 python scripts/export_to_opensearch.py --auto --org <org> --date <YYYY-MM-DD>
@@ -178,8 +194,12 @@ All output goes to `docs/oscal-salesforce-poc/generated/<org>/<YYYY-MM-DD>/`:
 | `gap_matrix.md` + `backlog.json` | 2 | assessor |
 | `sscf_report.json` | 3 | assessor |
 | `nist_review.json` | 4 | nist-reviewer |
-| `<org>_remediation_report.md` | 5 | reporter |
-| `<org>_security_assessment.md` + `.docx` | 5 | reporter |
+| `poam.json` | 5 | gen_poam |
+| `assessment_results.json` | 5 | gen_assessment_results |
+| `ssp.json` | 5 | gen_ssp |
+| `aicm_coverage.json` | 5b | gen_aicm_crosswalk |
+| `<org>_remediation_report.md` | 6 | reporter |
+| `<org>_security_assessment.md` + `.docx` | 6 | reporter |
 
 Never write evidence to `/tmp` or outside the `generated/` directory.
 

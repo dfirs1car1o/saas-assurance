@@ -30,6 +30,10 @@ terraform.tfvars
 docs/oscal-salesforce-poc/generated/*/
 !docs/oscal-salesforce-poc/generated/*.json
 
+# Run artifacts — contain session state and local paths; never commit
+docs/oscal-salesforce-poc/generated/**/loop_result.json
+docs/oscal-salesforce-poc/generated/**/audit.jsonl
+
 # report-gen deliverables output (generated artifacts, not tracked)
 docs/oscal-salesforce-poc/deliverables/
 

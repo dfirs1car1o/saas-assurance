@@ -121,7 +121,7 @@
 - **Orchestrator-workers** (not a swarm): Predictable, auditable, easy to debug. Each agent has a defined input and output. No emergent behavior.
 - **Sequential**: The assessor cannot run until the collector finishes. The reporter cannot run until the NIST reviewer approves. Dependencies are explicit.
 - **NIST Reviewer as blocking gate**: AI auditing is not a post-hoc review — it's a hard gate in the pipeline. This is the "MANAGE" function of NIST AI RMF.
-- **Haiku for Reporter**: Templated output generation from structured data is the cheapest operation. Haiku is fast and cheap here. Opus/Sonnet cost is reserved for decisions.
+- **Single model tier**: All agents use `gpt-5.3-chat-latest`. This simplifies reasoning audits — there is no cheaper-model shortcut that could produce lower-quality findings.
 
 ---
 
@@ -130,16 +130,20 @@
 | Agent | File | Model | Context Window | Primary Role |
 |---|---|---|---|---|
 | orchestrator | `agents/orchestrator.md` | gpt-5.3-chat-latest | 200K | Routing, QA, escalation |
-| collector | `agents/collector.md` | gpt-5.3-chat-latest | 200K | Salesforce API extraction |
-| assessor | `agents/assessor.md` | gpt-5.3-chat-latest | 200K | OSCAL/SBS/SSCF mapping |
+| collector | `agents/collector.md` | gpt-5.3-chat-latest | 200K | Salesforce + Workday API extraction |
+| assessor | `agents/assessor.md` | gpt-5.3-chat-latest | 200K | OSCAL/SBS/WSCC/SSCF mapping |
 | nist-reviewer | `agents/nist-reviewer.md` | gpt-5.3-chat-latest | 200K | AI RMF validation |
 | reporter | `agents/reporter.md` | gpt-5.3-chat-latest | 200K | Output formatting |
 | security-reviewer | `agents/security-reviewer.md` | gpt-5.3-chat-latest | 200K | AppSec + DevSecOps CI/CD audit |
 | sfdc-expert | `agents/sfdc-expert.md` | gpt-5.3-chat-latest | 200K | Apex + deep admin specialist (on-demand) |
+| workday-expert | `agents/workday-expert.md` | gpt-5.3-chat-latest | 200K | Workday API + WSCC specialist (on-demand) |
+| container-expert | `agents/container-expert.md` | gpt-5.3-chat-latest | 200K | Docker + OpenSearch stack specialist (on-demand) |
 
 **sfdc-expert** is invoked on-demand (not sequential) — only when `oscal_assess_assess`
 emits findings with `needs_expert_review=true`. It proposes read-only Apex scripts staged
 in `docs/oscal-salesforce-poc/apex-scripts/` for human review before any execution.
+
+**workday-expert** and **container-expert** are similarly on-demand text-analysis agents (no tool calls).
 
 ---
 
@@ -147,10 +151,13 @@ in `docs/oscal-salesforce-poc/apex-scripts/` for human review before any executi
 
 | Skill | Module | Commands | Auth | Description |
 |---|---|---|---|---|
-| sfdc-connect | `skills/sfdc_connect/sfdc_connect.py` | `collect`, `auth`, `org-info` | SF env vars | Salesforce REST + Tooling API collector |
-| oscal-assess | `skills/oscal-assess/` | TBD (Phase 2) | none | OSCAL gap mapping vs SBS catalog |
-| sscf-benchmark | `skills/sscf-benchmark/` | TBD (Phase 2) | none | CSA SSCF benchmarking |
-| report-gen | `skills/report-gen/` | TBD (Phase 2) | none | DOCX/MD/JSON output generation |
+| sfdc-connect | `skills/sfdc_connect/sfdc_connect.py` | `collect`, `auth`, `org-info` | SF JWT env vars | Salesforce REST + Tooling API collector |
+| workday-connect | `skills/workday_connect/workday_connect.py` | `collect` | WD OAuth 2.0 env vars | Workday REST + SOAP + RaaS collector (30 WSCC controls) |
+| oscal-assess | `skills/oscal_assess/oscal_assess.py` | `assess` | none | OSCAL gap mapping vs SBS/WSCC catalog; `--dry-run --platform` flags |
+| sscf-benchmark | `skills/sscf_benchmark/sscf_benchmark.py` | `benchmark` | none | CSA SSCF domain scoring; RED/AMBER/GREEN verdict |
+| nist-review | `skills/nist_review/nist_review.py` | `assess` | none | NIST AI RMF 7-step gate; clear/flag/block verdict |
+| report-gen | `skills/report_gen/report_gen.py` | `generate` | OpenAI API | DOCX/MD governance output; `--audience app-owner|security` |
+| agent-loop | `harness/loop.py` | `run` | OpenAI + platform creds | 14-turn ReAct orchestration loop; `--platform salesforce|workday` |
 
 ### sfdc-connect scopes
 
@@ -171,12 +178,17 @@ in `docs/oscal-salesforce-poc/apex-scripts/` for human review before any executi
 
 | Framework | Config File | Purpose |
 |---|---|---|
-| SBS v0.4.1 | `config/oscal-salesforce/sbs_source.yaml` | Salesforce-specific security controls |
-| OSCAL mapping | `config/oscal-salesforce/control_mapping.yaml` | SBS → OSCAL control IDs |
-| SBS → SSCF | `config/oscal-salesforce/sbs_to_sscf_mapping.yaml` | SBS controls → CSA CCM domains |
-| SSCF index | `config/sscf_control_index.yaml` | Canonical CSA SSCF control reference |
-| SF controls | `config/saas_baseline_controls/salesforce.yaml` | Controls with SSCF mappings |
-| NIST AI RMF | (applied in-context) | AI system governance (Govern/Map/Measure/Manage) |
+| SSCF v1.0 catalog | `config/sscf/sscf_v1_catalog.json` | 36 parameterized controls — base catalog with ODPs |
+| SBS profile | `config/salesforce/sbs_v1_profile.json` | Salesforce: selects 35 SSCF controls, sets ODP values |
+| SBS resolved catalog | `config/salesforce/sbs_resolved_catalog.json` | Pre-resolved: 35 controls, params substituted |
+| WSCC profile | `config/workday/wscc_v1_profile.json` | Workday: selects 30 SSCF controls, sets ODP values |
+| WSCC resolved catalog | `config/workday/wscc_resolved_catalog.json` | Pre-resolved: 30 controls, params substituted |
+| SBS → SSCF | `config/oscal-salesforce/sbs_to_sscf_mapping.yaml` | SBS control → SSCF domain + control ID |
+| SSCF → CCM | `config/sscf/sscf_to_ccm_mapping.yaml` | SSCF control → CCM v4.1 controls + regulatory highlights |
+| AICM v1.0.3 catalog | `config/aicm/aicm_v1_catalog.json` | 243 controls, 18 domains (EU AI Act / ISO 42001 / NIST AI 600-1) |
+| SSCF → AICM | `config/aicm/sscf_to_aicm_mapping.yaml` | 36-control SSCF → AICM crosswalk |
+| SSP template | `config/ssp/commercial_saas_ssp_template.json` | OSCAL 1.1.2 SSP — commercial SaaS variant |
+| NIST AI RMF | (applied in-context by nist-reviewer agent) | AI system governance (Govern/Map/Measure/Manage) |
 
 ---
 
