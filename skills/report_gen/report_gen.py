@@ -735,7 +735,10 @@ def _render_aicm_coverage(aicm: dict[str, Any]) -> str:
         failing = data.get("failing_controls", [])
         cov_icon = _VERDICT_ICON.get(cov, "—")
         pos_icon = _POSTURE_ICON.get(pos, "—")
-        fail_str = ", ".join(failing[:3]) + ("…" if len(failing) > 3 else "") if failing else "—"
+        if failing:
+            fail_str = ", ".join(failing[:3]) + ("…" if len(failing) > 3 else "")
+        else:
+            fail_str = "—"
         lines.append(f"| **{abbrev}** | {cov_icon} {cov} | {pos_icon} {pos} | {total} | {fail_str} |")
 
     if gap_note:
