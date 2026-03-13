@@ -208,7 +208,7 @@ Platform-agnostic assessment schema. Supports Salesforce, Workday, and future pl
 
 ## Workday Environment Variables
 
-Required when running `workday-connect` (Phase E):
+Required when running `workday-connect`:
 
 | Variable | Description |
 |---|---|

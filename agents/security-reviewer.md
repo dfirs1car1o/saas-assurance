@@ -60,7 +60,7 @@ For every workflow file, check:
 
 4. **SOQL injection** — any string that builds a SOQL query using user-supplied values without parameterization is HIGH. The Salesforce REST API does not support prepared statements — the fix is explicit allowlist validation of any user-supplied field or value.
 
-5. **Credential logging** — any `print()`, `logging.*`, or `click.echo()` that could expose SF_PASSWORD, SF_SECURITY_TOKEN, OPENAI_API_KEY, WD_CLIENT_SECRET, or OPENSEARCH_ADMIN_PASSWORD. Check exception handlers — stack traces can include request objects containing auth headers.
+5. **Credential logging** — any `print()`, `logging.*`, or `click.echo()` that could expose SF_CONSUMER_KEY, SF_PRIVATE_KEY_PATH, OPENAI_API_KEY, WD_CLIENT_SECRET, or OPENSEARCH_ADMIN_PASSWORD. Check exception handlers — stack traces can include request objects containing auth headers.
 
 ### `harness/**/*.py`
 
