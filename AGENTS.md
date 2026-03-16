@@ -12,6 +12,7 @@ This file is the canonical reference for all agents in this system. Each agent h
 | reporter | agents/reporter.md | gpt-5.3-chat-latest | Generates DOCX/MD governance outputs |
 | nist-reviewer | agents/nist-reviewer.md | gpt-5.3-chat-latest | Validates all outputs against NIST AI RMF 1.0 |
 | security-reviewer | agents/security-reviewer.md | gpt-5.3-chat-latest | AppSec + DevSecOps review of CI/CD, workflows, and skill CLIs |
+| delivery-reviewer | agents/delivery-reviewer.md | gpt-5.3-chat-latest | Final delivery quality review — credential exposure, status misrepresentation, scope violations |
 | sfdc-expert | agents/sfdc-expert.md | gpt-5.3-chat-latest | Apex + deep Salesforce admin specialist (on-call) |
 | workday-expert | agents/workday-expert.md | gpt-5.3-chat-latest | Workday HCM/Finance API specialist (on-call) — RaaS/REST, WSCC catalog, ISSG permissions |
 | container-expert | agents/container-expert.md | gpt-5.3-chat-latest | Docker Compose, OpenSearch 2.x, NDJSON dashboards, JVM tuning, stack troubleshooting |
@@ -23,7 +24,7 @@ This file is the canonical reference for all agents in this system. Each agent h
 | Skill | Directory | What It Does |
 |---|---|---|
 | sfdc-connect | skills/sfdc_connect/ | Authenticates and queries a Salesforce org via REST/Tooling API (JWT Bearer) |
-| oscal-assess | skills/oscal_assess/ | Evaluates 35 SBS controls (Salesforce) or 30 WSCC controls (Workday) against collected config |
+| oscal-assess | skills/oscal_assess/ | Evaluates 45 SBS controls (Salesforce) or 30 WSCC controls (Workday) against collected config |
 | sscf-benchmark | skills/sscf_benchmark/ | Scores findings by CSA SSCF domain (RED/AMBER/GREEN) |
 | nist-review | skills/nist_review/ | NIST AI RMF 1.0 gate (govern/map/measure/manage); issues block/flag/pass |
 | report-gen | skills/report_gen/ | Generates audience-specific Markdown + DOCX + AICM annex governance reports |
@@ -45,7 +46,7 @@ All agents use `gpt-5.3-chat-latest` by default. Override per-role via env vars:
 - `LLM_MODEL_ANALYST` — collector, assessor, nist-reviewer, sfdc-expert, workday-expert (mid-complexity structured tasks)
 - `LLM_MODEL_REPORTER` — reporter, container-expert (templated output; lower complexity)
 
-Security Reviewer runs as a Claude Code subagent (text-only, no tool calls).
+Security Reviewer (CI/CD AppSec) and Delivery Reviewer (report delivery QA) both run text-only, no tool calls.
 Azure OpenAI Government (FedRAMP/IL5): set `AZURE_OPENAI_API_KEY` + `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_VERSION`.
 
 ## Agent Loop Model

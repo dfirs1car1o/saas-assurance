@@ -70,7 +70,7 @@ All 9 agents in the system. Each has a definition file in `agents/` with YAML fr
 | **Tools** | `oscal-assess`, `oscal_gap_map` |
 | **Invoked by** | Orchestrator |
 
-**Role:** Maps collected Salesforce config to the 35 SBS controls. Runs the rule engine. Produces findings with status and severity. Maps findings to SSCF controls via gap map.
+**Role:** Maps collected Salesforce config to the 45 SBS controls. Runs the rule engine. Produces findings with status and severity. Maps findings to SSCF controls via gap map.
 
 **Control assignment:** Conservative — only marks `pass` when definitively met. Ambiguous → `partial`.
 

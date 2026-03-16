@@ -25,7 +25,7 @@ Phase 6 — Report       report-gen (app-owner + security)  →  Markdown + DOCX
 Phase 7 — Monitor      export_to_opensearch + dashboards  →  OpenSearch trending + 3 dashboards
 ```
 
-**Platform support:** Salesforce (35 SBS controls) · Workday (30 WSCC controls)
+**Platform support:** Salesforce (45 SBS controls) · Workday (30 WSCC controls)
 **Framework chain:** Platform control → SSCF v1.0 → CCM v4.1 → ISO 27001:2022 Annex A → SOX / HIPAA / SOC2 / NIST 800-53 / PCI DSS / GDPR
 **AI governance chain:** SSCF v1.0 → CSA AICM v1.0.3 (243 controls, 18 domains) → EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4
 **OSCAL output:** Resolved catalog · Assessment Results · System Security Plan · POA&M — all OSCAL 1.1.2 valid
@@ -93,14 +93,15 @@ Human ──► agent-loop run (harness/loop.py)
                          ├── 4.   sscf_benchmark_benchmark  → sscf_report.json
                          ├── 5.   nist_review_assess        → nist_review.json        (AI RMF gate)
                          ├── 5d.  gen_aicm_crosswalk        → aicm_coverage.json      (AICM v1.0.3)
-                         ├── 5e.  gen_poam                  → poam.json               (OSCAL POA&M)
-                         ├── 5f.  gen_assessment_results    → assessment_results.json
-                         ├── 5g.  gen_ssp                   → ssp.json                (System Security Plan)
                          ├── 6a.  report_gen_generate       → *_remediation_report.md (app-owner)
                          ├── 6b.  report_gen_generate       → *_security_assessment.md + .docx
-                         ├──  ╰─► security_reviewer_review  → flags (AppSec final)    [agent sub-call]
+                         ├──  ╰─► security_reviewer_review  → flags (delivery QA)     [agent sub-call]
                          └── 6c.  finish()
 ```
+
+> **OSCAL artifact generation** (`gen_poam.py`, `gen_assessment_results.py`, `gen_ssp.py`) runs as
+> post-processing scripts after the pipeline completes — see [docs/wiki/OSCAL-Guide.md](docs/wiki/OSCAL-Guide.md).
+> These scripts are not orchestrated tool calls.
 
 All agents are OpenAI models (`gpt-5.3-chat-latest`). The orchestrator dispatches tool calls to skills (Python CLIs) and inline **agent sub-calls** — direct OpenAI chat completions that inject specialist intelligence between pipeline stages. Agents communicate through JSON evidence files on disk — no shared state or MCP. **Tool sequencing is enforced in code** via `_TOOL_REQUIRES` in `harness/loop.py`.
 
@@ -171,7 +172,7 @@ All platform controls chain through SSCF → CCM v4.1 → regulatory crosswalk (
 | Framework | Version | Config File |
 |---|---|---|
 | CSA SSCF | v1.0 | `config/sscf/sscf_v1_catalog.json` (OSCAL 1.1.2, 36 controls, 6 domains) |
-| Security Benchmark for Salesforce (SBS) | v1.0 | `config/salesforce/sbs_v1_profile.json` (OSCAL sub-profile of SSCF, 35 controls) |
+| Security Benchmark for Salesforce (SBS) | v1.0 | `config/oscal-salesforce/sbs_profile.json` (OSCAL sub-profile of SSCF, 45 controls) |
 | Workday Security Control Catalog (WSCC) | v1.0 | `config/workday/wscc_v1_profile.json` (OSCAL sub-profile of SSCF, 30 controls) |
 | CSA CCM | v4.1 | `config/ccm/ccm_v4.1_oscal_ref.yaml` (reference; CCM control IDs embedded in SSCF catalog) |
 | **ISO/IEC 27001:2022** | **2022** | **`config/iso27001/sscf_to_iso27001_mapping.yaml`** (direct Annex A mapping — 29 of 93 controls; full 93-control SoA auto-generated in security reports) |
@@ -206,7 +207,7 @@ Original Pipeline               Current Pipeline
 agents/                   ← Agent definitions (YAML frontmatter + role docs)
 config/
   sscf/                   ← SSCF v1.0 OSCAL catalog (36 controls, 6 domains) + profile + CCM bridge
-  salesforce/             ← SBS v1.0 OSCAL sub-profile (35 controls) + Salesforce platform notes
+  salesforce/             ← SBS v1.0 OSCAL sub-profile (45 controls) + Salesforce platform notes
   workday/                ← WSCC v1.0 OSCAL sub-profile (30 controls) + Workday/ISSG notes
   component-definitions/  ← OSCAL component definitions: evidence specs per control (Salesforce + Workday)
   oscal-salesforce/       ← Legacy SBS OSCAL catalog + SSCF mapping

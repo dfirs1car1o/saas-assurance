@@ -66,7 +66,7 @@ Produces a synthetic weak-org snapshot (no real Salesforce connection needed).
 
 ## Stage 2: OSCAL Assessment (`oscal-assess`)
 
-**What it does:** Evaluates 35 SBS (Salesforce Baseline Security) controls against the collected config.
+**What it does:** Evaluates 45 SBS (Salesforce Baseline Security) controls against the collected config.
 
 **How rules work:**
 

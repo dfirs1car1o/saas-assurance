@@ -146,8 +146,8 @@ Do not allow the orchestrator to auto-override a block verdict.
 
 ### Salesforce (SBS) Verdicts
 Reference: "Security Benchmark for Salesforce (SBS) v1.0 — 45 controls across 10 domains"
-Catalog: `config/salesforce/sbs_v1_profile.json`
+Catalog: `config/oscal-salesforce/sbs_profile.json`
 
 ### Workday (WSCC) Verdicts
-Reference: "Workday Security Control Catalog (WSCC) v0.2.0 — 30 controls across 6 domains"
+Reference: "Workday Security Control Catalog (WSCC) v0.3.0 — 30 controls across 6 domains"
 Catalog: `config/workday/wscc_v1_profile.json`

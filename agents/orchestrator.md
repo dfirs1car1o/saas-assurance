@@ -47,7 +47,6 @@ Phase 1.5 — Drift Check   : backlog_diff (OPTIONAL — only on re-assessments)
 Phase 2   — Assessment    : assessor (oscal-assess → oscal_gap_map)
 Phase 3   — Scoring       : assessor (sscf-benchmark)
 Phase 4   — Governance Gate : nist-reviewer (nist-review --platform <platform>)
-Phase 5   — OSCAL Artifacts : gen_poam → gen_assessment_results → gen_ssp
 Phase 5b  — AICM Crosswalk : gen_aicm_crosswalk (for AI-enabled SaaS)
                               Run after backlog.json exists. Produces aicm_coverage.json
                               (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 crosswalk).

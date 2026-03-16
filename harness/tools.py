@@ -42,6 +42,58 @@ def set_openai_client(client: Any) -> None:
     _AGENT_CLIENT = client
 
 
+def _validate_agent_response(raw: str, agent_name: str) -> dict:
+    """Parse and validate an agent response string into a well-formed dict.
+
+    Tries JSON parse first (structured output). Falls back to FLAG: line scraping
+    for legacy free-text responses. Always returns a dict with all required fields.
+    Never silently degrades — missing fields are filled with safe defaults.
+    """
+    _REQUIRED = {"status", "agent", "analysis", "flags"}
+    # --- Attempt 1: JSON parse ---
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            if _REQUIRED.issubset(parsed.keys()):
+                # All required fields present — use directly
+                return parsed
+            # Partial JSON — fill in missing fields from text content
+            analysis = parsed.get("analysis", raw)
+            flags = parsed.get("flags")
+            if not isinstance(flags, list):
+                flags = [
+                    line.split("FLAG:", 1)[1].strip()
+                    for line in str(analysis).splitlines()
+                    if line.strip().startswith("FLAG:")
+                ]
+            return {
+                "status": parsed.get("status", "ok"),
+                "agent": parsed.get("agent", agent_name),
+                "analysis": analysis,
+                "flags": flags,
+                "severity": parsed.get("severity", "info"),
+            }
+    except (json.JSONDecodeError, TypeError):
+        pass
+    # --- Attempt 2: FLAG: line scraping (legacy free-text) ---
+    import sys  # noqa: PLC0415 — local import to keep module top clean
+
+    print(  # noqa: T201
+        f"[agent] WARNING: {agent_name} returned non-JSON response — falling back to FLAG: scraping.",
+        file=sys.stderr,
+    )
+    flags = [
+        line.split("FLAG:", 1)[1].strip() for line in raw.splitlines() if line.strip().startswith("FLAG:")
+    ]
+    return {
+        "status": "ok",
+        "agent": agent_name,
+        "analysis": raw,
+        "flags": flags,
+        "severity": "info",
+    }
+
+
 def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str) -> str:
     """Make a direct OpenAI chat.completions call using an agent's system prompt.
 
@@ -51,8 +103,9 @@ def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str)
     Returns a JSON string:
         {"status": "ok", "agent": "<name>", "analysis": "<text>", "flags": [...]}
 
-    "flags" contains short slug tokens the orchestrator can act on, extracted from
-    lines starting with "FLAG: " in the agent's response.
+    "flags" contains short slug tokens the orchestrator can act on. If the agent returns
+    valid JSON with the required fields it is used directly; otherwise FLAG: line scraping
+    is applied as a fallback (see _validate_agent_response).
 
     On failure returns a structured error payload so the orchestrator can continue
     rather than aborting the pipeline.
@@ -75,18 +128,9 @@ def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str)
                 {"role": "user", "content": user_content},
             ],
         )
-        analysis_text = response.choices[0].message.content or ""
-        flags = [
-            line.split("FLAG:", 1)[1].strip() for line in analysis_text.splitlines() if line.strip().startswith("FLAG:")
-        ]
-        return json.dumps(
-            {
-                "status": "ok",
-                "agent": agent_name,
-                "analysis": analysis_text,
-                "flags": flags,
-            }
-        )
+        raw = response.choices[0].message.content or ""
+        result = _validate_agent_response(raw, agent_name)
+        return json.dumps(result)
     except Exception as exc:  # noqa: BLE001
         return json.dumps(
             {
@@ -838,7 +882,11 @@ def _dispatch_nist_review(inp: dict[str, Any], out_dir: Path) -> str:
 
 
 def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
-    """Enrich gap_analysis findings that need expert Apex/admin review (Phase 1 stub)."""
+    """Enrich gap_analysis findings that need expert Apex/admin review.
+
+    For each eligible finding: stages an Apex script placeholder AND calls the
+    sfdc-expert agent for per-finding specialist notes written into expert_notes.
+    """
     gap_path_str = inp.get("gap_analysis", "")
     if not gap_path_str:
         return json.dumps({"status": "error", "message": _GAP_ANALYSIS_REQUIRED})
@@ -873,10 +921,39 @@ def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: A
                 f"// Control: {cid}\n"
                 f"// Purpose: Surface data unavailable via sfdc-connect REST/SOQL API\n"
             )
-        finding["expert_notes"] = (
+        # Call sfdc-expert agent for per-finding specialist notes (if client available)
+        agent_note = ""
+        if _AGENT_CLIENT is not None:
+            finding_summary = json.dumps(
+                {
+                    "control_id": cid,
+                    "status": finding.get("status"),
+                    "severity": finding.get("severity"),
+                    "observed_value": finding.get("observed_value", ""),
+                    "evidence_ref": finding.get("evidence_ref", ""),
+                }
+            )
+            user_content = (
+                f"Provide expert Salesforce/Apex guidance for this finding requiring specialist review.\n"
+                f"Control: {cid}\n"
+                f"Finding: {finding_summary}\n\n"
+                f"Specify: (1) exact SOQL or Tooling API query to gather evidence, "
+                f"(2) Salesforce permission required to run it, "
+                f"(3) whether the finding is likely a genuine gap or a collector API limitation."
+            )
+            try:
+                result_str = _dispatch_agent_call("sfdc-expert", load_agent_prompt("sfdc-expert"), user_content)
+                result = json.loads(result_str)
+                if result.get("status") == "ok":
+                    agent_note = result.get("analysis", "")[:600]
+            except Exception:  # noqa: BLE001
+                pass  # agent call failure must not abort the enrichment loop
+
+        apex_note = (
             f"Apex script staged at docs/oscal-salesforce-poc/apex-scripts/{apex_filename}. "
             f"Awaiting human review before execution."
         )
+        finding["expert_notes"] = f"{apex_note}\n{agent_note}".strip() if agent_note else apex_note
         enriched += 1
 
     gap_path = gap_path.resolve()
@@ -1053,9 +1130,33 @@ def _dispatch_workday_expert_enrich(inp: dict[str, Any], out_dir: Path) -> str: 
         result = json.loads(result_str)
         if result.get("status") == "ok":
             analysis = result.get("analysis", "")
+            # Parse per-finding sections from analysis text.
+            # Expected format: "Control: <WD-ID>\nGap: ...\nFix: ...\nAPI: ..."
+            # Build a dict of control_id -> section text for targeted application.
+            per_finding_notes: dict[str, str] = {}
+            current_cid: str | None = None
+            current_lines: list[str] = []
+            for line in analysis.splitlines():
+                if line.startswith("Control:"):
+                    if current_cid and current_lines:
+                        per_finding_notes[current_cid] = "\n".join(current_lines).strip()
+                    current_cid = line.split(":", 1)[1].strip()
+                    current_lines = [line]
+                elif current_cid:
+                    current_lines.append(line)
+            if current_cid and current_lines:
+                per_finding_notes[current_cid] = "\n".join(current_lines).strip()
+
             for finding in eligible:
-                if not finding.get("expert_notes"):
-                    finding["expert_notes"] = f"[workday-expert] {analysis[:500]}\nAwaiting human review."
+                if finding.get("expert_notes"):
+                    continue
+                cid = finding.get("control_id", "")
+                if cid in per_finding_notes:
+                    # Apply control-specific note
+                    finding["expert_notes"] = f"[workday-expert] {per_finding_notes[cid]}\nAwaiting human review."
+                else:
+                    # Generic blob fallback — prefix with [generic] to distinguish
+                    finding["expert_notes"] = f"[workday-expert][generic] {analysis[:500]}\nAwaiting human review."
         gap_path = gap_path.resolve()
         gap_path.write_text(json.dumps(data, indent=2))  # NOSONAR — intentional artifact path
         result["enriched_findings"] = len(eligible)
@@ -1074,20 +1175,20 @@ def _dispatch_security_reviewer_review(inp: dict[str, Any], out_dir: Path) -> st
     """
     report_path_str = inp.get("report_path", "")
     if not report_path_str:
-        return json.dumps({"status": "error", "agent": "security-reviewer", "message": "report_path required"})
+        return json.dumps({"status": "error", "agent": "delivery-reviewer", "message": "report_path required"})
     report_path = _safe_inp_path(report_path_str)
     if not report_path:
         return json.dumps(
             {
                 "status": "error",
-                "agent": "security-reviewer",
+                "agent": "delivery-reviewer",
                 "message": f"report_path failed safety validation: {report_path_str}",
             }
         )
     try:
         report_text = Path(report_path).read_text()
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"status": "error", "agent": "security-reviewer", "message": f"Could not read report: {exc}"})
+        return json.dumps({"status": "error", "agent": "delivery-reviewer", "message": f"Could not read report: {exc}"})
 
     user_content = (
         "Review the following security assessment report for delivery to a human stakeholder.\n"
@@ -1105,7 +1206,24 @@ def _dispatch_security_reviewer_review(inp: dict[str, Any], out_dir: Path) -> st
 
 
 def _dispatch_finish(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
-    """Sentinel: orchestrator signals pipeline is complete. Loop will break immediately."""
+    """Sentinel: orchestrator signals pipeline is complete. Loop will break immediately.
+
+    Blocks completion if security_review_flags contains any credential_exposure:* or
+    scope_violation:* flags — these require human acknowledgement before delivery.
+    status_misrepresentation:* flags are warning-only and do not block.
+    """
+    review_flags: list[str] = inp.get("security_review_flags", [])
+    blocking_flags = [
+        f for f in review_flags if f.startswith("credential_exposure:") or f.startswith("scope_violation:")
+    ]
+    if blocking_flags:
+        return json.dumps(
+            {
+                "status": "blocked",
+                "reason": "Unresolved delivery-review flags require human acknowledgement",
+                "flags": blocking_flags,
+            }
+        )
     return json.dumps({"status": "ok", "pipeline_complete": True, "summary": inp.get("summary", "")})
 
 

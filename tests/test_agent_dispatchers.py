@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from harness.tools import _ARTIFACT_ROOT, _dispatch_agent_call, dispatch, set_openai_client
+from harness.tools import _ARTIFACT_ROOT, _dispatch_agent_call, _validate_agent_response, dispatch, set_openai_client
 
 _TEST_ORG = "ci-dry-run-sfdc"
 _TEST_DATE = "2026-01-01"
@@ -322,7 +322,7 @@ class TestDispatchSecurityReviewerReview:
             )
         assert result["status"] == "ok"
         mock_call.assert_called_once()
-        assert mock_call.call_args[0][0] == "security-reviewer"
+        assert mock_call.call_args[0][0] == "delivery-reviewer"
 
     def test_report_content_truncated_to_6000_chars(self) -> None:
         report_path = _BASE / "security_report.md"
@@ -354,3 +354,216 @@ class TestDispatchSecurityReviewerReview:
                 dispatch("security_reviewer_review", {"org": _TEST_ORG, "report_path": str(report_path)})
             )
         assert result["flags"] == ["credential_exposure:org-id-12345"]
+
+
+# ---------------------------------------------------------------------------
+# PATCH 4 — _validate_agent_response structured output tests
+# ---------------------------------------------------------------------------
+
+
+class TestValidateAgentResponse:
+    def test_structured_json_response_used_directly(self) -> None:
+        """Valid JSON with all required fields is used directly without FLAG: scraping."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "delivery-reviewer",
+                "analysis": "No issues found.",
+                "flags": ["scope_violation:section-x"],
+                "severity": "critical",
+            }
+        )
+        result = _validate_agent_response(payload, "delivery-reviewer")
+        assert result["status"] == "ok"
+        assert result["flags"] == ["scope_violation:section-x"]
+        assert result["analysis"] == "No issues found."
+
+    def test_malformed_json_falls_back_to_flag_scraping(self) -> None:
+        """Non-JSON free-text response falls back to FLAG: line extraction."""
+        raw = "Some analysis text.\nFLAG: missing_scope:event-monitoring\nEnd of review."
+        result = _validate_agent_response(raw, "collector")
+        assert result["status"] == "ok"
+        assert result["flags"] == ["missing_scope:event-monitoring"]
+        assert result["analysis"] == raw
+
+    def test_missing_fields_filled_with_defaults(self) -> None:
+        """Partial JSON (missing flags/status) gets defaults filled in."""
+        partial = json.dumps({"agent": "assessor", "analysis": "FLAG: low_confidence_critical:SBS-AUTH-001"})
+        result = _validate_agent_response(partial, "assessor")
+        assert "status" in result
+        assert "flags" in result
+        # flags should be extracted from analysis text since they were missing in JSON
+        assert "low_confidence_critical:SBS-AUTH-001" in result["flags"]
+
+
+# ---------------------------------------------------------------------------
+# PATCH 1 — finish() blocked on security_review_flags
+# ---------------------------------------------------------------------------
+
+
+class TestFinishBlockedOnSecurityReviewFlags:
+    """Tests for the finish() sequencing gate against security_review_flags."""
+
+    def _make_state_with_flags(self, flags: list[str]) -> None:
+        """Helper: inject flags into harness.tools module state via loop.py path.
+
+        The _dispatch_finish function in tools.py reads flags from the input dict
+        (passed by loop.py which extracts them from state). We test the dispatch
+        path directly by passing flags in the tool input.
+        """
+
+    def test_finish_blocked_on_credential_exposure_flag(self) -> None:
+        """finish() returns status=blocked when credential_exposure flag is present."""
+        result = json.loads(
+            dispatch(
+                "finish",
+                {
+                    "org": _TEST_ORG,
+                    "summary": "Assessment complete.",
+                    "security_review_flags": ["credential_exposure:org-id-123"],
+                },
+            )
+        )
+        assert result["status"] == "blocked"
+        assert "credential_exposure:org-id-123" in result["flags"]
+
+    def test_finish_blocked_on_scope_violation_flag(self) -> None:
+        """finish() returns status=blocked when scope_violation flag is present."""
+        result = json.loads(
+            dispatch(
+                "finish",
+                {
+                    "org": _TEST_ORG,
+                    "summary": "Assessment complete.",
+                    "security_review_flags": ["scope_violation:executive-summary"],
+                },
+            )
+        )
+        assert result["status"] == "blocked"
+        assert "scope_violation:executive-summary" in result["flags"]
+
+    def test_finish_allowed_when_only_status_misrepresentation_flag(self) -> None:
+        """status_misrepresentation flags are warning-only — must not block finish()."""
+        result = json.loads(
+            dispatch(
+                "finish",
+                {
+                    "org": _TEST_ORG,
+                    "summary": "Assessment complete.",
+                    "security_review_flags": ["status_misrepresentation:SBS-AUTH-001"],
+                },
+            )
+        )
+        assert result["status"] == "ok"
+        assert result["pipeline_complete"] is True
+
+    def test_finish_allowed_when_no_security_review_flags(self) -> None:
+        """Normal path: no flags means finish() proceeds."""
+        result = json.loads(
+            dispatch(
+                "finish",
+                {
+                    "org": _TEST_ORG,
+                    "summary": "Assessment complete.",
+                    "security_review_flags": [],
+                },
+            )
+        )
+        assert result["status"] == "ok"
+        assert result["pipeline_complete"] is True
+
+
+# ---------------------------------------------------------------------------
+# PATCH 6 — expert agent per-finding enrichment
+# ---------------------------------------------------------------------------
+
+
+class TestWorkdayExpertDifferentiatedNotes:
+    def test_workday_expert_produces_differentiated_notes_per_finding(self) -> None:
+        """Two eligible findings should each get expert_notes written."""
+        gap = {
+            "findings": [
+                {
+                    "control_id": "WD-IAM-001",
+                    "status": "fail",
+                    "severity": "critical",
+                    "needs_expert_review": True,
+                    "observed_value": "no data",
+                    "evidence_ref": "",
+                },
+                {
+                    "control_id": "WD-LOG-002",
+                    "status": "partial",
+                    "severity": "high",
+                    "needs_expert_review": True,
+                    "observed_value": "partial logs",
+                    "evidence_ref": "",
+                },
+            ]
+        }
+        gap_path = _BASE / "gap_analysis_wd_expert.json"
+        gap_path.write_text(json.dumps(gap))
+
+        # Return a response that includes per-finding sections
+        per_finding_response = json.dumps(
+            {
+                "status": "ok",
+                "agent": "workday-expert",
+                "analysis": (
+                    "Control: WD-IAM-001\nGap: Missing IAM grant\nFix: ISSG domain\nAPI: /raas/iam\n\n"
+                    "Control: WD-LOG-002\nGap: Partial log coverage\nFix: Enable audit log RaaS\nAPI: /raas/logs"
+                ),
+                "flags": [],
+            }
+        )
+        with patch("harness.tools._dispatch_agent_call", return_value=per_finding_response):
+            result = json.loads(
+                dispatch("workday_expert_enrich", {"org": _TEST_ORG, "gap_analysis": str(gap_path)})
+            )
+        assert result["status"] == "ok"
+        assert result["enriched_findings"] == 2
+        updated = json.loads(gap_path.read_text())
+        for finding in updated["findings"]:
+            assert "expert_notes" in finding, f"expert_notes missing on {finding['control_id']}"
+
+
+class TestSfdcExpertWritesExpertNotes:
+    def test_sfdc_expert_writes_expert_notes_to_findings(self) -> None:
+        """sfdc_expert_enrich must write expert_notes to each eligible finding."""
+        gap = {
+            "findings": [
+                {
+                    "control_id": "SBS-AUTH-001",
+                    "status": "fail",
+                    "severity": "critical",
+                    "needs_expert_review": True,
+                },
+                {
+                    "control_id": "SBS-ACS-005",
+                    "status": "partial",
+                    "severity": "high",
+                    "needs_expert_review": True,
+                },
+                {
+                    "control_id": "SBS-LOG-001",
+                    "status": "pass",
+                    "severity": "medium",
+                    "needs_expert_review": False,
+                },
+            ]
+        }
+        gap_path = _BASE / "gap_analysis_sfdc_expert.json"
+        gap_path.write_text(json.dumps(gap))
+
+        result = json.loads(
+            dispatch("sfdc_expert_enrich", {"org": _TEST_ORG, "gap_analysis": str(gap_path)})
+        )
+        assert result["status"] == "ok"
+        assert result["enriched_findings"] == 2
+        updated = json.loads(gap_path.read_text())
+        enriched = [f for f in updated["findings"] if f.get("needs_expert_review")]
+        for finding in enriched:
+            assert "expert_notes" in finding, f"expert_notes missing on {finding['control_id']}"
+        # Non-eligible finding should NOT have expert_notes
+        pass_finding = next(f for f in updated["findings"] if f["control_id"] == "SBS-LOG-001")
+        assert "expert_notes" not in pass_finding
