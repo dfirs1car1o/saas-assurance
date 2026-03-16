@@ -186,7 +186,7 @@ The `schemas/baseline_assessment_schema.json` enforces required fields on all ou
 
 ## Security Test Coverage
 
-191 tests, all offline:
+Full offline test suite (no API keys needed):
 
 | Test class | What it covers |
 |---|---|

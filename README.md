@@ -230,7 +230,7 @@ skills/
   nist_review/            ← NIST AI RMF gate (--platform salesforce|workday)
   report_gen/             ← Governance report generator (MD + DOCX)
   workday_connect/        ← Workday HCM/Finance collector (OAuth 2.0, 30 controls, 21 tests)
-tests/                    ← pytest suite (191 tests, fully offline)
+tests/                    ← pytest suite (fully offline, no API keys needed)
 docs/security/            ← threat-model.md — OWASP Top 10 for Agentic Applications 2026
 ```
 
@@ -283,7 +283,7 @@ source .venv/bin/activate
 ruff check skills/ harness/    # lint
 bandit -r skills/ harness/     # SAST
 pip-audit                      # dependency CVEs
-pytest tests/ -v               # 191 tests, fully offline (no API key needed)
+pytest tests/ -v               # fully offline, no API key needed
 ```
 
 CI stack: ruff · bandit · Semgrep (`p/python` + `p/owasp-top-ten`) · pip-audit · gitleaks · pytest · CodeQL · grype · zizmor · CodeRabbit Pro · dependency-review.

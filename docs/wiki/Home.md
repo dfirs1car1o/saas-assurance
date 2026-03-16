@@ -85,43 +85,23 @@ cd saas-posture
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env   # fill in OPENAI_API_KEY + Salesforce credentials
-pytest tests/ -v       # 191/191 should pass (offline, no API keys needed)
+pytest tests/ -v       # full offline suite — no API keys needed
 agent-loop run --dry-run --env dev --org test-org
 ```
 
 ---
 
-## Current Status
+## Capabilities
 
-| Phase | Status | Deliverable |
-|---|---|---|
-| 1 | ✅ Done | `sfdc-connect` CLI + full CI stack |
-| 2 | ✅ Done | `oscal-assess` + `sscf-benchmark` CLIs |
-| 3 | ✅ Done | `agent-loop` harness + Mem0 session memory |
-| 4 | ✅ Done | `report-gen` DOCX/MD governance output |
-| 5 | ✅ Done | Auto-regenerating architecture diagram |
-| 6 | ✅ Done | CI hardening, delivery-reviewer agent (pipeline QA) |
-| NIST review | ✅ Done | nist-review skill, 7-step pipeline, gate logic |
-| JWT Auth | ✅ Done | JWT Bearer flow, live verified |
-| sfdc-expert | ✅ Done | On-call Apex/SFDC specialist agent |
-| All agents | ✅ Done | Unified model: all 10 agents use `gpt-5.3-chat-latest` |
-| Executive reports | ✅ Done | Python-rendered scorecard, domain chart, sorted matrix |
-| finish() tool | ✅ Done | Orchestrator exits cleanly; _MAX_TURNS→14 |
-| OSCAL Catalogs | ✅ Done | SSCF catalog, SBS catalog, Workday catalog — all OSCAL 1.1.2 |
-| Schema v2 | ✅ Done | `baseline_assessment_schema.json` v2 — platform-agnostic, CCM chains |
-| SSCF→CCM bridge | ✅ Done | 14 SSCF controls mapped to CCM v4.1; automatic regulatory crosswalk |
-| Workday Blueprint | ✅ Done | 30-control WSCC catalog, SSCF mapping, connector blueprint |
-| Workday Connector | ✅ Done | `skills/workday_connect/workday_connect.py` — OAuth 2.0, 30 controls, 21 tests |
-| Workday Agent-Loop | ✅ Done | `--platform workday` flag, workday_connect_collect tool, Workday task prompt |
-| Report: POA&M + Not Assessed | ✅ Done | POA&M (POAM-IDs, owners, milestones) + auditor appendix in security DOCX |
-| Report: OSCAL Provenance | ✅ Done | Catalog → Profile → Component Def → CCM chain table in every report |
-| Report: Table borders + Description | ✅ Done | Full single-line borders on all DOCX tables; Description column added |
-| **OpenSearch** | **✅ Done** | Docker stack + OpenSearch + 3 pre-built dashboards (combined, Salesforce, Workday) |
-| **OSCAL P0** | **✅ Done** | ODP parameterization — all 36 SSCF controls carry `params`; SBS (59) + WSCC (50) `set-parameters` |
-| **OSCAL P1** | **✅ Done** | `gen_resolved_profile.py` — resolved catalogs for SBS (35 controls) and WSCC (30 controls); component def upgrades with `control-origination` + `responsibility` |
-| **OSCAL P2** | **✅ Done** | `gen_assessment_results.py` (OSCAL AR), `gen_ssp.py` (per-org SSP), commercial SSP template; all wired into CI |
-| **AICM** | **✅ Done** | CSA AI Controls Matrix v1.0.3 crosswalk — 243 controls, 18 domains; `config/aicm/` + `gen_aicm_crosswalk.py`; maps to EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 |
-| **AICM Loop Wiring** | **✅ Done** | `gen_aicm_crosswalk` registered as dispatchable tool in agent loop; Step 5b in both Salesforce + Workday task prompts; `schedule.yml` Phase 6 passes `--aicm-coverage` |
-| **Tool Sequencing Gate** | **✅ Done** | `_TOOL_REQUIRES` dependency map in `harness/loop.py` — enforces pipeline order in code; sequencing violations return structured error JSON (OWASP A2 Excessive Agency) |
-| **Qdrant API Key Auth** | **✅ Done** | `QDRANT_API_KEY` env var wired into networked Qdrant config; documented in `.env.example` (OWASP A3 Memory Poisoning) |
-| **OWASP Agentic App Hardening** | **✅ Done** | Full OWASP Top 10 for Agentic Applications 2026 threat model; input path validation, org sanitization, memory guard, structured audit log, Semgrep CI gates; 191 tests |
+| Area | What's included |
+|---|---|
+| **Platforms** | Salesforce (JWT Bearer, 35 SBS controls) · Workday (OAuth 2.0, 30 WSCC controls) |
+| **Agents** | 10 specialists — orchestrator, collector, assessor, reporter, nist-reviewer, delivery-reviewer, sfdc-expert, workday-expert, container-expert, security-reviewer |
+| **CLI Skills** | 7 tools: `sfdc-connect`, `workday-connect`, `oscal-assess`, `sscf-benchmark`, `nist-review`, `report-gen`, `gen-aicm-crosswalk` |
+| **OSCAL** | OSCAL 1.1.2 catalogs (SSCF · SBS · WSCC) · resolved profiles · ODP parameterization · post-processing scripts for POA&M, SSP, Assessment Results |
+| **Control Frameworks** | SSCF → CCM v4.1 → SOX / HIPAA / SOC2 / ISO 27001 / NIST 800-53 / PCI DSS / GDPR · AICM v1.0.3 (243 controls, EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) |
+| **Reports** | Executive Markdown + DOCX · app-owner remediation backlog · governance annex (POA&M, OSCAL provenance, CCM crosswalk, ISO 27001 SoA) · evidence methodology |
+| **Gates** | NIST AI RMF gate (block / flag / pass) · critical-finding block · delivery-reviewer QA (credential exposure, scope violations) · tool sequencing (`_TOOL_REQUIRES`) |
+| **Security hardening** | OWASP Agentic App Top 10 threat model · path validation · org sanitization · memory guard · structured JSONL audit log · Semgrep + Bandit + zizmor CI gates |
+| **Observability** | OpenSearch + 3 pre-built dashboards (combined, Salesforce, Workday) · drift detection across runs |
+| **CI** | ruff · bandit · pip-audit · gitleaks · CodeQL · grype SBOM · zizmor · SonarCloud · full offline pytest suite |
