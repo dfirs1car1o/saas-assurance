@@ -9,6 +9,7 @@ Mission always loads first — it takes precedence over role definitions.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -16,12 +17,36 @@ _REPO = Path(__file__).resolve().parents[1]
 
 DEFAULT_MODEL = "gpt-5.3-chat-latest"
 
+_FRONTMATTER_RE = re.compile(r"^\s*---\s*\n.*?\n---\s*\n", re.DOTALL)
+
+
+def _strip_frontmatter(text: str) -> str:
+    """Remove YAML frontmatter block (--- ... ---) from an agent .md file.
+
+    Frontmatter is metadata for Claude Code and human readers. Stripping it
+    keeps LLM sub-call system prompts clean and avoids the model treating the
+    YAML as instructions.
+    """
+    return _FRONTMATTER_RE.sub("", text, count=1).strip()
+
 
 def _load(agent_name: str) -> str:
     """Concatenate mission.md + agents/<name>.md into a single system prompt."""
     mission = (_REPO / "mission.md").read_text()
     agent_file = _REPO / "agents" / f"{agent_name}.md"
     agent_text = agent_file.read_text() if agent_file.exists() else ""
+    return f"{mission}\n\n---\n\n{agent_text}".strip()
+
+
+def load_agent_prompt(agent_name: str) -> str:
+    """Return mission.md + stripped agent body — suitable for a sub-call system prompt.
+
+    Unlike _load(), this strips YAML frontmatter so the sub-call receives only
+    the human-readable role definition, not metadata fields like model: or tools:.
+    """
+    mission = (_REPO / "mission.md").read_text()
+    agent_file = _REPO / "agents" / f"{agent_name}.md"
+    agent_text = _strip_frontmatter(agent_file.read_text()) if agent_file.exists() else ""
     return f"{mission}\n\n---\n\n{agent_text}".strip()
 
 

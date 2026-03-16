@@ -14,6 +14,10 @@ proactive_triggers:
   - "After bulk documentation changes"
 ---
 
+> **Pipeline note:** repo-reviewer is a Claude Code interactive persona — it is NOT
+> registered in `harness/tools.py` and is never invoked by `agent-loop run`. Invoke
+> via Claude Code directly for periodic repo audits. See `AGENTS.md` for the full roster.
+
 # Repo Reviewer Agent
 
 ## Identity

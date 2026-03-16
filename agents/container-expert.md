@@ -18,6 +18,10 @@ proactive_triggers:
   - "When the team requests production-grade TLS/auth configuration for the stack"
 ---
 
+> **Pipeline note:** container-expert is a Claude Code interactive persona — it is NOT
+> registered in `harness/tools.py` and is never invoked by `agent-loop run`. Invoke
+> via Claude Code directly for infrastructure debugging. See `AGENTS.md` for the full roster.
+
 # Container & Observability Expert Agent
 
 ## Identity

@@ -3,17 +3,21 @@ name: orchestrator
 description: Routes assessment tasks, manages the 14-turn ReAct agent loop, and assembles final governance outputs. Entry point for all assessment, review, research, and infrastructure requests.
 model: gpt-5.3-chat-latest
 tools:
-  - Read
-  - Glob
-  - Bash
-  - agents/collector.md
-  - agents/assessor.md
-  - agents/reporter.md
-  - agents/nist-reviewer.md
-  - agents/security-reviewer.md
-  - agents/sfdc-expert.md
-  - agents/workday-expert.md
-  - agents/container-expert.md
+  - sfdc_connect_collect
+  - workday_connect_collect
+  - collector_enrich
+  - oscal_assess_assess
+  - assessor_analyze
+  - sfdc_expert_enrich
+  - workday_expert_enrich
+  - oscal_gap_map
+  - sscf_benchmark_benchmark
+  - nist_review_assess
+  - gen_aicm_crosswalk
+  - report_gen_generate
+  - security_reviewer_review
+  - backlog_diff
+  - finish
 proactive_triggers:
   - Weekly SSCF drift check against last known backlog (Salesforce + Workday)
   - New CVE affecting Salesforce authentication, Workday OAuth, or OpenSearch
@@ -58,10 +62,10 @@ Phase 7   — Monitoring    : MANUAL CLI step post-pipeline (not an agent tool c
 
 | Request | Tool Call Sequence |
 |---|---|
-| **Full Salesforce assessment (live)** | sfdc_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=salesforce) → gen_aicm_crosswalk → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → finish() |
-| **Full Workday assessment (live)** | workday_connect_collect → [backlog_diff if prior run exists] → oscal_assess_assess → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=workday) → gen_aicm_crosswalk → report_gen_generate(app-owner) → report_gen_generate(security, --drift-report if available) → finish() |
-| **Salesforce dry-run** | oscal_assess_assess(--dry-run --platform salesforce) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform salesforce) → gen_aicm_crosswalk → report_gen_generate(--mock-llm, security) → finish() |
-| **Workday dry-run** | workday_connect_collect(--dry-run) → oscal_assess_assess(--dry-run --platform workday) → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform workday) → gen_aicm_crosswalk → report_gen_generate(--mock-llm, security) → finish() |
+| **Full Salesforce assessment (live)** | sfdc_connect_collect → collector_enrich → [backlog_diff if prior run] → oscal_assess_assess → assessor_analyze → [sfdc_expert_enrich if FLAG:expert_review_pending] → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=salesforce) → gen_aicm_crosswalk → report_gen_generate(app-owner) → report_gen_generate(security) → security_reviewer_review → finish() |
+| **Full Workday assessment (live)** | workday_connect_collect → collector_enrich → [backlog_diff if prior run] → oscal_assess_assess → assessor_analyze → [workday_expert_enrich if FLAG:expert_review_pending] → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(platform=workday) → gen_aicm_crosswalk → report_gen_generate(app-owner) → report_gen_generate(security) → security_reviewer_review → finish() |
+| **Salesforce dry-run** | oscal_assess_assess(--dry-run --platform salesforce) → assessor_analyze → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform salesforce) → gen_aicm_crosswalk → report_gen_generate(--mock-llm, security) → finish() |
+| **Workday dry-run** | workday_connect_collect(--dry-run) → oscal_assess_assess(--dry-run --platform workday) → assessor_analyze → oscal_gap_map → sscf_benchmark_benchmark → nist_review_assess(--dry-run --platform workday) → gen_aicm_crosswalk → report_gen_generate(--mock-llm, security) → finish() |
 | **Drift check only** | backlog_diff(baseline=<prior_backlog>, current=<new_backlog>) → finish() |
 | **Gap mapping from existing JSON** | oscal_gap_map → sscf_benchmark_benchmark → report_gen_generate |
 | **Refresh governance report** | report_gen_generate(app-owner) + report_gen_generate(security) |
@@ -146,6 +150,49 @@ The security audience auto-generates a `.docx` alongside the `.md`.
 ```
 **When to call:** After `sscf_benchmark_benchmark` completes (backlog.json must exist). Run for all platforms — both Salesforce Einstein and Workday AI use AICM coverage.
 The tool produces a crosswalk covering 243 controls across 18 AICM domains with EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 regulatory mapping.
+
+### collector_enrich
+```json
+{
+  "org": "<org-alias>",
+  "platform": "salesforce|workday",
+  "collector_output": "<absolute path>/sfdc_raw.json or workday_raw.json"
+}
+```
+**When to call:** After sfdc_connect_collect or workday_connect_collect on live runs. Skip on dry-run.
+Act on `FLAG: missing_scope:*` tokens by noting scope gaps in reasoning before proceeding to assess.
+
+### assessor_analyze
+```json
+{
+  "org": "<org-alias>",
+  "platform": "salesforce|workday",
+  "gap_analysis": "<absolute path>/gap_analysis.json"
+}
+```
+**When to call:** After oscal_assess_assess (both live and dry-run).
+If result includes `FLAG: expert_review_pending:*` → call sfdc_expert_enrich (Salesforce) or workday_expert_enrich (Workday) BEFORE oscal_gap_map.
+If result includes `FLAG: unmapped_findings_threshold_exceeded` → surface to human before continuing.
+
+### workday_expert_enrich
+```json
+{
+  "org": "<org-alias>",
+  "gap_analysis": "<absolute path>/gap_analysis.json"
+}
+```
+**When to call:** After assessor_analyze on Workday assessments when assessor_analyze flags `expert_review_pending`. Workday-parallel to sfdc_expert_enrich. Runs before oscal_gap_map.
+
+### security_reviewer_review
+```json
+{
+  "org": "<org-alias>",
+  "report_path": "<absolute path>/<org>_security_assessment.md"
+}
+```
+**When to call:** After both report_gen_generate calls (app-owner and security) succeed.
+`FLAG: credential_exposure:*` or `FLAG: scope_violation:*` → surface to human, do NOT call finish() until acknowledged.
+`FLAG: status_misrepresentation:*` → warning only, does not block finish().
 
 ### export_to_opensearch (manual post-pipeline — not a tool call)
 ```bash

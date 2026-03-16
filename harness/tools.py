@@ -12,6 +12,7 @@ Raises RuntimeError on non-zero subprocess exit (stderr included in message).
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,7 +20,85 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from harness.agents import load_agent_prompt
+
 _REPO = Path(__file__).resolve().parents[1]
+
+# ---------------------------------------------------------------------------
+# Agent sub-call client (injected by loop.py at startup via set_openai_client)
+# ---------------------------------------------------------------------------
+
+_AGENT_CLIENT: Any = None
+
+
+def set_openai_client(client: Any) -> None:
+    """Inject the already-instantiated OpenAI client from loop.py.
+
+    Called once at the top of _run_loop() before the agentic loop starts.
+    Avoids creating a second client with separate retry/rate-limit state.
+    Must be called before any _dispatch_agent_call() is invoked.
+    """
+    global _AGENT_CLIENT  # noqa: PLW0603
+    _AGENT_CLIENT = client
+
+
+def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str) -> str:
+    """Make a direct OpenAI chat.completions call using an agent's system prompt.
+
+    NOT a subprocess call — uses the injected client directly (shell=False satisfied).
+    The model is read from LLM_MODEL_ANALYST env var (default: gpt-5.3-chat-latest).
+
+    Returns a JSON string:
+        {"status": "ok", "agent": "<name>", "analysis": "<text>", "flags": [...]}
+
+    "flags" contains short slug tokens the orchestrator can act on, extracted from
+    lines starting with "FLAG: " in the agent's response.
+
+    On failure returns a structured error payload so the orchestrator can continue
+    rather than aborting the pipeline.
+    """
+    if _AGENT_CLIENT is None:
+        return json.dumps(
+            {
+                "status": "error",
+                "agent": agent_name,
+                "message": "OpenAI client not injected — call set_openai_client() before dispatch.",
+            }
+        )
+    model = os.getenv("LLM_MODEL_ANALYST", "gpt-5.3-chat-latest")
+    try:
+        response = _AGENT_CLIENT.chat.completions.create(
+            model=model,
+            max_completion_tokens=2048,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+        )
+        analysis_text = response.choices[0].message.content or ""
+        flags = [
+            line.split("FLAG:", 1)[1].strip() for line in analysis_text.splitlines() if line.strip().startswith("FLAG:")
+        ]
+        return json.dumps(
+            {
+                "status": "ok",
+                "agent": agent_name,
+                "analysis": analysis_text,
+                "flags": flags,
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps(
+            {
+                "status": "error",
+                "agent": agent_name,
+                "message": str(exc),
+                "analysis": "",
+                "flags": [],
+            }
+        )
+
+
 _PYTHON = sys.executable
 _ORG_ALIAS_HELP = "Org alias for output dir naming"
 
@@ -408,6 +487,105 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
             "required": ["backlog"],
         },
     },
+    {
+        "name": "collector_enrich",
+        "description": (
+            "Invoke the collector agent to review raw collector output for evidence quality, "
+            "missing API scopes, and data_source issues before assessment runs. "
+            "Call after sfdc_connect_collect or workday_connect_collect on live runs. "
+            "Skip on dry-run (synthetic output has no real gaps to review). "
+            "Returns analyst commentary and FLAG tokens — act on 'FLAG: missing_scope:*' "
+            "tokens by noting them in reasoning before proceeding."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
+                "platform": {
+                    "type": "string",
+                    "enum": ["salesforce", "workday"],
+                    "description": "Platform being assessed",
+                },
+                "collector_output": {
+                    "type": "string",
+                    "description": "Path to sfdc_raw.json or workday_raw.json from the collect step",
+                },
+            },
+            "required": ["collector_output"],
+        },
+    },
+    {
+        "name": "assessor_analyze",
+        "description": (
+            "Invoke the assessor agent to review gap_analysis.json for confidence issues, "
+            "unmapped findings, and controls requiring expert review. "
+            "Call after oscal_assess_assess. "
+            "If result flags 'expert_review_pending:*', call sfdc_expert_enrich (Salesforce) "
+            "or workday_expert_enrich (Workday) BEFORE proceeding to oscal_gap_map. "
+            "If result flags 'unmapped_findings_threshold_exceeded', surface to human."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
+                "platform": {
+                    "type": "string",
+                    "enum": ["salesforce", "workday"],
+                    "description": "Platform being assessed",
+                },
+                "gap_analysis": {
+                    "type": "string",
+                    "description": "Path to gap_analysis.json from oscal_assess_assess",
+                },
+            },
+            "required": ["gap_analysis"],
+        },
+    },
+    {
+        "name": "workday_expert_enrich",
+        "description": (
+            "Invoke the Workday Expert agent to enrich findings that need ISSG permission guidance "
+            "or RaaS report proposals. Workday-parallel to sfdc_expert_enrich. "
+            "Processes controls where needs_expert_review=true or data_source=permission_denied. "
+            "Writes expert_notes back to gap_analysis.json. "
+            "Call after oscal_assess_assess on Workday assessments when assessor_analyze "
+            "flags expert_review_pending."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
+                "gap_analysis": {
+                    "type": "string",
+                    "description": "Path to gap_analysis.json from oscal_assess_assess",
+                },
+            },
+            "required": ["gap_analysis"],
+        },
+    },
+    {
+        "name": "security_reviewer_review",
+        "description": (
+            "Invoke the Security Reviewer agent for a final AppSec pass on the security report "
+            "before finish() is called. Checks for credential exposure, status misrepresentation, "
+            "and scope violations. "
+            "Call after both report_gen_generate calls complete. "
+            "If result flags 'credential_exposure:*' or 'scope_violation:*', surface to human "
+            "and do NOT call finish() until acknowledged. "
+            "'status_misrepresentation:*' is a warning only — does not block finish()."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "org": {"type": "string", "description": _ORG_ALIAS_HELP},
+                "report_path": {
+                    "type": "string",
+                    "description": "Path to the security-audience report markdown file",
+                },
+            },
+            "required": ["report_path"],
+        },
+    },
 ]
 
 
@@ -740,6 +918,190 @@ def _dispatch_aicm_crosswalk(inp: dict[str, Any], out_dir: Path) -> str:
     return json.dumps({"status": "ok", "output_file": out_path})
 
 
+def _dispatch_collector_enrich(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
+    """Invoke the collector agent to review raw collector output for evidence quality.
+
+    Checks for missing API scopes, stale evidence refs, and data_source issues
+    before assessment runs. Returns commentary + FLAG tokens the orchestrator acts on.
+    Skip on dry-run (synthetic collector output has no real gaps to review).
+    """
+    collector_output = _safe_inp_path(inp.get("collector_output"))
+    if not collector_output:
+        return json.dumps({"status": "error", "agent": "collector", "message": "collector_output path required"})
+    try:
+        raw_text = Path(collector_output).read_text()
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps({"status": "error", "agent": "collector", "message": f"Could not read: {exc}"})
+
+    platform = inp.get("platform", "salesforce")
+    org = inp.get("org", "unknown-org")
+    user_content = (
+        f"Review the following raw collector output for {platform} org '{org}'.\n"
+        "Identify: (1) missing API scopes or API limitations affecting assessment completeness, "
+        "(2) controls recorded as not_applicable that a different scope would have resolved, "
+        "(3) data quality issues (missing timestamps, empty evidence_ref).\n"
+        "For each issue found, emit a line starting with 'FLAG: <slug>', e.g. "
+        "'FLAG: missing_scope:event-monitoring' or 'FLAG: stale_evidence:SBS-LOG-001'.\n\n"
+        f"Collector output (truncated to 4000 chars):\n{raw_text[:4000]}"
+    )
+    return _dispatch_agent_call("collector", load_agent_prompt("collector"), user_content)
+
+
+def _dispatch_assessor_analyze(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
+    """Invoke the assessor agent to review gap_analysis findings for confidence issues.
+
+    Checks mapping_confidence on critical/high findings, controls still needing expert
+    review, and whether unmapped findings exceed 20%. Returns FLAG tokens the orchestrator
+    uses to decide whether sfdc_expert_enrich or workday_expert_enrich should run before
+    proceeding to oscal_gap_map.
+    """
+    gap_analysis = _safe_inp_path(inp.get("gap_analysis"))
+    if not gap_analysis:
+        return json.dumps({"status": "error", "agent": "assessor", "message": "gap_analysis path required"})
+    try:
+        data = json.loads(Path(gap_analysis).read_text())
+        summary = [
+            {
+                "control_id": f.get("control_id"),
+                "status": f.get("status"),
+                "severity": f.get("severity"),
+                "needs_expert_review": f.get("needs_expert_review", False),
+                "data_source": f.get("data_source"),
+                "mapping_confidence": f.get("mapping_confidence"),
+            }
+            for f in data.get("findings", [])
+        ]
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps({"status": "error", "agent": "assessor", "message": f"Could not read gap_analysis: {exc}"})
+
+    platform = inp.get("platform", "salesforce")
+    user_content = (
+        f"Review the following {platform} gap analysis findings summary.\n"
+        "Identify: (1) critical/high findings with low mapping_confidence needing review, "
+        "(2) controls with needs_expert_review=true that lack expert_notes, "
+        "(3) whether >20% of findings are unmapped.\n"
+        "For each concern emit 'FLAG: <slug>' on its own line. Examples:\n"
+        "  FLAG: low_confidence_critical:SBS-AUTH-001\n"
+        "  FLAG: expert_review_pending:SBS-ACS-005\n"
+        "  FLAG: unmapped_findings_threshold_exceeded\n\n"
+        f"Findings summary:\n{json.dumps(summary, indent=2)[:5000]}"
+    )
+    return _dispatch_agent_call("assessor", load_agent_prompt("assessor"), user_content)
+
+
+def _dispatch_workday_expert_enrich(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
+    """Invoke the Workday Expert agent to enrich permission-denied findings.
+
+    Workday-parallel to sfdc_expert_enrich. Produces ISSG permission guidance and
+    RaaS report proposals for controls where needs_expert_review=true or
+    data_source=permission_denied. Writes expert_notes back to gap_analysis.json.
+    """
+    gap_path_str = inp.get("gap_analysis", "")
+    if not gap_path_str:
+        return json.dumps({"status": "error", "message": "gap_analysis path required"})
+    gap_path = Path(gap_path_str)
+    if not gap_path.exists():
+        return json.dumps({"status": "error", "message": f"gap_analysis not found: {gap_path}"})
+    try:
+        data = json.loads(gap_path.read_text())
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps({"status": "error", "message": f"Could not read gap_analysis: {exc}"})
+
+    eligible = [
+        f
+        for f in data.get("findings", [])
+        if f.get("needs_expert_review") or f.get("data_source") == "permission_denied"
+    ]
+    if not eligible:
+        return json.dumps(
+            {
+                "status": "ok",
+                "agent": "workday-expert",
+                "enriched_findings": 0,
+                "output_file": str(gap_path),
+                "note": "No findings required workday-expert review.",
+            }
+        )
+
+    eligible_summary = json.dumps(
+        [
+            {
+                "control_id": f.get("control_id"),
+                "status": f.get("status"),
+                "severity": f.get("severity"),
+                "observed_value": f.get("observed_value", ""),
+                "evidence_ref": f.get("evidence_ref", ""),
+            }
+            for f in eligible
+        ],
+        indent=2,
+    )[:4000]
+    user_content = (
+        "The following Workday findings require expert review — either permission_denied "
+        "or needs_expert_review=true.\n\n"
+        "For each control: (1) identify which Workday domain security policy grant is missing, "
+        "(2) specify the exact RaaS report or REST endpoint that provides the evidence, "
+        "(3) state whether an ISSG grant resolves it or tenant admin manual confirmation is required.\n\n"
+        "Format each as:\nControl: <WD-ID>\nGap: <what is missing>\n"
+        "Fix: <ISSG domain permission or manual check>\nAPI: <RaaS report or REST endpoint>\n\n"
+        f"Findings requiring expert review:\n{eligible_summary}"
+    )
+    result_str = _dispatch_agent_call("workday-expert", load_agent_prompt("workday-expert"), user_content)
+    try:
+        result = json.loads(result_str)
+        if result.get("status") == "ok":
+            analysis = result.get("analysis", "")
+            for finding in eligible:
+                if not finding.get("expert_notes"):
+                    finding["expert_notes"] = f"[workday-expert] {analysis[:500]}\nAwaiting human review."
+        gap_path = gap_path.resolve()
+        gap_path.write_text(json.dumps(data, indent=2))  # NOSONAR — intentional artifact path
+        result["enriched_findings"] = len(eligible)
+        result["output_file"] = str(gap_path)
+        return json.dumps(result)
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps({"status": "error", "message": f"Failed to write enriched findings: {exc}"})
+
+
+def _dispatch_security_reviewer_review(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
+    """Invoke the security-reviewer agent for a final AppSec pass on the security report.
+
+    Checks for credential exposure, status misrepresentation, and scope violations.
+    Returns FLAG tokens — credential_exposure and scope_violation flags should delay
+    finish() until the human acknowledges them. status_misrepresentation is a warning only.
+    """
+    report_path_str = inp.get("report_path", "")
+    if not report_path_str:
+        return json.dumps({"status": "error", "agent": "security-reviewer", "message": "report_path required"})
+    report_path = _safe_inp_path(report_path_str)
+    if not report_path:
+        return json.dumps(
+            {
+                "status": "error",
+                "agent": "security-reviewer",
+                "message": f"report_path failed safety validation: {report_path_str}",
+            }
+        )
+    try:
+        report_text = Path(report_path).read_text()
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps({"status": "error", "agent": "security-reviewer", "message": f"Could not read report: {exc}"})
+
+    user_content = (
+        "Review the following security assessment report for delivery to a human stakeholder.\n"
+        "Check three areas:\n"
+        "1. Credentials, org URLs, usernames, or internal identifiers that should not appear "
+        "   in a deliverable — emit 'FLAG: credential_exposure:<detail>'.\n"
+        "2. Language in any finding that downplays or softens a fail/critical status — "
+        "   emit 'FLAG: status_misrepresentation:<control_id>'.\n"
+        "3. Any section granting or implying permissions beyond the read-only OSCAL/SSCF "
+        "   assessment scope in mission.md — emit 'FLAG: scope_violation:<section>'.\n\n"
+        "End with a '### Security Posture Summary' block (1-3 sentences).\n\n"
+        f"Report content (truncated to 6000 chars):\n{report_text[:6000]}"
+    )
+    return _dispatch_agent_call("security-reviewer", load_agent_prompt("security-reviewer"), user_content)
+
+
 def _dispatch_finish(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
     """Sentinel: orchestrator signals pipeline is complete. Loop will break immediately."""
     return json.dumps({"status": "ok", "pipeline_complete": True, "summary": inp.get("summary", "")})
@@ -773,13 +1135,17 @@ _DISPATCHERS = {
     "backlog_diff": _dispatch_backlog_diff,
     "workday_connect_collect": _dispatch_workday_connect,
     "sfdc_connect_collect": _dispatch_sfdc_connect,
+    "collector_enrich": _dispatch_collector_enrich,
     "oscal_assess_assess": _dispatch_oscal_assess,
+    "assessor_analyze": _dispatch_assessor_analyze,
     "oscal_gap_map": _dispatch_gap_map,
     "sfdc_expert_enrich": _dispatch_sfdc_expert,
+    "workday_expert_enrich": _dispatch_workday_expert_enrich,
     "nist_review_assess": _dispatch_nist_review,
     "sscf_benchmark_benchmark": _dispatch_sscf_benchmark,
     "gen_aicm_crosswalk": _dispatch_aicm_crosswalk,
     "report_gen_generate": _dispatch_report_gen,
+    "security_reviewer_review": _dispatch_security_reviewer_review,
 }
 
 

@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 
 from harness.agents import ORCHESTRATOR
 from harness.memory import build_client, load_memories, save_assessment
-from harness.tools import ALL_TOOLS, dispatch
+from harness.tools import ALL_TOOLS, dispatch, set_openai_client
 
 _REPO = Path(__file__).resolve().parents[1]
 
@@ -96,6 +96,11 @@ _TOOL_REQUIRES: dict[str, frozenset] = {
     "gen_aicm_crosswalk": frozenset({"oscal_gap_map"}),
     "report_gen_generate": frozenset({"oscal_gap_map", "sscf_benchmark_benchmark"}),
     "finish": frozenset({"report_gen_generate"}),
+    # Agent sub-call tools — require assess to have produced gap_analysis.json.
+    # collector_enrich and security_reviewer_review are optional/conditional and
+    # are not gated here; the orchestrator task prompt governs when to call them.
+    "assessor_analyze": frozenset({"oscal_assess_assess"}),
+    "workday_expert_enrich": frozenset({"oscal_assess_assess"}),
 }
 
 # ---------------------------------------------------------------------------
@@ -233,6 +238,9 @@ def _run_loop(  # NOSONAR
 ) -> dict[str, Any]:
     """Core agentic loop. Returns result dict with score, status, output paths."""
     client = _make_openai_client(api_key=api_key or os.getenv("OPENAI_API_KEY"), max_retries=5)
+    # Inject client into tools.py so agent sub-call dispatchers can use it.
+    # Must happen before the first tool call — not lazily on first dispatch.
+    set_openai_client(client)
 
     # --- Audit log: one JSONL file per run, co-located with other outputs ---
     run_date = datetime.now(UTC).strftime("%Y-%m-%d")
@@ -301,6 +309,8 @@ def _run_loop(  # NOSONAR
         "report_app_owner": None,
         "report_security_md": None,
         "report_security_docx": None,
+        "collector_enrichment": None,  # analysis text from collector_enrich agent
+        "security_review_flags": [],  # FLAG tokens from security_reviewer_review
         "turns": 0,
     }
 
@@ -451,6 +461,20 @@ def _run_loop(  # NOSONAR
                             docx = str(Path(out_file).with_suffix(".docx"))
                             if Path(docx).exists():
                                 state["report_security_docx"] = docx
+                # Track agent sub-call outputs (no output_file — track analysis/flags instead).
+                if name == "collector_enrich":
+                    state["collector_enrichment"] = result_data.get("analysis")
+                elif name == "security_reviewer_review":
+                    state["security_review_flags"] = result_data.get("flags", [])
+                    critical_flags = [
+                        f for f in result_data.get("flags", []) if "credential_exposure" in f or "scope_violation" in f
+                    ]
+                    if critical_flags:
+                        click.echo(
+                            f"  [security-reviewer] WARNING: {len(critical_flags)} critical flag(s):\n"
+                            + "\n".join(f"    - {f}" for f in critical_flags),
+                            err=True,
+                        )
             except (json.JSONDecodeError, AttributeError):
                 pass
 
@@ -592,8 +616,14 @@ def run(  # NOSONAR
                 f"IMPORTANT: Pass org='{org}' to every tool call so all outputs land in the same directory.\n\n"
                 "Pipeline:\n"
                 f"1. Call workday_connect_collect (org='{org}') to gather Workday tenant configuration.\n"
+                f"1b. (Live only) Call collector_enrich (org='{org}', platform='workday', "
+                f"collector_output=<output from step 1>) to review evidence quality. "
+                f"Skip on dry-run. Act on any FLAG: tokens before proceeding.\n"
                 f"2. Call oscal_assess_assess (org='{org}', platform='workday') to produce gap_analysis.json "
                 f"using the WSCC control catalog (30 SSCF controls).\n"
+                f"2b. Call assessor_analyze (org='{org}', platform='workday', "
+                f"gap_analysis=<output from step 2>) to review finding confidence. "
+                f"If it flags 'expert_review_pending:*', call workday_expert_enrich before step 3.\n"
                 f"3. Call oscal_gap_map (org='{org}') with the gap_analysis output to produce backlog.json.\n"
                 f"4. Call sscf_benchmark_benchmark (org='{org}') with the backlog to produce the SSCF scorecard.\n"
                 f"5. Call nist_review_assess (org='{org}', platform='workday') with gap_analysis from step 2 "
@@ -606,8 +636,12 @@ def run(  # NOSONAR
                 f"   b. audience='security', out='{org}_security_assessment.md', platform='workday', "
                 f"sscf_benchmark from step 4, nist_review from step 5, aicm_coverage from step 5b, "
                 f"title='{governance_title} - {org_display}'. "
-                f"The security call automatically also writes .docx to the same directory.\n\n"
-                "After step 6b completes, call finish() with a one-sentence summary of what was done. "
+                f"The security call automatically also writes .docx to the same directory.\n"
+                f"6c. Call security_reviewer_review (org='{org}', "
+                f"report_path=<security .md from step 6b>) for a final AppSec check. "
+                f"If it flags 'credential_exposure:*' or 'scope_violation:*', surface to human "
+                f"before calling finish().\n\n"
+                "After step 6c completes (with no blocking flags), call finish() with a one-sentence summary. "
                 "The finish() tool signals the harness to stop the loop. "
                 "Do NOT call any further tools after finish()."
             )
@@ -618,7 +652,13 @@ def run(  # NOSONAR
                 f"IMPORTANT: Pass org='{org}' to every tool call so all outputs land in the same directory.\n\n"
                 "Pipeline:\n"
                 f"1. Call sfdc_connect_collect (org='{org}', scope='all') to gather org configuration.\n"
+                f"1b. (Live only) Call collector_enrich (org='{org}', platform='salesforce', "
+                f"collector_output=<output from step 1>) to review evidence quality. "
+                f"Skip on dry-run. Act on any FLAG: tokens before proceeding.\n"
                 f"2. Call oscal_assess_assess (org='{org}') to produce gap_analysis.json.\n"
+                f"2b. Call assessor_analyze (org='{org}', platform='salesforce', "
+                f"gap_analysis=<output from step 2>) to review finding confidence. "
+                f"If it flags 'expert_review_pending:*', call sfdc_expert_enrich before step 3.\n"
                 f"3. Call oscal_gap_map (org='{org}') with the gap_analysis output to produce backlog.json.\n"
                 f"4. Call sscf_benchmark_benchmark (org='{org}') with the backlog to produce the SSCF scorecard.\n"
                 f"5. Call nist_review_assess (org='{org}', platform='salesforce') with gap_analysis from step 2 "
@@ -631,8 +671,12 @@ def run(  # NOSONAR
                 f"   b. audience='security', out='{org}_security_assessment.md', platform='salesforce', "
                 f"sscf_benchmark from step 4, nist_review from step 5, aicm_coverage from step 5b, "
                 f"title='{governance_title} - {org_display}'. "
-                f"The security call automatically also writes .docx to the same directory.\n\n"
-                "After step 6b completes, call finish() with a one-sentence summary of what was done. "
+                f"The security call automatically also writes .docx to the same directory.\n"
+                f"6c. Call security_reviewer_review (org='{org}', "
+                f"report_path=<security .md from step 6b>) for a final AppSec check. "
+                f"If it flags 'credential_exposure:*' or 'scope_violation:*', surface to human "
+                f"before calling finish().\n\n"
+                "After step 6c completes (with no blocking flags), call finish() with a one-sentence summary. "
                 "The finish() tool signals the harness to stop the loop. "
                 "Do NOT call any further tools after finish()."
             )
@@ -697,6 +741,8 @@ def run(  # NOSONAR
                 "report_app_owner": state.get("report_app_owner"),
                 "report_security_md": state.get("report_security_md"),
                 "report_security_docx": state.get("report_security_docx"),
+                "collector_enrichment": state.get("collector_enrichment"),
+                "security_review_flags": state.get("security_review_flags", []),
                 "audit_log": state.get("audit_log"),
                 "summary": state.get("summary", ""),
             },
