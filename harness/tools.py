@@ -101,6 +101,8 @@ def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str)
 
 _PYTHON = sys.executable
 _ORG_ALIAS_HELP = "Org alias for output dir naming"
+_GAP_ANALYSIS_HELP = "Path to gap_analysis.json from oscal_assess_assess"
+_GAP_ANALYSIS_REQUIRED = "gap_analysis path required"
 
 # Allowed output roots — all generated artifacts must land under one of these.
 _ARTIFACT_ROOT = (_REPO / "docs" / "oscal-salesforce-poc" / "generated").resolve()
@@ -405,7 +407,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "gap_analysis": {
                     "type": "string",
-                    "description": "Path to gap_analysis.json from oscal_assess_assess",
+                    "description": _GAP_ANALYSIS_HELP,
                 },
             },
             "required": ["gap_analysis"],
@@ -535,7 +537,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 },
                 "gap_analysis": {
                     "type": "string",
-                    "description": "Path to gap_analysis.json from oscal_assess_assess",
+                    "description": _GAP_ANALYSIS_HELP,
                 },
             },
             "required": ["gap_analysis"],
@@ -557,7 +559,7 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 "org": {"type": "string", "description": _ORG_ALIAS_HELP},
                 "gap_analysis": {
                     "type": "string",
-                    "description": "Path to gap_analysis.json from oscal_assess_assess",
+                    "description": _GAP_ANALYSIS_HELP,
                 },
             },
             "required": ["gap_analysis"],
@@ -839,7 +841,7 @@ def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: A
     """Enrich gap_analysis findings that need expert Apex/admin review (Phase 1 stub)."""
     gap_path_str = inp.get("gap_analysis", "")
     if not gap_path_str:
-        return json.dumps({"status": "error", "message": "gap_analysis path required"})
+        return json.dumps({"status": "error", "message": _GAP_ANALYSIS_REQUIRED})
 
     gap_path = Path(gap_path_str)
     if not gap_path.exists():
@@ -957,7 +959,7 @@ def _dispatch_assessor_analyze(inp: dict[str, Any], out_dir: Path) -> str:  # no
     """
     gap_analysis = _safe_inp_path(inp.get("gap_analysis"))
     if not gap_analysis:
-        return json.dumps({"status": "error", "agent": "assessor", "message": "gap_analysis path required"})
+        return json.dumps({"status": "error", "agent": "assessor", "message": _GAP_ANALYSIS_REQUIRED})
     try:
         data = json.loads(Path(gap_analysis).read_text())
         summary = [
@@ -998,7 +1000,7 @@ def _dispatch_workday_expert_enrich(inp: dict[str, Any], out_dir: Path) -> str: 
     """
     gap_path_str = inp.get("gap_analysis", "")
     if not gap_path_str:
-        return json.dumps({"status": "error", "message": "gap_analysis path required"})
+        return json.dumps({"status": "error", "message": _GAP_ANALYSIS_REQUIRED})
     gap_path = Path(gap_path_str)
     if not gap_path.exists():
         return json.dumps({"status": "error", "message": f"gap_analysis not found: {gap_path}"})
