@@ -5,7 +5,7 @@ description: |
   returns partial or blocked findings for controls that require Apex or
   deep admin analysis. Proposes read-only Apex scripts for human review;
   never executes Apex autonomously.
-model: claude-sonnet-4-6
+model: gpt-5.3-chat-latest
 tools:
   - read_file
   - write_file
