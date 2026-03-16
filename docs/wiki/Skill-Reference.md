@@ -321,14 +321,13 @@ WD_TOKEN_URL=https://acme_dpt1.workday.com/ccx/oauth2/acme_dpt1/token
 | Method | Transport | Count |
 |---|---|---|
 | `rest` | GET JSON with Bearer | 1 control (WD-IAM-007: `/staffing/v6/workers`) |
-| `soap+oauth` | POST SOAP XML with Bearer | 25 controls (security config endpoints) |
-| `raas` | GET JSON with Bearer | 3 controls (pre-configured custom reports) |
-| `manual` | N/A | 1 control (WD-CKM-002 BYOK) |
+| `raas` | GET JSON with Bearer | 10 controls (pre-configured custom reports) |
+| `manual` | N/A — questionnaire required | 19 controls |
 
 ### Graceful degradation
 
 - RaaS report not pre-configured → `not_applicable + raas_available: false`
-- SOAP permission denied → `partial`
+- REST permission denied → `partial`
 - Manual controls → always `not_applicable`
 
 ### Dev without a live tenant
@@ -340,7 +339,7 @@ docker run -d --name workday-mock -p 8080:8080 \
 # Set WD_BASE_URL=http://localhost:8080 in .env
 ```
 
-Stub files: `tests/workday_mocks/` — one JSON file per SOAP operation, REST endpoint, and RaaS report.
+Stub files: `tests/workday_mocks/` — one JSON file per REST endpoint and RaaS report.
 
 ### Output
 

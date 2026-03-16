@@ -170,7 +170,7 @@ Platform-agnostic assessment schema. Supports Salesforce, Workday, and future pl
   "assessor": "workday-connect v0.1.0",
   "oscal_catalog_ref": "config/workday/workday_catalog.json",
   "assessment_owner": "Jane Smith",
-  "data_source": "workday-connect SOAP WWS v40.0 + RaaS",
+  "data_source": "workday-connect OAuth 2.0 + RaaS + REST",
   "findings": [...]
 }
 ```
@@ -216,10 +216,10 @@ Required when running `workday-connect`:
 | `WD_CLIENT_ID` | OAuth 2.0 API client ID (from Workday API Client registration) |
 | `WD_CLIENT_SECRET` | OAuth 2.0 client secret (never logged) |
 | `WD_TOKEN_URL` | Token endpoint (`https://{tenant}.workday.com/ccx/oauth2/{tenant}/token`) |
-| `WD_API_VERSION` | WWS SOAP version (default: `v40.0`) |
+| `WD_API_VERSION` | Workday REST API version (default: `v40.0`) |
 | `WD_BASE_URL` | Override base URL (default: `https://{tenant}.workday.com`); set to `http://localhost:8080` for WireMock |
 
-Auth method: **OAuth 2.0 Client Credentials** — no password credentials. All transports (REST, SOAP, RaaS) use short-lived Bearer tokens.
+Auth method: **OAuth 2.0 Client Credentials** — no password credentials. All transports (REST, RaaS) use short-lived Bearer tokens.
 
 ---
 

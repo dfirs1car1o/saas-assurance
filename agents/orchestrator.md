@@ -75,7 +75,6 @@ Phase 7   — Monitoring    : MANUAL CLI step post-pipeline (not an agent tool c
 | **Salesforce API or Apex question** | sfdc-expert (text analysis) |
 | **Workday API or WSCC question** | workday-expert (text analysis) |
 | **Research a control or CVE** | assessor context — no tool calls |
-| **Repo audit** | repo-reviewer — no tool calls |
 
 ---
 

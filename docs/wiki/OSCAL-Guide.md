@@ -103,7 +103,7 @@ flowchart TD
 
     subgraph LAYER3["Layer 3 — Component Definitions (evidence specs)"]
         SFDC_CD["Salesforce Component\n18 implemented requirements\nSOQL · Tooling API · Metadata API\nconfig/component-definitions/salesforce_component.json"]
-        WD_CD["Workday Component\n16 implemented requirements\nSOAP · RaaS · REST · ISSG perms\nconfig/component-definitions/workday_component.json"]
+        WD_CD["Workday Component\n11 implemented requirements\nRaaS · REST · OAuth 2.0 · ISSG perms\nconfig/component-definitions/workday_component.json"]
     end
 
     CCM -->|"CCM control IDs\nembedded via ccm-controls prop"| SSCF
@@ -198,12 +198,12 @@ flowchart TD
     subgraph PROFILE["Profile Layer"]
         P1["config/sscf/sscf_v1_profile.json\n✦ Selects all 36 SSCF v1.0 controls\n✦ Base profile — platforms inherit from this"]
         P2["config/salesforce/sbs_v1_profile.json\n✦ Selects 35 SSCF controls for Salesforce\n✦ Adds Salesforce-specific platform notes\n✦ (JWT, Event Monitoring, Health Check)"]
-        P3["config/workday/wscc_v1_profile.json\n✦ Selects 30 SSCF controls for Workday\n✦ Adds ISSG permission notes\n✦ (SOAP/RaaS/REST, OAuth 2.0)"]
+        P3["config/workday/wscc_v1_profile.json\n✦ Selects 30 SSCF controls for Workday\n✦ Adds ISSG permission notes\n✦ (RaaS/REST, OAuth 2.0)"]
     end
 
     subgraph COMPDEF["Component Definition Layer"]
         D1["config/component-definitions/salesforce_component.json\n✦ 18 controls with API evidence specs\n✦ Tooling API · SOQL · Metadata API\n✦ Pass/fail criteria per control"]
-        D2["config/component-definitions/workday_component.json\n✦ 16 controls with API evidence specs\n✦ SOAP operations · RaaS reports · REST endpoints\n✦ ISSG permission listed per control"]
+        D2["config/component-definitions/workday_component.json\n✦ 11 controls with API evidence specs\n✦ RaaS reports · REST endpoints\n✦ ISSG permission listed per control"]
     end
 
     subgraph MAPPING["Mapping / Reference"]
@@ -239,7 +239,7 @@ sequenceDiagram
     ORC->>COL: collect --scope all
     COL->>COMP: read evidence spec for each control
     COMP-->>COL: api-endpoint, pass-criteria, fail-criteria
-    COL->>PLT: query API (Tooling/SOQL/SOAP/RaaS)
+    COL->>PLT: query API (Tooling/SOQL/RaaS/REST)
     PLT-->>COL: raw evidence JSON
     COL-->>ORC: sfdc_raw.json / workday_raw.json
 

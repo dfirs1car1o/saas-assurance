@@ -61,7 +61,7 @@ The user account used by the agent needs **read-only** access:
 | Permission | Why |
 |---|---|
 | View Setup and Configuration | SOQL on SecuritySettings, RemoteProxy, NetworkAccess |
-| API Enabled | All REST/SOAP API calls |
+| API Enabled | All REST API calls |
 | View All Data | EventLogFile query |
 | Modify All Data | **Not required — do not grant** |
 

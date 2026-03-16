@@ -41,7 +41,7 @@ All 9 agents in the system. Each has a definition file in `agents/` with YAML fr
 | New skill added | security-reviewer (text) → review subprocess dispatcher |
 | Control research | assessor context, no tools |
 | Apex / complex SFDC question | sfdc-expert (on-call) |
-| Workday SOAP/RaaS question | workday-expert (on-call) |
+| Workday RaaS/REST question | workday-expert (on-call) |
 | Docker / OpenSearch issue | container-expert (on-call) |
 
 ---
@@ -164,11 +164,11 @@ All 9 agents in the system. Each has a definition file in `agents/` with YAML fr
 | **File** | `agents/workday-expert.md` |
 | **Model** | `gpt-5.3-chat-latest` |
 | **Tools** | None (text analysis + code generation only) |
-| **Invoked by** | Orchestrator when Workday SOAP/RaaS calls fail or controls need clarification |
+| **Invoked by** | Orchestrator when Workday API calls fail or controls need clarification |
 
-**Role:** On-call Workday HCM/Finance specialist. Handles complex Workday questions — SOAP WWS operations, RaaS report configuration, security group membership APIs, ISSG policies, and OAuth 2.0 troubleshooting.
+**Role:** On-call Workday HCM/Finance specialist. Handles complex Workday questions — RaaS report configuration, security group membership APIs, ISSG policies, and OAuth 2.0 troubleshooting.
 
-**Outputs:** Plain-text analysis and Workday SOAP/REST snippets (never executed — for human review only).
+**Outputs:** Plain-text analysis and Workday RaaS/REST guidance (never executed — for human review only).
 
 ---
 
