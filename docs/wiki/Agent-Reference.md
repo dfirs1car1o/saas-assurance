@@ -1,6 +1,6 @@
 # Agent Reference
 
-All 9 agents in the system. Each has a definition file in `agents/` with YAML frontmatter and a full role description.
+All 10 agents in the system. Each has a definition file in `agents/` with YAML frontmatter and a full role description.
 
 ---
 
@@ -112,6 +112,26 @@ All 9 agents in the system. Each has a definition file in `agents/` with YAML fr
 
 ---
 
+## Delivery Reviewer
+
+| Field | Value |
+|---|---|
+| **File** | `agents/delivery-reviewer.md` |
+| **Model** | `gpt-5.3-chat-latest` |
+| **Tools** | None (text analysis only) |
+| **Invoked by** | Orchestrator via `security_reviewer_review` dispatcher after security report generation |
+
+**Role:** Final delivery-quality pass on the security report before it is sent to a stakeholder. Checks for:
+- **Credential exposure** — org URLs, usernames, internal identifiers in a deliverable → `FLAG: credential_exposure:<detail>`
+- **Status misrepresentation** — language that softens a fail/critical finding → `FLAG: status_misrepresentation:<control_id>`
+- **Scope violations** — any section implying write permissions beyond read-only OSCAL/SSCF assessment scope → `FLAG: scope_violation:<section>`
+
+`credential_exposure` and `scope_violation` flags block `finish()` until human acknowledgement. `status_misrepresentation` is a warning only.
+
+> **Not to be confused with `security-reviewer`**, which reviews repo/CI/AppSec posture (workflow files, skill CLIs, PRs) and is invoked on-demand — not as a pipeline dispatch.
+
+---
+
 ## Security Reviewer
 
 | Field | Value |
@@ -119,7 +139,7 @@ All 9 agents in the system. Each has a definition file in `agents/` with YAML fr
 | **File** | `agents/security-reviewer.md` |
 | **Model** | `gpt-5.3-chat-latest` |
 | **Tools** | None (text analysis only) |
-| **Invoked by** | Orchestrator on CI/CD, workflow, or skill changes |
+| **Invoked by** | Orchestrator on CI/CD, workflow, or skill changes (on-demand; not a pipeline dispatch) |
 
 **Role:** Expert AppSec + DevSecOps reviewer. Reviews:
 - `.github/workflows/` — expression injection, permissions, unpinned actions

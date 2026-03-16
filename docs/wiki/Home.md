@@ -1,6 +1,6 @@
 # saas-posture Wiki
 
-Welcome to the **SaaS Security Multi-Agent System** wiki. Fully automated AI pipeline for Salesforce and Workday OSCAL/SSCF security assessments with NIST AI RMF governance gate and OWASP Agentic App security hardening.
+Welcome to the **SaaS Security Multi-Agent System** wiki. AI-orchestrated assessment pipeline for Salesforce and Workday OSCAL/SSCF security assessments with NIST AI RMF governance gate and OWASP Agentic App security hardening. The 6-phase agent pipeline is fully automated; OSCAL artifact generation (POA&M, SSP, Assessment Results) runs as optional post-processing scripts.
 
 ---
 
@@ -14,7 +14,7 @@ Welcome to the **SaaS Security Multi-Agent System** wiki. Fully automated AI pip
 | [Windows Setup](Windows-Setup) | Corporate Windows machine with VS Code — step by step |
 | [Architecture Overview](Architecture-Overview) | How the system is designed |
 | [OSCAL Guide](OSCAL-Guide) | What OSCAL is and how we use it — catalogs, profiles, component definitions, diagrams |
-| [Agent Reference](Agent-Reference) | All 9 agents — roles, models, triggers |
+| [Agent Reference](Agent-Reference) | All 10 agents — roles, models, triggers |
 | [Skill Reference](Skill-Reference) | All 7 CLI tools — usage, inputs, outputs |
 | [Pipeline Walkthrough](Pipeline-Walkthrough) | Step-by-step: from org → report |
 | [CI-CD Reference](CI-CD-Reference) | Every CI job, what it checks, how to fix failures |
@@ -34,13 +34,13 @@ This system connects to SaaS platforms, runs OSCAL and CSA SSCF security assessm
 
 Platform controls chain through **platform OSCAL catalog → SSCF → CCM v4.1 → regulatory crosswalk** (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, GDPR) automatically. For organizations using AI-enabled SaaS (Salesforce Einstein, Workday AI), an **AICM v1.0.3 crosswalk** (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) is generated as a companion output.
 
-The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 7 CLI tools and 9 specialist agents over a 14-turn ReAct loop with enforced tool sequencing. No human input needed once triggered. Every tool call is logged to a structured JSONL audit trail.
+The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 7 CLI tools and 10 specialist agents over a 14-turn ReAct loop with enforced tool sequencing. No human input needed once triggered. Every tool call is logged to a structured JSONL audit trail.
 
 ---
 
 ## Pipeline at a Glance
 
-6 automated phases, 7 CLI skills, 9 specialist agents, 14-turn ReAct orchestration loop.
+6 automated phases, 7 CLI skills, 10 specialist agents, 14-turn ReAct orchestration loop.
 
 ### Automated Pipeline (agent-loop)
 
@@ -85,7 +85,7 @@ cd saas-posture
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env   # fill in OPENAI_API_KEY + Salesforce credentials
-pytest tests/ -v       # 94/94 should pass (offline, no API keys needed)
+pytest tests/ -v       # 191/191 should pass (offline, no API keys needed)
 agent-loop run --dry-run --env dev --org test-org
 ```
 
@@ -104,7 +104,7 @@ agent-loop run --dry-run --env dev --org test-org
 | NIST review | ✅ Done | nist-review skill, 7-step pipeline, gate logic |
 | JWT Auth | ✅ Done | JWT Bearer flow, live verified |
 | sfdc-expert | ✅ Done | On-call Apex/SFDC specialist agent |
-| All agents | ✅ Done | Unified model: all 9 agents use `gpt-5.3-chat-latest` |
+| All agents | ✅ Done | Unified model: all 10 agents use `gpt-5.3-chat-latest` |
 | Executive reports | ✅ Done | Python-rendered scorecard, domain chart, sorted matrix |
 | finish() tool | ✅ Done | Orchestrator exits cleanly; _MAX_TURNS→14 |
 | OSCAL Catalogs | ✅ Done | SSCF catalog, SBS catalog, Workday catalog — all OSCAL 1.1.2 |

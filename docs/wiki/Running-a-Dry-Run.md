@@ -164,7 +164,7 @@ To test just the pipeline logic without any API calls:
 pytest tests/ -v
 ```
 
-This runs 94 tests across 8 suites — all pass without any environment variables or API keys:
+This runs 191 tests across 11 suites — all pass without any environment variables or API keys:
 
 | Test file | Tests | What it covers |
 |---|---|---|
@@ -177,6 +177,9 @@ This runs 94 tests across 8 suites — all pass without any environment variable
 | `tests/test_security_gates.py` | 18 | Path traversal, org sanitization, dispatch boundary, input validation |
 | `tests/test_safe_out_path.py` | 7 | Output path boundary enforcement |
 | `tests/test_tools_dispatch.py` | 27 | All 10 dispatcher functions, _run helper, hermetic sfdc-expert enrichment |
+| `tests/test_agent_dispatchers.py` | 30 | Agent sub-call dispatchers (collector_enrich, assessor_analyze, workday_expert_enrich, security_reviewer_review) |
+| `tests/test_nist_review.py` | 21 | nist_review CLI dry-run, _build_review_context, _load_json, stub data |
+| `tests/test_sscf_benchmark.py` | 33 | _domain_status thresholds, _score_findings, run_benchmark core, _to_markdown |
 
 **Run with coverage:**
 ```bash

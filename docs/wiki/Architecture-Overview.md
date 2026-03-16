@@ -11,7 +11,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │         agent-loop  (gpt-5.3-chat-latest orchestrator)                      │
-│         OpenAI tool_use ReAct loop · max 14 turns · 9 agents · 7 tools      │
+│         OpenAI tool_use ReAct loop · max 14 turns · 10 agents · 7 tools     │
 │                                                                              │
 │  Security Harness (harness/loop.py · harness/tools.py)                      │
 │    _TOOL_REQUIRES sequencing gate · memory guard · audit.jsonl · path valid  │
@@ -47,7 +47,7 @@ Post-processing (run manually after pipeline — not automated tool calls):
 
 ## Agent Architecture
 
-### 9 Agents
+### 10 Agents
 
 | Agent | Model | Role | Tools |
 |---|---|---|---|
@@ -56,7 +56,8 @@ Post-processing (run manually after pipeline — not automated tool calls):
 | `assessor` | gpt-5.3-chat-latest | Maps findings to OSCAL/SBS/SSCF controls | oscal-assess, oscal_gap_map |
 | `reporter` | gpt-5.3-chat-latest | Generates DOCX/MD governance outputs | report-gen |
 | `nist-reviewer` | gpt-5.3-chat-latest | Validates outputs against NIST AI RMF | None (text analysis) |
-| `security-reviewer` | gpt-5.3-chat-latest | AppSec + DevSecOps review of CI/CD and skills | None (text analysis) |
+| `delivery-reviewer` | gpt-5.3-chat-latest | Final report delivery QA — credential exposure, status misrepresentation, scope violations | None (text analysis) |
+| `security-reviewer` | gpt-5.3-chat-latest | AppSec + DevSecOps review of CI/CD workflows, skills, and PRs (on-demand, not a pipeline dispatch) | None (text analysis) |
 | `sfdc-expert` | gpt-5.3-chat-latest | On-call Salesforce/Apex specialist | None (text + code) |
 | `workday-expert` | gpt-5.3-chat-latest | On-call Workday HCM/Finance/RaaS specialist | None (text + code) |
 | `container-expert` | gpt-5.3-chat-latest | Docker Compose, OpenSearch, JVM tuning specialist | None (text + config) |
