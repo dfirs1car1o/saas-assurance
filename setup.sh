@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# setup.sh — Onboarding script for saas-posture
+# setup.sh — Onboarding script for saas-assurance
 # Run once after cloning. Requires Python 3.11+ and uv.
 set -euo pipefail
 
-echo "==> saas-posture setup"
+echo "==> saas-assurance setup"
 
 # 1. Check Python version
 python_version=$(python3 --version 2>&1 | awk '{print $2}')

@@ -34,4 +34,4 @@ echo
 
 echo "== Suggested next commands =="
 echo "git -C $REPO push"
-echo "# Session notes are in Obsidian vault — saas-posture/Next Session.md"
+echo "# Session notes are in Obsidian vault — saas-assurance/Next Session.md"
