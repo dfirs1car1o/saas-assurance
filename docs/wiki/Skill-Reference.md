@@ -390,3 +390,53 @@ python3 scripts/generate_sbs_oscal_catalog.py [--dry-run]
 ```
 
 Maps custom JSON fields to OSCAL parts: `statement`, `guidance`, `objective` (audit procedure), `implementation-guidance` (remediation), `default-value`. Groups controls by category. Adds `sscf-control` prop and SSCF catalog link from `sbs_to_sscf_mapping.yaml`.
+
+---
+
+## Agent Enrichment Calls
+
+These are **not CLI skills** — they are OpenAI sub-calls made directly by the orchestrator using `_dispatch_agent_call()` in `harness/tools.py`. They inject agent intelligence into the pipeline between CLI stages. Each returns a JSON payload with `status`, `analysis`, and `flags`.
+
+### collector_enrich
+
+**Dispatcher:** `_dispatch_collector_enrich` (harness/tools.py)
+**Agent invoked:** `collector`
+**Input:** `collector_output` (path to `sfdc_raw.json` or `workday_raw.json`)
+
+Reviews raw collector output for evidence quality before assessment runs. Flags missing API scopes, stale evidence references, and data quality issues (missing timestamps, empty `evidence_ref`). Skipped on dry-run.
+
+**FLAG tokens:** `missing_scope:<scope>`, `stale_evidence:<control_id>`
+
+---
+
+### assessor_analyze
+
+**Dispatcher:** `_dispatch_assessor_analyze` (harness/tools.py)
+**Agent invoked:** `assessor`
+**Input:** `gap_analysis` (path to `gap_analysis.json`)
+
+Reviews gap analysis findings for confidence issues after `oscal-assess`. Identifies low-confidence critical findings, controls with `needs_expert_review: true` that lack notes, and whether the unmapped findings rate exceeds 20%.
+
+**FLAG tokens:** `low_confidence_critical:<control_id>`, `expert_review_pending:<control_id>`, `unmapped_findings_threshold_exceeded`
+
+---
+
+### workday_expert_enrich
+
+**Dispatcher:** `_dispatch_workday_expert_enrich` (harness/tools.py)
+**Agent invoked:** `workday-expert`
+**Input:** `gap_analysis` (path to `gap_analysis.json`)
+
+Enriches Workday findings where `needs_expert_review: true` or `data_source: permission_denied`. For each finding, identifies the missing Workday domain security policy grant, the exact RaaS report or REST endpoint for evidence, and whether an ISSG grant resolves it. Writes `expert_notes` back to `gap_analysis.json`. Returns `enriched_findings` count.
+
+---
+
+### security_reviewer_review
+
+**Dispatcher:** `_dispatch_security_reviewer_review` (harness/tools.py)
+**Agent invoked:** `security-reviewer`
+**Input:** `report_path` (path to the generated security assessment Markdown)
+
+Final AppSec pass on the security report before delivery. Checks for credential exposure, status misrepresentation, and scope violations. `credential_exposure` and `scope_violation` flags delay `finish()` until human acknowledgement.
+
+**FLAG tokens:** `credential_exposure:<detail>`, `status_misrepresentation:<control_id>`, `scope_violation:<section>`

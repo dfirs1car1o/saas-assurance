@@ -108,6 +108,8 @@ All agents are OpenAI models. The orchestrator dispatches numbered tool calls to
 | SFDC Expert | `gpt-5.3-chat-latest` | On-call specialist for complex Salesforce/Apex/API questions |
 | Workday Expert | `gpt-5.3-chat-latest` | On-call specialist for Workday HCM/Finance RaaS/REST |
 | Container Expert | `gpt-5.3-chat-latest` | Docker Compose, OpenSearch, NDJSON dashboards, JVM tuning |
+| Repo Reviewer | `gpt-5.3-chat-latest` | Periodic repo auditor — PII exposure, stale docs, strategic alignment (Claude Code only) |
+| OSCAL Expert | `gpt-5.3-chat-latest` | OSCAL 1.1.2 / SSCF / CCM / AICM specialist for catalog and mapping review (Claude Code only) |
 
 ## Skills (CLIs)
 

@@ -9,7 +9,6 @@ Mission always loads first — it takes precedence over role definitions.
 from __future__ import annotations
 
 import os
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -17,17 +16,22 @@ _REPO = Path(__file__).resolve().parents[1]
 
 DEFAULT_MODEL = "gpt-5.3-chat-latest"
 
-_FRONTMATTER_RE = re.compile(r"^\s*---\s*\n.*?\n---\s*\n", re.DOTALL)
-
 
 def _strip_frontmatter(text: str) -> str:
     """Remove YAML frontmatter block (--- ... ---) from an agent .md file.
 
-    Frontmatter is metadata for Claude Code and human readers. Stripping it
-    keeps LLM sub-call system prompts clean and avoids the model treating the
-    YAML as instructions.
+    Uses a linear string scan instead of a regex to avoid polynomial
+    backtracking (SonarCloud S5852 / ReDoS). Frontmatter is metadata for
+    Claude Code and human readers; stripping it keeps LLM sub-call system
+    prompts clean.
     """
-    return _FRONTMATTER_RE.sub("", text, count=1).strip()
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
+        return text
+    for i, line in enumerate(lines[1:], 1):
+        if line.strip() == "---":
+            return "\n".join(lines[i + 1 :]).strip()
+    return text
 
 
 def _load(agent_name: str) -> str:

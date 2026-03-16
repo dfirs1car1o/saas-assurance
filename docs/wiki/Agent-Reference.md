@@ -187,6 +187,40 @@ All 9 agents in the system. Each has a definition file in `agents/` with YAML fr
 
 ---
 
+## Repo Reviewer
+
+| Field | Value |
+|---|---|
+| **File** | `agents/repo-reviewer.md` |
+| **Model** | `gpt-5.3-chat-latest` |
+| **Tools** | None (text analysis only) |
+| **Invoked by** | Claude Code directly — NOT part of the pipeline harness |
+
+**Role:** Periodic repository auditor. Scans the full repo for personal data exposure, stale documentation, strategic misalignment, and code quality improvements. Produces a structured report with severity-graded findings and actionable fixes.
+
+**Outputs:** Structured audit report (personal data findings, doc health, strategic alignment review).
+
+**When to invoke:** Before a major release, when onboarding a new contributor, quarterly repo hygiene audit, or after bulk documentation changes.
+
+---
+
+## OSCAL Expert
+
+| Field | Value |
+|---|---|
+| **File** | `agents/oscal-expert.md` |
+| **Model** | `gpt-5.3-chat-latest` |
+| **Tools** | None (text analysis only) |
+| **Invoked by** | Claude Code directly — NOT part of the pipeline harness |
+
+**Role:** OSCAL 1.1.2 and CSA SSCF/CCM/AICM specialist. Invoked when reviewing or authoring catalog/profile/mapping files, control crosswalks, or OSCAL script logic. Deep expertise in SSCF, CCM v4.1, AICM v1.0.3, and ISO 27001:2022.
+
+**Proactive triggers:** Changes to `config/sscf/`, `config/salesforce/`, `config/workday/`, `config/aicm/`; PRs touching OSCAL generation scripts; new SaaS platform onboarding.
+
+**Outputs:** Control mapping analysis, crosswalk review, ODP parameter validation, component definition review.
+
+---
+
 ## Adding a New Agent
 
 1. Create `agents/<name>.md` with YAML frontmatter:

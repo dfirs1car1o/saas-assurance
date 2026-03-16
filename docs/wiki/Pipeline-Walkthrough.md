@@ -49,6 +49,21 @@ Produces a synthetic weak-org snapshot (no real Salesforce connection needed).
 
 ---
 
+## Stage 1a: Collector Enrichment (Agent Sub-call)
+
+**What it does:** After raw collection, the orchestrator invokes the **collector agent** directly via `collector_enrich` to review the raw output for evidence quality issues before assessment runs.
+
+**Checks:**
+- Missing API scopes or API limitations that reduced assessment completeness
+- Controls recorded as `not_applicable` that a different scope would have resolved
+- Data quality issues (missing timestamps, empty `evidence_ref` fields)
+
+**Output:** JSON with `status`, `analysis`, and `flags` list. Each FLAG is a short slug the orchestrator acts on (e.g., `FLAG: missing_scope:event-monitoring`, `FLAG: stale_evidence:SBS-LOG-001`).
+
+**When skipped:** Dry-run mode (synthetic collector output has no real gaps to review).
+
+---
+
 ## Stage 2: OSCAL Assessment (`oscal-assess`)
 
 **What it does:** Evaluates 35 SBS (Salesforce Baseline Security) controls against the collected config.
@@ -73,6 +88,22 @@ oscal-assess assess --collector-output sfdc_raw.json --org my-org --out gap_anal
 ```
 
 **Output:** `gap_analysis.json` — findings array with `control_id`, `status`, `severity`, `owner`, `evidence_ref`, `due_date`.
+
+---
+
+## Stage 2a: Assessor Enrichment (Agent Sub-call)
+
+**What it does:** After `oscal-assess`, the orchestrator invokes the **assessor agent** directly via `assessor_analyze` to review the gap analysis findings for confidence issues.
+
+**Checks:**
+- Critical/high findings with `mapping_confidence: low` that need expert review
+- Controls with `needs_expert_review: true` that lack `expert_notes`
+- Whether >20% of findings are unmapped (threshold exceeded)
+
+**Output:** JSON with `flags` list. Key flags:
+- `FLAG: low_confidence_critical:<control_id>` — triggers sfdc_expert or workday_expert_enrich
+- `FLAG: expert_review_pending:<control_id>` — expert notes missing
+- `FLAG: unmapped_findings_threshold_exceeded` — assessment may be incomplete
 
 ---
 
@@ -337,6 +368,19 @@ report-gen generate \
 
 ---
 
+## Stage 7a: Security Reviewer Final Review (Agent Sub-call)
+
+**What it does:** After security report generation, the orchestrator invokes the **security-reviewer agent** directly via `security_reviewer_review` for a final AppSec pass before `finish()`.
+
+**Checks three areas:**
+1. **Credential exposure** — org URLs, usernames, internal identifiers that should not appear in a deliverable → `FLAG: credential_exposure:<detail>`
+2. **Status misrepresentation** — language that downplays or softens a fail/critical finding → `FLAG: status_misrepresentation:<control_id>`
+3. **Scope violations** — any section implying permissions beyond read-only OSCAL/SSCF assessment scope → `FLAG: scope_violation:<section>`
+
+**Output:** JSON with `flags` list + `### Security Posture Summary` block (1–3 sentences). `credential_exposure` and `scope_violation` flags delay `finish()` until human acknowledgement.
+
+---
+
 ## Stage 1 (Workday): Workday Collection (`workday-connect`)
 
 For Workday assessments, replace Stage 1 with:
@@ -349,6 +393,12 @@ python3 scripts/workday_dry_run_demo.py --org my-tenant --env dev
 
 Collects 30 WSCC controls across IAM, CON, LOG, DSP, GOV, CKM domains via OAuth 2.0 / REST API v1 / RaaS (custom reports) / manual questionnaire. No SOAP.
 All subsequent stages (oscal-assess → report-gen) run identically with `--platform workday`.
+
+**Stage 1a (Workday):** The `workday_expert_enrich` dispatcher is the Workday parallel to sfdc_expert_enrich. It invokes the **workday-expert agent** on findings where `needs_expert_review: true` or `data_source: permission_denied`. For each eligible finding it:
+- Identifies which Workday domain security policy grant is missing
+- Specifies the exact RaaS report or REST endpoint that provides the evidence
+- States whether an ISSG grant resolves it or tenant admin manual confirmation is required
+- Writes `expert_notes` back to `gap_analysis.json`
 
 ---
 

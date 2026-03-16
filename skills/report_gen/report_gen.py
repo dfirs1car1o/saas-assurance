@@ -688,6 +688,43 @@ def _render_ccm_crosswalk(backlog: dict) -> str:  # NOSONAR
     return "\n".join(lines)
 
 
+_AICM_VERDICT_ICON: dict[str, str] = {
+    "covered": "✅",
+    "partial": "⚠️",
+    "not_assessed": "—",
+    "not_covered": "—",
+}
+_AICM_POSTURE_ICON: dict[str, str] = {"pass": "🟢", "partial": "🟡", "fail": "🔴", "not_assessed": "—"}
+
+
+def _aicm_domain_row(abbrev: str, data: dict[str, Any]) -> str:
+    """Render one row of the AICM domain coverage table."""
+    cov = data.get("coverage_verdict", "not_assessed")
+    pos = data.get("posture_verdict", "not_assessed")
+    total = data.get("total_aicm_controls", 0)
+    failing = data.get("failing_controls", [])
+    cov_icon = _AICM_VERDICT_ICON.get(cov, "—")
+    pos_icon = _AICM_POSTURE_ICON.get(pos, "—")
+    fail_str = (", ".join(failing[:3]) + ("…" if len(failing) > 3 else "")) if failing else "—"
+    return f"| **{abbrev}** | {cov_icon} {cov} | {pos_icon} {pos} | {total} | {fail_str} |"
+
+
+def _aicm_gap_detail_lines(d: dict[str, Any]) -> list[str]:
+    """Render per-domain gap detail block (heading + scope gap + guidance)."""
+    abbrev = d.get("abbrev", "")
+    full_name = d.get("full_name", abbrev)
+    control_range = d.get("control_range", "")
+    reason = d.get("reason", "")
+    guidance = d.get("supplemental_guidance", "")
+    range_str = f" ({control_range})" if control_range else ""
+    out = [f"#### {abbrev} — {full_name}{range_str}", ""]
+    if reason:
+        out += [f"**Scope gap:** {reason}", ""]
+    if guidance:
+        out += [f"**Supplemental guidance:** {guidance}", ""]
+    return out
+
+
 def _render_aicm_coverage(aicm: dict[str, Any]) -> str:
     """Render AICM v1.0.3 AI Governance Coverage section for the security annex.
 
@@ -702,14 +739,6 @@ def _render_aicm_coverage(aicm: dict[str, Any]) -> str:
     domain_coverage = aicm.get("domain_coverage", {})
     gap_note = aicm.get("gap_note", "")
     aicm_version = aicm.get("aicm_version", "v1.0.3")
-
-    _VERDICT_ICON = {
-        "covered": "✅",
-        "partial": "⚠️",
-        "not_assessed": "—",
-        "not_covered": "—",
-    }
-    _POSTURE_ICON = {"pass": "🟢", "partial": "🟡", "fail": "🔴", "not_assessed": "—"}
 
     lines = [
         f"## CSA AICM {aicm_version} AI Governance Coverage",
@@ -729,17 +758,7 @@ def _render_aicm_coverage(aicm: dict[str, Any]) -> str:
     ]
 
     for abbrev, data in sorted(domain_coverage.items()):
-        cov = data.get("coverage_verdict", "not_assessed")
-        pos = data.get("posture_verdict", "not_assessed")
-        total = data.get("total_aicm_controls", 0)
-        failing = data.get("failing_controls", [])
-        cov_icon = _VERDICT_ICON.get(cov, "—")
-        pos_icon = _POSTURE_ICON.get(pos, "—")
-        if failing:
-            fail_str = ", ".join(failing[:3]) + ("…" if len(failing) > 3 else "")
-        else:
-            fail_str = "—"
-        lines.append(f"| **{abbrev}** | {cov_icon} {cov} | {pos_icon} {pos} | {total} | {fail_str} |")
+        lines.append(_aicm_domain_row(abbrev, data))
 
     if gap_note:
         lines += ["", f"> **Gap Note:** {gap_note}"]
@@ -755,20 +774,7 @@ def _render_aicm_coverage(aicm: dict[str, Any]) -> str:
             "",
         ]
         for d in gap_domain_details:
-            abbrev = d.get("abbrev", "")
-            full_name = d.get("full_name", abbrev)
-            control_range = d.get("control_range", "")
-            reason = d.get("reason", "")
-            guidance = d.get("supplemental_guidance", "")
-            range_str = f" ({control_range})" if control_range else ""
-            lines += [
-                f"#### {abbrev} — {full_name}{range_str}",
-                "",
-            ]
-            if reason:
-                lines += [f"**Scope gap:** {reason}", ""]
-            if guidance:
-                lines += [f"**Supplemental guidance:** {guidance}", ""]
+            lines += _aicm_gap_detail_lines(d)
 
     return "\n".join(lines)
 
