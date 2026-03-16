@@ -744,6 +744,32 @@ def _render_aicm_coverage(aicm: dict[str, Any]) -> str:
     if gap_note:
         lines += ["", f"> **Gap Note:** {gap_note}"]
 
+    gap_domain_details: list[dict] = aicm.get("gap_domain_details", [])
+    if gap_domain_details:
+        lines += [
+            "",
+            "### Gap Domain Details",
+            "",
+            "The following AICM domains have no SSCF evidence. Each requires supplemental "
+            "review outside the API-based assessment scope.",
+            "",
+        ]
+        for d in gap_domain_details:
+            abbrev = d.get("abbrev", "")
+            full_name = d.get("full_name", abbrev)
+            control_range = d.get("control_range", "")
+            reason = d.get("reason", "")
+            guidance = d.get("supplemental_guidance", "")
+            range_str = f" ({control_range})" if control_range else ""
+            lines += [
+                f"#### {abbrev} — {full_name}{range_str}",
+                "",
+            ]
+            if reason:
+                lines += [f"**Scope gap:** {reason}", ""]
+            if guidance:
+                lines += [f"**Supplemental guidance:** {guidance}", ""]
+
     return "\n".join(lines)
 
 

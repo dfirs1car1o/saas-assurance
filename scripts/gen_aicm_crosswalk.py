@@ -193,7 +193,18 @@ def build_aicm_coverage(
     catalog_domains = _index_catalog_domains(catalog)
 
     controls_map = mapping.get("controls", {})
-    uncovered_domains: list[str] = [d["abbrev"] for d in mapping.get("uncovered_aicm_domains", [])]
+    raw_uncovered = mapping.get("uncovered_aicm_domains", [])
+    uncovered_domains: list[str] = [d["abbrev"] for d in raw_uncovered]
+    gap_domain_details: list[dict] = [
+        {
+            "abbrev": d["abbrev"],
+            "full_name": d.get("full_name", d["abbrev"]),
+            "control_range": d.get("control_range", ""),
+            "reason": d.get("reason", "").strip(),
+            "supplemental_guidance": d.get("supplemental_guidance", "").strip(),
+        }
+        for d in raw_uncovered
+    ]
     domain_sscf = _build_domain_sscf_map(controls_map, uncovered_domains)
 
     # Compute per-domain results
@@ -240,6 +251,7 @@ def build_aicm_coverage(
             "questionnaire or third-party audit (DCS, IVS, UEM, BCR, CEK, HRS, MDS)."
         ),
         "domain_coverage": domain_results,
+        "gap_domain_details": gap_domain_details,
     }
 
 
