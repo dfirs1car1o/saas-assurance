@@ -63,7 +63,7 @@ git --version
 2. Press **Ctrl+Shift+P** → type **"Git: Clone"** → Enter
 3. Paste the repo URL:
    ```
-   https://github.com/dfirs1car1o/saas-posture.git
+   https://github.com/dfirs1car1o/saas-assurance.git
    ```
 4. Choose a folder (e.g., `C:\Users\YourName\Projects\`)
 5. VS Code will ask **"Open cloned repository?"** — click **Yes**

@@ -43,13 +43,13 @@ pandoc --version
 ## Step 2 — Clone the Repo
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-posture.git saas-assurance
+git clone git@github.com:dfirs1car1o/saas-assurance.git saas-assurance
 cd saas-assurance
 ```
 
 Or use HTTPS:
 ```bash
-git clone https://github.com/dfirs1car1o/saas-posture.git saas-assurance
+git clone https://github.com/dfirs1car1o/saas-assurance.git saas-assurance
 cd saas-assurance
 ```
 

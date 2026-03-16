@@ -5,7 +5,7 @@
 ## Step 1: Clone & Install
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-posture.git saas-assurance
+git clone git@github.com:dfirs1car1o/saas-assurance.git saas-assurance
 cd saas-assurance
 
 # Create and activate a venv

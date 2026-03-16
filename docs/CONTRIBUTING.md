@@ -61,7 +61,7 @@ That's it. No Docker, no Node.js, no container runtime required.
 
 ```bash
 # 1. Clone
-git clone git@github.com:dfirs1car1o/saas-posture.git saas-assurance
+git clone git@github.com:dfirs1car1o/saas-assurance.git saas-assurance
 cd saas-assurance
 
 # 2. Install Python dependencies (includes all dev/test deps)

@@ -80,7 +80,7 @@ No Docker. No Node.js. No cloud accounts beyond OpenAI + Salesforce.
 ## Quick Start (Any Platform)
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-posture.git saas-assurance
+git clone git@github.com:dfirs1car1o/saas-assurance.git saas-assurance
 cd saas-assurance
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
