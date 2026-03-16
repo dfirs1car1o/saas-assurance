@@ -134,7 +134,7 @@ python3 scripts/oscal_gap_map.py \
 
 ---
 
-## Stage 2.5: OSCAL POA&M Generation (`gen_poam.py`)
+## Stage 2.5: OSCAL POA&M Generation (`gen_poam.py`) — Post-processing script (not automated pipeline)
 
 **What it does:** Converts the remediation backlog into a valid OSCAL 1.1.2 Plan of Action and Milestones (POA&M) JSON artifact. Supports persistent cumulative mode — each run merges into the existing POA&M, appending new observations and auto-closing resolved findings.
 
@@ -186,7 +186,7 @@ python3 scripts/gen_poam.py \
 
 ---
 
-## Stage 2.6: OSCAL Assessment Results (`gen_assessment_results.py`)
+## Stage 2.6: OSCAL Assessment Results (`gen_assessment_results.py`) — Post-processing script (not automated pipeline)
 
 **What it does:** Wraps `gap_analysis.json` findings in the OSCAL 1.1.2 `assessment-results` model — producing machine-readable observations and findings linked to the resolved platform profile. Each gap analysis finding maps to one OSCAL observation + one OSCAL finding.
 
@@ -213,7 +213,7 @@ python3 scripts/gen_assessment_results.py \
 
 ---
 
-## Stage 2.7: OSCAL SSP (`gen_ssp.py`)
+## Stage 2.7: OSCAL SSP (`gen_ssp.py`) — Post-processing script (not automated pipeline)
 
 **What it does:** Generates a fully-populated OSCAL 1.1.2 System Security Plan (SSP) for the assessed org. The SSP is generated every run to stay in sync with the latest assessment state. Uses the commercial SaaS template — no FedRAMP red tape (no JAB/PMO, no FIPS 199, no physical media controls).
 
@@ -251,7 +251,7 @@ python3 scripts/gen_ssp.py \
 
 **What it does:** Maps SSCF backlog findings through the SSCF → AICM v1.0.3 bridge to produce a per-domain AI governance coverage report. Surfaces which of the 18 AICM domains receive coverage from your SaaS platform assessment and which are structural gaps requiring supplemental controls.
 
-**When to run:** After gen_ssp.py (Stage 2.7), once backlog.json is available.
+**When to run:** After the pipeline completes and backlog.json is available. Can be run alongside or after the post-processing OSCAL scripts (Stages 2.5–2.7).
 
 **Command:**
 ```bash

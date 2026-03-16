@@ -517,9 +517,7 @@ class TestWorkdayExpertDifferentiatedNotes:
             }
         )
         with patch("harness.tools._dispatch_agent_call", return_value=per_finding_response):
-            result = json.loads(
-                dispatch("workday_expert_enrich", {"org": _TEST_ORG, "gap_analysis": str(gap_path)})
-            )
+            result = json.loads(dispatch("workday_expert_enrich", {"org": _TEST_ORG, "gap_analysis": str(gap_path)}))
         assert result["status"] == "ok"
         assert result["enriched_findings"] == 2
         updated = json.loads(gap_path.read_text())
@@ -555,9 +553,7 @@ class TestSfdcExpertWritesExpertNotes:
         gap_path = _BASE / "gap_analysis_sfdc_expert.json"
         gap_path.write_text(json.dumps(gap))
 
-        result = json.loads(
-            dispatch("sfdc_expert_enrich", {"org": _TEST_ORG, "gap_analysis": str(gap_path)})
-        )
+        result = json.loads(dispatch("sfdc_expert_enrich", {"org": _TEST_ORG, "gap_analysis": str(gap_path)}))
         assert result["status"] == "ok"
         assert result["enriched_findings"] == 2
         updated = json.loads(gap_path.read_text())

@@ -47,12 +47,16 @@ Phase 1.5 — Drift Check   : backlog_diff (OPTIONAL — only on re-assessments)
 Phase 2   — Assessment    : assessor (oscal-assess → oscal_gap_map)
 Phase 3   — Scoring       : assessor (sscf-benchmark)
 Phase 4   — Governance Gate : nist-reviewer (nist-review --platform <platform>)
-Phase 5b  — AICM Crosswalk : gen_aicm_crosswalk (for AI-enabled SaaS)
+Phase 5   — AICM Crosswalk : gen_aicm_crosswalk (for AI-enabled SaaS)
                               Run after backlog.json exists. Produces aicm_coverage.json
                               (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4 crosswalk).
 Phase 6   — Reporting     : reporter (report-gen × 2 audiences)
 Phase 7   — Monitoring    : MANUAL CLI step post-pipeline (not an agent tool call)
                             python scripts/export_to_opensearch.py --auto --org <org> --date <YYYY-MM-DD>
+
+NOTE: OSCAL artifact generation (gen_poam.py, gen_assessment_results.py, gen_ssp.py) runs as
+      post-processing scripts after the pipeline — see docs/wiki/OSCAL-Guide.md.
+      Do NOT call these as pipeline tool calls; they are not registered dispatchers.
 ```
 
 ---

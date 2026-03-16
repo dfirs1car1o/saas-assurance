@@ -82,9 +82,7 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
         f"[agent] WARNING: {agent_name} returned non-JSON response — falling back to FLAG: scraping.",
         file=sys.stderr,
     )
-    flags = [
-        line.split("FLAG:", 1)[1].strip() for line in raw.splitlines() if line.strip().startswith("FLAG:")
-    ]
+    flags = [line.split("FLAG:", 1)[1].strip() for line in raw.splitlines() if line.strip().startswith("FLAG:")]
     return {
         "status": "ok",
         "agent": agent_name,
