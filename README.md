@@ -118,12 +118,6 @@ All agents are OpenAI models (`gpt-5.3-chat-latest`). The orchestrator dispatche
 | Security Reviewer | Final AppSec pass on security report — flags credential exposure, scope violations |
 | Container Expert | Docker Compose, OpenSearch, NDJSON dashboards, JVM tuning |
 
-### Interactive Personas (Claude Code session — not part of `agent-loop run`)
-
-| Persona | Invoke with | Role |
-|---|---|---|
-| Repo Reviewer | `@repo-reviewer` | Periodic repo auditor — PII exposure, stale docs, strategic alignment |
-| OSCAL Expert | `@oscal-expert` | OSCAL 1.1.2 / SSCF / CCM / AICM specialist for catalog and mapping review |
 
 ## Skills (CLIs)
 

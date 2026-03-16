@@ -15,7 +15,6 @@ This file is the canonical reference for all agents in this system. Each agent h
 | sfdc-expert | agents/sfdc-expert.md | gpt-5.3-chat-latest | Apex + deep Salesforce admin specialist (on-call) |
 | workday-expert | agents/workday-expert.md | gpt-5.3-chat-latest | Workday HCM/Finance API specialist (on-call) — RaaS/REST, WSCC catalog, ISSG permissions |
 | container-expert | agents/container-expert.md | gpt-5.3-chat-latest | Docker Compose, OpenSearch 2.x, NDJSON dashboards, JVM tuning, stack troubleshooting |
-| repo-reviewer | agents/repo-reviewer.md | gpt-5.3-chat-latest | Periodic audit: personal data, stale docs, strategic alignment |
 
 > Models are set by env vars: `LLM_MODEL_ORCHESTRATOR`, `LLM_MODEL_ANALYST`, `LLM_MODEL_REPORTER` (default: `gpt-5.3-chat-latest`). Azure OpenAI Government supported via `AZURE_OPENAI_API_KEY` + `AZURE_OPENAI_ENDPOINT`.
 
