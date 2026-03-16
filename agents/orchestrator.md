@@ -243,12 +243,17 @@ All output goes to `docs/oscal-salesforce-poc/generated/<org>/<YYYY-MM-DD>/`:
 | `gap_matrix.md` + `backlog.json` | 2 | assessor |
 | `sscf_report.json` | 3 | assessor |
 | `nist_review.json` | 4 | nist-reviewer |
-| `poam.json` | 5 | gen_poam |
-| `assessment_results.json` | 5 | gen_assessment_results |
-| `ssp.json` | 5 | gen_ssp |
-| `aicm_coverage.json` | 5b | gen_aicm_crosswalk |
+| `aicm_coverage.json` | 5 | gen_aicm_crosswalk |
 | `<org>_remediation_report.md` | 6 | reporter |
 | `<org>_security_assessment.md` + `.docx` | 6 | reporter |
+
+**Post-pipeline artifacts** (standalone scripts — not pipeline tool calls):
+
+| File | Script |
+|---|---|
+| `poam.json` | `scripts/gen_poam.py` |
+| `assessment_results.json` | `scripts/gen_assessment_results.py` |
+| `ssp.json` | `scripts/gen_ssp.py` |
 
 Never write evidence to `/tmp` or outside the `generated/` directory.
 
