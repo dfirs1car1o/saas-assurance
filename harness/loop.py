@@ -3,7 +3,7 @@ harness/loop.py — Agentic orchestration loop for OSCAL/SSCF assessments.
 
 Entry point:  agent-loop run [OPTIONS]
 
-The orchestrator (gpt-4o by default) is called in a tool_calls loop:
+The orchestrator (gpt-5.3-chat-latest by default, override via LLM_MODEL_ORCHESTRATOR) is called in a tool_calls loop:
   1. Load agent config (mission.md + orchestrator.md as system prompt)
   2. Prepend prior org assessment memory to the first user message
   3. Drive the OpenAI chat completions API until finish_reason == "stop"

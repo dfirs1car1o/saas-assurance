@@ -1101,7 +1101,7 @@ def _dispatch_security_reviewer_review(inp: dict[str, Any], out_dir: Path) -> st
         "End with a '### Security Posture Summary' block (1-3 sentences).\n\n"
         f"Report content (truncated to 6000 chars):\n{report_text[:6000]}"
     )
-    return _dispatch_agent_call("security-reviewer", load_agent_prompt("security-reviewer"), user_content)
+    return _dispatch_agent_call("delivery-reviewer", load_agent_prompt("delivery-reviewer"), user_content)
 
 
 def _dispatch_finish(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001

@@ -299,7 +299,7 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
     else:
         client = openai.OpenAI(api_key=api_key)
     response = client.chat.completions.create(
-        model=os.getenv("LLM_MODEL_ANALYST", "gpt-4o"),
+        model=os.getenv("LLM_MODEL_ANALYST", "gpt-5.3-chat-latest"),
         max_completion_tokens=2048,
         messages=[
             {"role": "system", "content": system_prompt},

@@ -44,7 +44,7 @@ python -m skills.nist_review.nist_review assess \
 
 **Critical:** Always pass `--platform`. Dry-run stub verdicts are platform-specific:
 - Salesforce dry-run: references SBS v1.0 catalog language
-- Workday dry-run: references WSCC v0.2.0 catalog language
+- Workday dry-run: references WSCC v0.3.0 catalog language
 
 **Note:** Uses `max_completion_tokens` (not `max_tokens`) — required for gpt-5.x models.
 If JSON response is truncated, the skill applies a regex fallback to extract the verdict.
@@ -80,7 +80,7 @@ If JSON response is truncated, the skill applies a regex fallback to extract the
 - Is there a `due_date` for every `critical`/`high` fail finding?
 - Is the exception process referenced for findings that cannot be remediated on schedule?
 
-**Check:** Exception process reference: `config/role_model_policy.yaml` and `docs/change-control.md`. If any critical finding lacks a `due_date`, flag in blocking_issues.
+**Check:** Exception process reference: `mission.md` (scope and escalation policy) and `config/sscf/` (control definitions). If any critical finding lacks a `due_date`, flag in blocking_issues.
 
 ---
 
