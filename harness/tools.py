@@ -30,6 +30,8 @@ _REPO = Path(__file__).resolve().parents[1]
 
 _AGENT_CLIENT: Any = None
 
+_FLAG_PREFIX = "FLAG:"
+
 
 def set_openai_client(client: Any) -> None:
     """Inject the already-instantiated OpenAI client from loop.py.
@@ -62,9 +64,9 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
             flags = parsed.get("flags")
             if not isinstance(flags, list):
                 flags = [
-                    line.split("FLAG:", 1)[1].strip()
+                    line.split(_FLAG_PREFIX, 1)[1].strip()
                     for line in str(analysis).splitlines()
-                    if line.strip().startswith("FLAG:")
+                    if line.strip().startswith(_FLAG_PREFIX)
                 ]
             return {
                 "status": parsed.get("status", "ok"),
@@ -82,7 +84,9 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
         f"[agent] WARNING: {agent_name} returned non-JSON response — falling back to FLAG: scraping.",
         file=sys.stderr,
     )
-    flags = [line.split("FLAG:", 1)[1].strip() for line in raw.splitlines() if line.strip().startswith("FLAG:")]
+    flags = [
+        line.split(_FLAG_PREFIX, 1)[1].strip() for line in raw.splitlines() if line.strip().startswith(_FLAG_PREFIX)
+    ]
     return {
         "status": "ok",
         "agent": agent_name,
@@ -879,6 +883,51 @@ def _dispatch_nist_review(inp: dict[str, Any], out_dir: Path) -> str:
     return json.dumps({"status": "ok", "output_file": out_path})
 
 
+def _write_apex_placeholder(apex_path: Path, cid: str, date_str: str) -> None:
+    """Stage a read-only Apex script placeholder for human review."""
+    if not apex_path.exists():
+        apex_path.write_text(
+            f"// -- READ-ONLY -- sfdc-expert proposal for {cid}\n"
+            f"// Generated: {date_str} | Status: PENDING HUMAN REVIEW\n"
+            f"// Do NOT execute without System Administrator review.\n"
+            f"// Replace this placeholder with a specific SOQL/Apex query.\n"
+            f"//\n"
+            f"// Control: {cid}\n"
+            f"// Purpose: Surface data unavailable via sfdc-connect REST/SOQL API\n"
+        )
+
+
+def _call_sfdc_expert_note(cid: str, finding: dict[str, Any]) -> str:
+    """Call sfdc-expert agent for per-finding guidance. Returns '' if unavailable."""
+    if _AGENT_CLIENT is None:
+        return ""
+    finding_summary = json.dumps(
+        {
+            "control_id": cid,
+            "status": finding.get("status"),
+            "severity": finding.get("severity"),
+            "observed_value": finding.get("observed_value", ""),
+            "evidence_ref": finding.get("evidence_ref", ""),
+        }
+    )
+    user_content = (
+        f"Provide expert Salesforce/Apex guidance for this finding requiring specialist review.\n"
+        f"Control: {cid}\n"
+        f"Finding: {finding_summary}\n\n"
+        f"Specify: (1) exact SOQL or Tooling API query to gather evidence, "
+        f"(2) Salesforce permission required to run it, "
+        f"(3) whether the finding is likely a genuine gap or a collector API limitation."
+    )
+    try:
+        result_str = _dispatch_agent_call("sfdc-expert", load_agent_prompt("sfdc-expert"), user_content)
+        result = json.loads(result_str)
+        if result.get("status") == "ok":
+            return result.get("analysis", "")[:600]
+    except Exception:  # noqa: BLE001
+        pass  # agent call failure must not abort the enrichment loop
+    return ""
+
+
 def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
     """Enrich gap_analysis findings that need expert Apex/admin review.
 
@@ -908,45 +957,8 @@ def _dispatch_sfdc_expert(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: A
             continue
         cid = finding["control_id"]
         apex_filename = f"{cid}_{date_str}.apex"
-        apex_path = apex_dir / apex_filename
-        if not apex_path.exists():
-            apex_path.write_text(
-                f"// -- READ-ONLY -- sfdc-expert proposal for {cid}\n"
-                f"// Generated: {date_str} | Status: PENDING HUMAN REVIEW\n"
-                f"// Do NOT execute without System Administrator review.\n"
-                f"// Replace this placeholder with a specific SOQL/Apex query.\n"
-                f"//\n"
-                f"// Control: {cid}\n"
-                f"// Purpose: Surface data unavailable via sfdc-connect REST/SOQL API\n"
-            )
-        # Call sfdc-expert agent for per-finding specialist notes (if client available)
-        agent_note = ""
-        if _AGENT_CLIENT is not None:
-            finding_summary = json.dumps(
-                {
-                    "control_id": cid,
-                    "status": finding.get("status"),
-                    "severity": finding.get("severity"),
-                    "observed_value": finding.get("observed_value", ""),
-                    "evidence_ref": finding.get("evidence_ref", ""),
-                }
-            )
-            user_content = (
-                f"Provide expert Salesforce/Apex guidance for this finding requiring specialist review.\n"
-                f"Control: {cid}\n"
-                f"Finding: {finding_summary}\n\n"
-                f"Specify: (1) exact SOQL or Tooling API query to gather evidence, "
-                f"(2) Salesforce permission required to run it, "
-                f"(3) whether the finding is likely a genuine gap or a collector API limitation."
-            )
-            try:
-                result_str = _dispatch_agent_call("sfdc-expert", load_agent_prompt("sfdc-expert"), user_content)
-                result = json.loads(result_str)
-                if result.get("status") == "ok":
-                    agent_note = result.get("analysis", "")[:600]
-            except Exception:  # noqa: BLE001
-                pass  # agent call failure must not abort the enrichment loop
-
+        _write_apex_placeholder(apex_dir / apex_filename, cid, date_str)
+        agent_note = _call_sfdc_expert_note(cid, finding)
         apex_note = (
             f"Apex script staged at docs/oscal-salesforce-poc/apex-scripts/{apex_filename}. "
             f"Awaiting human review before execution."
@@ -1066,6 +1078,43 @@ def _dispatch_assessor_analyze(inp: dict[str, Any], out_dir: Path) -> str:  # no
     return _dispatch_agent_call("assessor", load_agent_prompt("assessor"), user_content)
 
 
+def _parse_workday_expert_notes(analysis: str) -> dict[str, str]:
+    """Parse workday-expert analysis text into a per-control-id notes dict.
+
+    Expected format: "Control: <WD-ID>\\nGap: ...\\nFix: ...\\nAPI: ..."
+    """
+    per_finding_notes: dict[str, str] = {}
+    current_cid: str | None = None
+    current_lines: list[str] = []
+    for line in analysis.splitlines():
+        if line.startswith("Control:"):
+            if current_cid and current_lines:
+                per_finding_notes[current_cid] = "\n".join(current_lines).strip()
+            current_cid = line.split(":", 1)[1].strip()
+            current_lines = [line]
+        elif current_cid:
+            current_lines.append(line)
+    if current_cid and current_lines:
+        per_finding_notes[current_cid] = "\n".join(current_lines).strip()
+    return per_finding_notes
+
+
+def _apply_workday_expert_notes(
+    eligible: list[dict[str, Any]],
+    per_finding_notes: dict[str, str],
+    analysis: str,
+) -> None:
+    """Write expert_notes into each eligible finding in-place."""
+    for finding in eligible:
+        if finding.get("expert_notes"):
+            continue
+        cid = finding.get("control_id", "")
+        if cid in per_finding_notes:
+            finding["expert_notes"] = f"[workday-expert] {per_finding_notes[cid]}\nAwaiting human review."
+        else:
+            finding["expert_notes"] = f"[workday-expert][generic] {analysis[:500]}\nAwaiting human review."
+
+
 def _dispatch_workday_expert_enrich(inp: dict[str, Any], out_dir: Path) -> str:  # noqa: ARG001
     """Invoke the Workday Expert agent to enrich permission-denied findings.
 
@@ -1128,33 +1177,8 @@ def _dispatch_workday_expert_enrich(inp: dict[str, Any], out_dir: Path) -> str: 
         result = json.loads(result_str)
         if result.get("status") == "ok":
             analysis = result.get("analysis", "")
-            # Parse per-finding sections from analysis text.
-            # Expected format: "Control: <WD-ID>\nGap: ...\nFix: ...\nAPI: ..."
-            # Build a dict of control_id -> section text for targeted application.
-            per_finding_notes: dict[str, str] = {}
-            current_cid: str | None = None
-            current_lines: list[str] = []
-            for line in analysis.splitlines():
-                if line.startswith("Control:"):
-                    if current_cid and current_lines:
-                        per_finding_notes[current_cid] = "\n".join(current_lines).strip()
-                    current_cid = line.split(":", 1)[1].strip()
-                    current_lines = [line]
-                elif current_cid:
-                    current_lines.append(line)
-            if current_cid and current_lines:
-                per_finding_notes[current_cid] = "\n".join(current_lines).strip()
-
-            for finding in eligible:
-                if finding.get("expert_notes"):
-                    continue
-                cid = finding.get("control_id", "")
-                if cid in per_finding_notes:
-                    # Apply control-specific note
-                    finding["expert_notes"] = f"[workday-expert] {per_finding_notes[cid]}\nAwaiting human review."
-                else:
-                    # Generic blob fallback — prefix with [generic] to distinguish
-                    finding["expert_notes"] = f"[workday-expert][generic] {analysis[:500]}\nAwaiting human review."
+            per_finding_notes = _parse_workday_expert_notes(analysis)
+            _apply_workday_expert_notes(eligible, per_finding_notes, analysis)
         gap_path = gap_path.resolve()
         gap_path.write_text(json.dumps(data, indent=2))  # NOSONAR — intentional artifact path
         result["enriched_findings"] = len(eligible)

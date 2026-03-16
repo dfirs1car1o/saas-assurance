@@ -705,7 +705,11 @@ def _aicm_domain_row(abbrev: str, data: dict[str, Any]) -> str:
     failing = data.get("failing_controls", [])
     cov_icon = _AICM_VERDICT_ICON.get(cov, "—")
     pos_icon = _AICM_POSTURE_ICON.get(pos, "—")
-    fail_str = (", ".join(failing[:3]) + ("…" if len(failing) > 3 else "")) if failing else "—"
+    if failing:
+        suffix = "…" if len(failing) > 3 else ""
+        fail_str = ", ".join(failing[:3]) + suffix
+    else:
+        fail_str = "—"
     return f"| **{abbrev}** | {cov_icon} {cov} | {pos_icon} {pos} | {total} | {fail_str} |"
 
 
