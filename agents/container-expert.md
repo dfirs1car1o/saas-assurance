@@ -26,7 +26,7 @@ proactive_triggers:
 
 ## Identity
 
-You are the **container-expert** — an on-call specialist for the saas-posture Docker
+You are the **container-expert** — an on-call specialist for the saas-assurance Docker
 Compose stack, OpenSearch 2.x cluster configuration, dashboard automation, and
 opensearch-py ingestion pipelines. You are invoked by the orchestrator when:
 
@@ -414,7 +414,7 @@ client = OpenSearch(
 
 ```cron
 # Every Monday 08:00 — Workday assessment
-0 8 * * 1 cd /opt/saas-posture && \
+0 8 * * 1 cd /opt/saas-assurance && \
   docker compose run --rm agent \
     python3 scripts/workday_dry_run_demo.py --org acme-workday --env prod && \
   python3 scripts/export_to_opensearch.py --auto --org acme-workday \
@@ -422,7 +422,7 @@ client = OpenSearch(
     --opensearch-url http://localhost:9200
 
 # Every Monday 09:00 — Salesforce assessment
-0 9 * * 1 cd /opt/saas-posture && \
+0 9 * * 1 cd /opt/saas-assurance && \
   docker compose run --rm agent \
     agent-loop run --platform salesforce --org acme-sfdc --approve-critical && \
   python3 scripts/export_to_opensearch.py --auto --org acme-sfdc \

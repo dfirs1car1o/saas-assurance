@@ -1,15 +1,15 @@
-# Threat Model — saas-posture Agentic Pipeline
+# Threat Model — saas-assurance Agentic Pipeline
 
 **Framework:** OWASP Top 10 for Agentic Applications 2026 + OWASP LLM Top 10 2025
 **Last reviewed:** 2026-03-12
 **Reviewer:** Security Team
-**Scope:** The `saas-posture` agentic assessment pipeline — orchestrator loop, CLI tool dispatchers, Salesforce/Workday collectors, report generation, and CI/CD gates.
+**Scope:** The `saas-assurance` agentic assessment pipeline — orchestrator loop, CLI tool dispatchers, Salesforce/Workday collectors, report generation, and CI/CD gates.
 
 ---
 
 ## System Context
 
-`saas-posture` is a **read-only security assessment tool**, not a consumer web application. It runs as a CLI on operator machines or in GitHub Actions. The attack surface is therefore different from the JWT/brute-force/WebSocket threats that affect web apps — the relevant threats are:
+`saas-assurance` is a **read-only security assessment tool**, not a consumer web application. It runs as a CLI on operator machines or in GitHub Actions. The attack surface is therefore different from the JWT/brute-force/WebSocket threats that affect web apps — the relevant threats are:
 
 1. **LLM-output → system execution boundary** (tool arguments from the LLM reaching subprocess calls)
 2. **Memory poisoning** (Qdrant-stored assessment history injected into the orchestrator prompt)

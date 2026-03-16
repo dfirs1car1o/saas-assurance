@@ -33,7 +33,7 @@ _RESET = "\033[0m"
 def _print_header() -> None:
     print(f"""
 {_BOLD}{_CYAN}╔══════════════════════════════════════════════════════╗
-║        saas-posture — Assessment Runner          ║
+║        saas-assurance — Assessment Runner        ║
 ╚══════════════════════════════════════════════════════╝{_RESET}
 """)
 

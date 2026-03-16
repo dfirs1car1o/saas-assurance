@@ -76,7 +76,7 @@ In VS Code: **Terminal → New Terminal** (or **Ctrl+`**)
 
 This opens a PowerShell terminal at the repo root. All commands below run here.
 
-> **Tip:** If you see `PS C:\Users\YourName\Projects\saas-posture>` you're in the right place.
+> **Tip:** If you see `PS C:\Users\YourName\Projects\saas-assurance>` you're in the right place.
 
 ---
 

@@ -6,8 +6,8 @@ These are the prompting patterns that work well for this system. The approach: s
 
 ### Session Start (Standard)
 ```
-Continue work on saas-posture. Read mission.md and AGENTS.md first, then tell me the current state.
-(Session notes are in Obsidian vault — saas-posture/Next Session.md)
+Continue work on saas-assurance. Read mission.md and AGENTS.md first, then tell me the current state.
+(Session notes are in Obsidian vault — saas-assurance/Next Session.md)
 ```
 
 ### Session Start (Live Assessment)

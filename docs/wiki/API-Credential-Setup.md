@@ -18,7 +18,7 @@ JWT Bearer uses a certificate/private-key pair instead of passwords. No session 
 openssl genrsa -out ~/salesforce_jwt_private.pem 2048
 openssl req -new -x509 -key ~/salesforce_jwt_private.pem \
   -out salesforce_jwt_cert.crt -days 730 \
-  -subj "/CN=saas-posture-agent"
+  -subj "/CN=saas-assurance-agent"
 chmod 600 ~/salesforce_jwt_private.pem
 ```
 
@@ -28,7 +28,7 @@ Keep `salesforce_jwt_private.pem` **outside the repo** (never commit it). The `.
 
 1. **Setup → External Client Apps → New External Client App**
 2. Fill in:
-   - **App Name / Label:** `saas-posture-agent`
+   - **App Name / Label:** `saas-assurance-agent`
    - **Contact Email:** your email
    - **Enable OAuth Settings:** ✅
    - **Callback URL:** `https://login.salesforce.com/services/oauth2/callback`
@@ -82,7 +82,7 @@ Workday uses OAuth 2.0 Client Credentials flow. All credentials come from a Work
 
 1. **Workday search bar → "Create Integration System User"**
 2. Fill in:
-   - **User Name:** `saas-posture-agent`
+   - **User Name:** `saas-assurance-agent`
    - **Password:** strong random password
    - **Do Not Allow UI Sessions:** ✅ (security best practice)
 3. Note the **User Name** — this is your service account
@@ -112,7 +112,7 @@ After adding, run **Activate Pending Security Policy Changes** (required by Work
 
 1. **Search → "Register API Client for Integrations"**
 2. Fill in:
-   - **Client Name:** `saas-posture-agent`
+   - **Client Name:** `saas-assurance-agent`
    - **Client Grant Type:** Client Credentials
    - **Access Token Type:** Bearer
    - **Token Expiration (seconds):** `3600`
@@ -147,7 +147,7 @@ WD_BASE_URL=https://your-tenant.workday.com/ccx/api
 The orchestration harness uses the OpenAI API for all LLM calls.
 
 1. Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. Create a new secret key — name it `saas-posture-agent`
+2. Create a new secret key — name it `saas-assurance-agent`
 3. Copy immediately (shown once)
 
 ```bash

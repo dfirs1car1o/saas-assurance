@@ -1,5 +1,5 @@
 [project]
-name = "saas-posture"
+name = "saas-assurance"
 version = "0.2.0"
 description = "SaaS Security multi-agent AI system for OSCAL/SSCF assessments"
 license = { file = "LICENSE" }

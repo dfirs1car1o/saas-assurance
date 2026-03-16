@@ -1,4 +1,4 @@
-# CLAUDE.md — saas-posture
+# CLAUDE.md — saas-assurance
 
 ## What This Repo Is
 

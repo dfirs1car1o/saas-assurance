@@ -24,7 +24,7 @@ import click
 if TYPE_CHECKING:
     pass  # intentional: no type-only imports needed at this time
 
-COLLECTION = "saas-posture"
+COLLECTION = "saas-assurance"
 _MEMORY_LIMIT = 5  # max prior assessment summaries to surface per org
 
 

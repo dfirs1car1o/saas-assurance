@@ -1,10 +1,10 @@
-# saas-posture — full platform stack
+# saas-assurance — full platform stack
 #
 # Services:
 #   opensearch      — document store (Apache 2.0)
 #   dashboards      — OpenSearch Dashboards UI at http://localhost:5601
 #   dashboard-init  — one-shot: imports index patterns + saved dashboards on first start
-#   agent           — saas-posture CLI (runs on demand, not as a daemon)
+#   agent           — saas-assurance CLI (runs on demand, not as a daemon)
 #
 # Security note: container-to-container communication uses http:// on the private
 # Docker bridge network with DISABLE_SECURITY_PLUGIN=true (dev only). All external

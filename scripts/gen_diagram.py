@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gen_diagram.py — Generate reference architecture diagram for saas-posture.
+gen_diagram.py — Generate reference architecture diagram for saas-assurance.
 
 Outputs: docs/architecture.png  (via graphviz / diagrams library)
 
@@ -45,7 +45,7 @@ _GRAPH = {
     "splines": "ortho",
     "nodesep": "0.6",
     "ranksep": "0.9",
-    "label": "saas-posture — Reference Architecture\nRead-only · OWASP Agentic App hardened · 7-phase · 94 tests",
+    "label": "saas-assurance — Reference Architecture\nRead-only · OWASP Agentic App hardened · 7-phase",
     "labelloc": "t",
     "labelfontsize": "13",
 }

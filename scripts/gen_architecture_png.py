@@ -2,7 +2,7 @@
 """
 gen_architecture_png.py — Generate docs/architecture.png
 
-Reference architecture for saas-posture.
+Reference architecture for saas-assurance.
 JWT-only for Salesforce, OAuth 2.0 / REST / RaaS for Workday.  No SOAP anywhere.
 """
 
@@ -127,7 +127,7 @@ def platform_box(x, y, w, h, name, lines):
 TOP = 25.7
 
 # ── Title ─────────────────────────────────────────────────────────────────────
-label(9, TOP - 0.05, "saas-posture — Reference Architecture", size=13, bold=True, color=C_BLUE_DARK)
+label(9, TOP - 0.05, "saas-assurance — Reference Architecture", size=13, bold=True, color=C_BLUE_DARK)
 label(
     9,
     TOP - 0.42,

@@ -5,8 +5,8 @@
 ## Step 1: Clone & Install
 
 ```bash
-git clone git@github.com:dfirs1car1o/saas-posture.git
-cd saas-posture
+git clone git@github.com:dfirs1car1o/saas-posture.git saas-assurance
+cd saas-assurance
 
 # Create and activate a venv
 python3 -m venv .venv && source .venv/bin/activate
