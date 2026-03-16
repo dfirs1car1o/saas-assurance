@@ -4,7 +4,7 @@
 [![CI](https://github.com/dfirs1car1o/saas-assurance/actions/workflows/ci.yml/badge.svg)](https://github.com/dfirs1car1o/saas-assurance/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
 
-SaaS Security multi-agent AI system for OSCAL and CSA SSCF assessments across Salesforce and Workday. Produces governance-grade evidence packages for application owners and business security review cycles.
+Read-only SaaS security assessment pipeline for commercial platforms such as Salesforce and Workday, designed to preserve evidence provenance from collection through governance output.
 
 > **New here?** Start with the **[Wiki →](https://github.com/dfirs1car1o/saas-assurance/wiki)** for full onboarding instructions, platform-specific setup guides (macOS, Linux, Windows), pipeline walkthroughs, and a complete skill and agent reference.
 
@@ -12,7 +12,7 @@ SaaS Security multi-agent AI system for OSCAL and CSA SSCF assessments across Sa
 
 ## What This Is
 
-A seven-phase, read-only security assessment pipeline powered by multi-agent AI with enforced tool sequencing and OWASP Agentic App Top 10 hardening. Each phase produces a structured artifact that feeds the next.
+A seven-phase, read-only SaaS assurance pipeline powered by multi-agent AI with enforced tool sequencing and OWASP Agentic App Top 10 hardening. It is designed to turn platform configuration evidence into structured findings, governance outputs, POA&M-ready remediation tracking, and repeatable monitoring artifacts.
 
 ```
 Phase 1 — Collect      sfdc-connect / workday-connect    →  sfdc_raw.json / workday_raw.json
