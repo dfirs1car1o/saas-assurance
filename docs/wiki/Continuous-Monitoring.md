@@ -32,7 +32,7 @@ Run this after every formal assessment and you get a full audit trail over time.
 Skip Docker entirely. Just run the export script after each assessment and pipe the data to your existing tooling:
 
 ```bash
-pip install -e ".[monitoring]"   # installs opensearch-py — only needed for OpenSearch sink
+pip install -e ".[dev]"   # installs all dev/test dependencies (opensearch-py is in the main dependencies)
 
 python scripts/export_to_opensearch.py \
   --backlog <path/to/backlog.json> \

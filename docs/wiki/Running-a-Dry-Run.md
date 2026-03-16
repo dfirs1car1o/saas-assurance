@@ -50,10 +50,6 @@ agent-loop [DRY-RUN]: org=test-org env=dev
   → writes: docs/oscal-salesforce-poc/generated/test-org/test-org_security_assessment.md
   → writes: docs/oscal-salesforce-poc/generated/test-org/test-org_security_assessment.docx
 
-  [OSCAL] gen_poam.py → poam.json (OSCAL 1.1.2 Plan of Action and Milestones)
-  [OSCAL] gen_assessment_results.py → assessment_results.json (OSCAL 1.1.2 Assessment Results)
-  [OSCAL] gen_ssp.py → ssp.json (OSCAL 1.1.2 System Security Plan)
-
 ============================================================
 Assessment complete (7 turn(s))
 overall_score : 34.8%
@@ -61,6 +57,33 @@ critical_fails: 0
 ============================================================
 
 Result written → docs/oscal-salesforce-poc/generated/test-org/loop_result.json
+```
+
+### Optional post-processing (run manually after pipeline)
+
+The OSCAL machine-readable artifacts are **not** produced by the automated pipeline. Run these scripts separately after `agent-loop` completes if needed for GRC tooling or audit packages:
+
+```bash
+# OSCAL Plan of Action and Milestones
+python scripts/gen_poam.py \
+    --backlog docs/oscal-salesforce-poc/generated/test-org/backlog.json \
+    --org test-org --platform salesforce \
+    --out docs/oscal-salesforce-poc/generated/test-org/poam.json
+
+# OSCAL Assessment Results
+python scripts/gen_assessment_results.py \
+    --gap-analysis docs/oscal-salesforce-poc/generated/test-org/gap_analysis.json \
+    --backlog docs/oscal-salesforce-poc/generated/test-org/backlog.json \
+    --org test-org --platform salesforce \
+    --out docs/oscal-salesforce-poc/generated/test-org/assessment_results.json
+
+# OSCAL System Security Plan
+python scripts/gen_ssp.py \
+    --sscf-report docs/oscal-salesforce-poc/generated/test-org/sscf_report.json \
+    --backlog docs/oscal-salesforce-poc/generated/test-org/backlog.json \
+    --nist-review docs/oscal-salesforce-poc/generated/test-org/nist_review.json \
+    --org test-org --platform salesforce \
+    --out docs/oscal-salesforce-poc/generated/test-org/ssp.json
 ```
 
 ---
@@ -109,17 +132,21 @@ python3 scripts/workday_dry_run_demo.py --org acme-workday --env dev
 Runs the complete Workday pipeline (all 30 WSCC controls) using realistic stub data — no live Workday tenant required. Produces identical output structure to a live run:
 
 ```
+Automated pipeline outputs:
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/workday_raw.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/gap_analysis.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/backlog.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/sscf_report.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/nist_review.json
-→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/poam.json
-→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/assessment_results.json
-→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/ssp.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/aicm_coverage.json
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_remediation_report.md
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_security_assessment.md
 → docs/oscal-salesforce-poc/generated/acme-workday/<date>/acme-workday_security_assessment.docx
+
+Optional post-processing (run manually after pipeline — see gen_poam.py, gen_assessment_results.py, gen_ssp.py):
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/poam.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/assessment_results.json
+→ docs/oscal-salesforce-poc/generated/acme-workday/<date>/ssp.json
 ```
 
 Or via agent-loop:

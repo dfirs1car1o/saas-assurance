@@ -433,9 +433,13 @@ Enriches Workday findings where `needs_expert_review: true` or `data_source: per
 ### security_reviewer_review
 
 **Dispatcher:** `_dispatch_security_reviewer_review` (harness/tools.py)
-**Agent invoked:** `security-reviewer`
+**Agent invoked:** `delivery-reviewer`
 **Input:** `report_path` (path to the generated security assessment Markdown)
 
-Final AppSec pass on the security report before delivery. Checks for credential exposure, status misrepresentation, and scope violations. `credential_exposure` and `scope_violation` flags delay `finish()` until human acknowledgement.
+Final delivery-quality pass on the security report before it is sent to a stakeholder. Checks for credential exposure, status misrepresentation, and scope violations. `credential_exposure` and `scope_violation` flags delay `finish()` until human acknowledgement.
+
+> **Agent distinction:**
+> - `delivery-reviewer` — reviews **report output** for delivery QA (credential exposure, softened findings, scope violations). Invoked here via `security_reviewer_review`.
+> - `security-reviewer` — reviews **repo/CI/AppSec posture** (workflow files, skill CLIs, PRs). Invoked on-demand for DevSecOps review; not a pipeline dispatch.
 
 **FLAG tokens:** `credential_exposure:<detail>`, `status_misrepresentation:<control_id>`, `scope_violation:<section>`

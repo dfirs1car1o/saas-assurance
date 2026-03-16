@@ -305,7 +305,7 @@ artifacts = [
     ("sfdc_raw.json\nworkday_raw.json", "Phase 1 — Collect", 1.4),
     ("gap_analysis.json\nbacklog.json", "Phase 2-3 — Assess", 3.55),
     ("sscf_report.json\nnist_review.json", "Phase 3-4 — Score+Gate", 5.7),
-    ("aicm_coverage.json\npoam.json / ssp.json", "Phase 5 — OSCAL+AICM", 7.85),
+    ("aicm_coverage.json\n(poam/ssp: post-proc)", "Phase 5 — AICM Crosswalk", 7.85),
     ("report_*.md/.docx\naudit.jsonl", "Phase 6-7 — Report+Audit", 10.0),
 ]
 for text, phase, cx in artifacts:

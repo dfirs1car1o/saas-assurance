@@ -28,15 +28,19 @@ sfdc_raw  workday_raw gap_analysis backlog  sscf_report nist_review aicm_coverag
  .json      .json       .json       .json     .json       .json       .json
    └──────────┴──────────┴───────────┴──────────┴───────────┴──────────┘
                               │
-              ┌───────────────┼───────────────────────────────┐
-              │               │                               │
-    ┌─────────▼──────┐ ┌──────▼──────────┐    audit.jsonl (per run)
-    │   report-gen    │ │  gen_poam +     │    loop_result.json
-    │  app-owner MD   │ │  gen_assessment │
-    │  security MD    │ │  _results +     │
-    │  + DOCX         │ │  gen_ssp        │
-    │  + AICM annex   │ │  (OSCAL 1.1.2)  │
-    └─────────────────┘ └─────────────────┘
+                              │
+                    ┌─────────▼──────┐    audit.jsonl (per run)
+                    │   report-gen    │    loop_result.json
+                    │  app-owner MD   │
+                    │  security MD    │
+                    │  + DOCX         │
+                    │  + AICM annex   │
+                    └─────────────────┘
+
+Post-processing (run manually after pipeline — not automated tool calls):
+    gen_poam.py → poam.json
+    gen_assessment_results.py → assessment_results.json
+    gen_ssp.py → ssp.json  (all OSCAL 1.1.2)
 ```
 
 ---

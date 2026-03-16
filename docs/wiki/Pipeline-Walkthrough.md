@@ -368,9 +368,11 @@ report-gen generate \
 
 ---
 
-## Stage 7a: Security Reviewer Final Review (Agent Sub-call)
+## Stage 7a: Delivery Reviewer Final Review (Agent Sub-call)
 
-**What it does:** After security report generation, the orchestrator invokes the **security-reviewer agent** directly via `security_reviewer_review` for a final AppSec pass before `finish()`.
+**What it does:** After security report generation, the orchestrator invokes the **delivery-reviewer agent** directly via `security_reviewer_review` for a final delivery-quality pass before `finish()`.
+
+> **Agent distinction:** `delivery-reviewer` reviews **report output** for delivery QA. The separate `security-reviewer` agent reviews **repo/CI/AppSec posture** (workflow files, skill CLIs) and is not a pipeline dispatch.
 
 **Checks three areas:**
 1. **Credential exposure** — org URLs, usernames, internal identifiers that should not appear in a deliverable → `FLAG: credential_exposure:<detail>`

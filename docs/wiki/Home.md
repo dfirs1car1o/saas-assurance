@@ -40,7 +40,9 @@ The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 7 CLI tools an
 
 ## Pipeline at a Glance
 
-7 phases, 7 CLI skills, 9 specialist agents, 14-turn ReAct orchestration loop.
+6 automated phases, 7 CLI skills, 9 specialist agents, 14-turn ReAct orchestration loop.
+
+### Automated Pipeline (agent-loop)
 
 | Phase | Tool | Output | Notes |
 |---|---|---|---|
@@ -48,12 +50,20 @@ The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 7 CLI tools an
 | **2 · Assess** | `oscal-assess` + `oscal_gap_map.py` | `gap_analysis.json` + `backlog.json` | 35 SBS controls (SFDC) / 30 WSCC controls (Workday) |
 | **3 · Score** | `sscf-benchmark` | `sscf_report.json` | RED / AMBER / GREEN per SSCF domain |
 | **4 · NIST Gate** | `nist-review` | `nist_review.json` | clear / flag / block verdict; block stops delivery |
-| **5 · OSCAL Artifacts** | `gen_poam.py`, `gen_assessment_results.py`, `gen_ssp.py` | `poam.json`, `assessment_results.json`, `ssp.json` | Persistent POA&M, OSCAL AR, per-org SSP |
-| **5b · AICM** | `gen_aicm_crosswalk.py` | `aicm_coverage.json` | 243 controls, 18 domains; EU AI Act / ISO 42001 / NIST AI 600-1 |
+| **5 · AICM Crosswalk** | `gen_aicm_crosswalk.py` | `aicm_coverage.json` | 243 controls, 18 domains; EU AI Act / ISO 42001 / NIST AI 600-1 |
 | **6 · Report** | `report-gen` | `.md` + `.docx` | App-owner + security-governance audience split |
-| **7 · Monitor** | `export_to_opensearch` | OpenSearch index | 3 pre-built dashboards; drift trending |
 
 **Sequencing is enforced in code** — the harness `_TOOL_REQUIRES` map blocks out-of-order tool calls before dispatch. Every invocation is logged to `audit.jsonl`.
+
+### Post-processing (run manually after pipeline)
+
+These scripts are **not** orchestrated tool calls. Run them after `agent-loop` completes if OSCAL machine-readable artifacts are needed for GRC tooling or audit packages.
+
+| Script | Output | Description |
+|---|---|---|
+| `python scripts/gen_poam.py` | `poam.json` | OSCAL 1.1.2 persistent Plan of Action and Milestones |
+| `python scripts/gen_assessment_results.py` | `assessment_results.json` | OSCAL 1.1.2 Assessment Results |
+| `python scripts/gen_ssp.py` | `ssp.json` | OSCAL 1.1.2 per-org System Security Plan |
 
 ---
 

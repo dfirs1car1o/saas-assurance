@@ -366,7 +366,7 @@ curl -X POST "http://localhost:5601/api/saved_objects/_import?overwrite=true" \
 | Score tiles show "No data" | `sscf-runs-*` index missing — run `export_to_opensearch.py` after assessment |
 | `dashboard-init` exited non-zero | Re-run: `docker compose restart dashboard-init` |
 | Dashboards not loading after start | Wait 60 s — OpenSearch takes ~30 s to become healthy before dashboards can connect |
-| `opensearch-py not installed` | `pip install opensearch-py` or `pip install -e ".[monitoring]"` |
+| `opensearch-py not installed` | `pip install opensearch-py` (opensearch-py is already a main dependency; or reinstall with `pip install -e ".[dev]"`) |
 | Port 9200 or 5601 already in use | Stop conflicting service, or change ports in `docker-compose.yml` |
 | Apple Silicon (M-series) OOM | `OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m` in `docker-compose.yml` |
 | Duplicate panels / wrong viz | Re-import: `curl -X POST "localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" --form file=@config/opensearch/dashboards.ndjson` |
