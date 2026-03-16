@@ -1,6 +1,6 @@
 # saas-posture Wiki
 
-Welcome to the **SaaS Security Multi-Agent System** wiki. AI-orchestrated assessment pipeline for Salesforce and Workday OSCAL/SSCF security assessments with NIST AI RMF governance gate and OWASP Agentic App security hardening. The 6-phase agent pipeline is fully automated; OSCAL artifact generation (POA&M, SSP, Assessment Results) runs as optional post-processing scripts.
+Welcome to the **SaaS Security Multi-Agent System** wiki. AI-orchestrated, tool-sequenced assessment pipeline for Salesforce and Workday OSCAL/SSCF security assessments with NIST AI RMF governance gate and OWASP Agentic App security hardening. The pipeline runs automated from collection through report generation; delivery can be held by quality gates and human acknowledgment. OSCAL artifacts (POA&M, SSP, Assessment Results) are post-processing scripts, not orchestrated pipeline steps.
 
 ---
 
@@ -34,13 +34,13 @@ This system connects to SaaS platforms, runs OSCAL and CSA SSCF security assessm
 
 Platform controls chain through **platform OSCAL catalog → SSCF → CCM v4.1 → regulatory crosswalk** (SOX, HIPAA, SOC2, ISO 27001, NIST 800-53, PCI DSS, GDPR) automatically. For organizations using AI-enabled SaaS (Salesforce Einstein, Workday AI), an **AICM v1.0.3 crosswalk** (EU AI Act / ISO 42001 / NIST AI 600-1 / BSI AI C4) is generated as a companion output.
 
-The pipeline is fully agentic: `gpt-5.3-chat-latest` orchestrates 7 CLI tools and 10 specialist agents over a 14-turn ReAct loop with enforced tool sequencing. No human input needed once triggered. Every tool call is logged to a structured JSONL audit trail.
+`gpt-5.3-chat-latest` orchestrates 7 CLI tools and 10 specialist agents over a 14-turn ReAct loop with enforced tool sequencing. Every tool call is logged to a structured JSONL audit trail.
 
 ---
 
 ## Pipeline at a Glance
 
-6 automated phases, 7 CLI skills, 10 specialist agents, 14-turn ReAct orchestration loop.
+7 CLI skills, 10 specialist agents, 14-turn ReAct orchestration loop.
 
 ### Automated Pipeline (agent-loop)
 
@@ -100,7 +100,7 @@ agent-loop run --dry-run --env dev --org test-org
 | 3 | ✅ Done | `agent-loop` harness + Mem0 session memory |
 | 4 | ✅ Done | `report-gen` DOCX/MD governance output |
 | 5 | ✅ Done | Auto-regenerating architecture diagram |
-| 6 | ✅ Done | CI hardening, security-reviewer agent |
+| 6 | ✅ Done | CI hardening, delivery-reviewer agent (pipeline QA) |
 | NIST review | ✅ Done | nist-review skill, 7-step pipeline, gate logic |
 | JWT Auth | ✅ Done | JWT Bearer flow, live verified |
 | sfdc-expert | ✅ Done | On-call Apex/SFDC specialist agent |
@@ -124,4 +124,4 @@ agent-loop run --dry-run --env dev --org test-org
 | **AICM Loop Wiring** | **✅ Done** | `gen_aicm_crosswalk` registered as dispatchable tool in agent loop; Step 5b in both Salesforce + Workday task prompts; `schedule.yml` Phase 6 passes `--aicm-coverage` |
 | **Tool Sequencing Gate** | **✅ Done** | `_TOOL_REQUIRES` dependency map in `harness/loop.py` — enforces pipeline order in code; sequencing violations return structured error JSON (OWASP A2 Excessive Agency) |
 | **Qdrant API Key Auth** | **✅ Done** | `QDRANT_API_KEY` env var wired into networked Qdrant config; documented in `.env.example` (OWASP A3 Memory Poisoning) |
-| **OWASP Agentic App Hardening** | **✅ Done** | Full OWASP Top 10 for Agentic Applications 2026 threat model; input path validation, org sanitization, memory guard, structured audit log, Semgrep CI gates; 94 tests |
+| **OWASP Agentic App Hardening** | **✅ Done** | Full OWASP Top 10 for Agentic Applications 2026 threat model; input path validation, org sanitization, memory guard, structured audit log, Semgrep CI gates; 191 tests |

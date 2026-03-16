@@ -117,7 +117,7 @@ All agents are OpenAI models (`gpt-5.3-chat-latest`). The orchestrator dispatche
 | Workday Expert | On-call Workday HCM/Finance specialist; proposes RaaS reports for permission-denied findings |
 | NIST Reviewer | Validates outputs; issues block/flag/pass verdicts against NIST AI RMF |
 | Reporter | Writes LLM narrative for governance reports |
-| Security Reviewer | Final AppSec pass on security report — flags credential exposure, scope violations |
+| Delivery Reviewer | Final delivery-quality pass on security report — flags credential exposure, status misrepresentation, scope violations |
 | Container Expert | Docker Compose, OpenSearch, NDJSON dashboards, JVM tuning |
 
 
@@ -230,7 +230,7 @@ skills/
   nist_review/            ← NIST AI RMF gate (--platform salesforce|workday)
   report_gen/             ← Governance report generator (MD + DOCX)
   workday_connect/        ← Workday HCM/Finance collector (OAuth 2.0, 30 controls, 21 tests)
-tests/                    ← pytest suite (94 tests, fully offline with --mock-llm)
+tests/                    ← pytest suite (191 tests, fully offline)
 docs/security/            ← threat-model.md — OWASP Top 10 for Agentic Applications 2026
 ```
 
@@ -283,7 +283,7 @@ source .venv/bin/activate
 ruff check skills/ harness/    # lint
 bandit -r skills/ harness/     # SAST
 pip-audit                      # dependency CVEs
-pytest tests/ -v               # 94 tests, fully offline (no API key needed)
+pytest tests/ -v               # 191 tests, fully offline (no API key needed)
 ```
 
 CI stack: ruff · bandit · Semgrep (`p/python` + `p/owasp-top-ten`) · pip-audit · gitleaks · pytest · CodeQL · grype · zizmor · CodeRabbit Pro · dependency-review.
