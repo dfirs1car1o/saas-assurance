@@ -174,7 +174,7 @@ def run_benchmark(  # NOSONAR
         "source_assessment_id": backlog.get("assessment_id", ""),
         "framework": "CSA_SSCF",
         "threshold": threshold,
-        "overall_score": round(overall_score, 4),
+        "overall_score": round(overall_score, 4) if overall_score is not None else None,
         "overall_status": _domain_status(overall_score, threshold),
         "domains": domain_results,
         "summary": {
@@ -201,7 +201,9 @@ def _to_markdown(report: dict[str, Any]) -> str:
         f"- Generated UTC: `{report['generated_at_utc']}`",
         f"- Framework: `{report['framework']}`",
         f"- Threshold: `{int(report['threshold'] * 100)}%`",
-        f"- Overall Score: `{int(report['overall_score'] * 100)}%` — **{report['overall_status'].upper()}**",
+        "- Overall Score: `"
+        + ("N/A" if report["overall_score"] is None else f"{int(report['overall_score'] * 100)}%")
+        + f"` — **{report['overall_status'].upper()}**",
         "",
         "## Domain Scorecard",
         "",
