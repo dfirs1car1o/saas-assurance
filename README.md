@@ -19,8 +19,9 @@ Phase 1 — Collect      sfdc-connect / workday-connect    →  sfdc_raw.json / 
 Phase 2 — Assess       oscal-assess + oscal_gap_map       →  gap_analysis.json + backlog.json
 Phase 3 — Score        sscf-benchmark                     →  sscf_report.json (RED/AMBER/GREEN)
 Phase 4 — Gate         nist-reviewer (NIST AI RMF 1.0)    →  nist_review.json (clear/flag/block)
-Phase 5 — OSCAL        gen_poam + gen_assessment_results  →  poam.json + assessment_results.json
-           + gen_ssp + gen_aicm_crosswalk                 →  ssp.json + aicm_coverage.json
+Phase 5 — AICM         gen_aicm_crosswalk                 →  aicm_coverage.json
+Post-proc — OSCAL      gen_poam + gen_assessment_results  →  poam.json + assessment_results.json
+           + gen_ssp (standalone scripts — not pipeline)  →  ssp.json
 Phase 6 — Report       report-gen (app-owner + security)  →  Markdown + DOCX governance packages
 Phase 7 — Monitor      export_to_opensearch + dashboards  →  OpenSearch trending + 3 dashboards
 ```
@@ -194,9 +195,6 @@ Original Pipeline               Current Pipeline
 4. sscf_benchmark               4.  sscf_benchmark
 5. nist_review_assess           5.  nist_review_assess      (AI RMF gate)
                                 5d. gen_aicm_crosswalk      (AICM v1.0.3)
-                                5e. gen_poam                (OSCAL POA&M)
-                                5f. gen_assessment_results  (OSCAL AR)
-                                5g. gen_ssp                 (OSCAL SSP)
 6a/6b. report_gen_generate      6a/6b. report_gen_generate
                                 7.  export_to_opensearch    (dashboards)
 ```

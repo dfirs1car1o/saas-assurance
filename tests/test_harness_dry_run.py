@@ -527,3 +527,70 @@ def test_finish_blocked_without_security_report(tmp_path: Path) -> None:
     # finish() must NOT have been dispatched — sequencing gate should have blocked it
     # because state["report_security_md"] is None (only app-owner report was written)
     assert "finish" not in dispatched, "finish() should be blocked when no security-audience report has been written"
+
+
+# ---------------------------------------------------------------------------
+# finish() gating: security_review_flags injected from harness state
+# ---------------------------------------------------------------------------
+
+
+def test_finish_blocked_on_credential_exposure_flag() -> None:
+    """_dispatch_finish must block when security_review_flags contains a credential_exposure flag.
+
+    This test verifies that harness/tools.py correctly blocks pipeline completion
+    when a credential_exposure flag is present. The loop.py injects state flags
+    into the inp dict before calling dispatch("finish", inp).
+    """
+    from harness.tools import dispatch
+
+    inp = {
+        "summary": "All checks complete.",
+        "security_review_flags": ["credential_exposure:org_id_in_executive_summary"],
+    }
+    result = json.loads(dispatch("finish", inp))
+    assert result["status"] == "blocked", f"Expected blocked, got: {result}"
+    assert any("credential_exposure" in f for f in result.get("flags", [])), "blocking flag not surfaced"
+
+
+def test_finish_blocked_on_scope_violation_flag() -> None:
+    """_dispatch_finish must block when security_review_flags contains a scope_violation flag."""
+    from harness.tools import dispatch
+
+    inp = {
+        "summary": "Assessment done.",
+        "security_review_flags": ["scope_violation:section_3_grants_write_access"],
+    }
+    result = json.loads(dispatch("finish", inp))
+    assert result["status"] == "blocked", f"Expected blocked, got: {result}"
+    assert any("scope_violation" in f for f in result.get("flags", [])), "blocking flag not surfaced"
+
+
+def test_finish_allowed_when_only_status_misrepresentation_flag() -> None:
+    """_dispatch_finish must allow completion when the only flag is status_misrepresentation.
+
+    status_misrepresentation is a warning-only flag — it does not block delivery.
+    Only credential_exposure and scope_violation are blocking.
+    """
+    from harness.tools import dispatch
+
+    inp = {
+        "summary": "Assessment complete.",
+        "security_review_flags": ["status_misrepresentation:SBS-AUTH-001"],
+    }
+    result = json.loads(dispatch("finish", inp))
+    assert result["status"] == "ok", f"Expected ok (warning-only flag should not block), got: {result}"
+    assert result.get("pipeline_complete") is True
+
+
+def test_finish_allowed_when_no_security_review_flags() -> None:
+    """_dispatch_finish must allow completion when security_review_flags is empty."""
+    from harness.tools import dispatch
+
+    inp = {
+        "summary": "Clean run — no flags.",
+        "security_review_flags": [],
+    }
+    result = json.loads(dispatch("finish", inp))
+    assert result["status"] == "ok", f"Expected ok with no flags, got: {result}"
+    assert result.get("pipeline_complete") is True
+    assert result.get("summary") == "Clean run — no flags."

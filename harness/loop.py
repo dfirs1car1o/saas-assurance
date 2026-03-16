@@ -368,6 +368,14 @@ def _run_loop(  # NOSONAR
 
             click.echo(f"  [tool] {name}({json.dumps(inp, separators=(',', ':'))})", err=True)
 
+            # --- Inject harness-managed state into finish() call (OWASP A2 hardening) ---
+            # The LLM cannot reliably pass security_review_flags back to finish() because
+            # it has no structured access to harness state. Inject from state here so
+            # _dispatch_finish always sees the flags recorded by security_reviewer_review,
+            # regardless of what the LLM included in its tool arguments.
+            if name == "finish":
+                inp["security_review_flags"] = state.get("security_review_flags", [])
+
             # --- Tool sequencing gate (OWASP A2 — Excessive Agency) ---
             # Waive collector prerequisites when dry_run is active — offline test runs
             # skip straight to assess without a live Salesforce/Workday connection.
