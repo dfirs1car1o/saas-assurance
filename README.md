@@ -80,36 +80,50 @@ Human ──► agent-loop run (harness/loop.py)
                │
                └──► Orchestrator (gpt-5.3-chat-latest)
                          │
-                         ├── 1a. sfdc_connect_collect      → sfdc_raw.json        (Salesforce)
-                         ├── 1b. workday_connect_collect   → workday_raw.json     (Workday)
-                         ├── 1.5 backlog_diff              → drift_report.json    (re-assessments only)
-                         ├── 2.  oscal_assess_assess       → gap_analysis.json
-                         ├── 3.  oscal_gap_map             → backlog.json + matrix.md
-                         ├── 4.  sscf_benchmark_benchmark  → sscf_report.json
-                         ├── 5.  nist_review_assess        → nist_review.json     (AI RMF gate)
-                         ├── 5d. gen_aicm_crosswalk        → aicm_coverage.json   (AICM v1.0.3)
-                         ├── 5e. gen_poam                  → poam.json            (OSCAL POA&M)
-                         ├── 5f. gen_assessment_results    → assessment_results.json
-                         ├── 5g. gen_ssp                   → ssp.json             (System Security Plan)
-                         ├── 6a. report_gen_generate       → *_remediation_report.md   (app-owner)
-                         └── 6b. report_gen_generate       → *_security_assessment.md + .docx
+                         ├── 1a.  sfdc_connect_collect      → sfdc_raw.json           (Salesforce)
+                         ├──  ╰─► collector_enrich          → flags (evidence QA)     [agent sub-call]
+                         ├── 1b.  workday_connect_collect   → workday_raw.json        (Workday)
+                         ├──  ╰─► collector_enrich          → flags (evidence QA)     [agent sub-call]
+                         ├── 1.5  backlog_diff              → drift_report.json       (re-assessments only)
+                         ├── 2.   oscal_assess_assess       → gap_analysis.json
+                         ├──  ╰─► assessor_analyze          → flags (confidence QA)   [agent sub-call]
+                         ├──  ╰─► sfdc_expert_enrich        → gap_analysis.json+      (if flagged)
+                         ├──  ╰─► workday_expert_enrich     → gap_analysis.json+      (if flagged, Workday)
+                         ├── 3.   oscal_gap_map             → backlog.json + matrix.md
+                         ├── 4.   sscf_benchmark_benchmark  → sscf_report.json
+                         ├── 5.   nist_review_assess        → nist_review.json        (AI RMF gate)
+                         ├── 5d.  gen_aicm_crosswalk        → aicm_coverage.json      (AICM v1.0.3)
+                         ├── 5e.  gen_poam                  → poam.json               (OSCAL POA&M)
+                         ├── 5f.  gen_assessment_results    → assessment_results.json
+                         ├── 5g.  gen_ssp                   → ssp.json                (System Security Plan)
+                         ├── 6a.  report_gen_generate       → *_remediation_report.md (app-owner)
+                         ├── 6b.  report_gen_generate       → *_security_assessment.md + .docx
+                         ├──  ╰─► security_reviewer_review  → flags (AppSec final)    [agent sub-call]
+                         └── 6c.  finish()
 ```
 
-All agents are OpenAI models. The orchestrator dispatches numbered tool calls to skills (Python CLIs). Agents communicate through JSON evidence files on disk — no shared state or MCP. **Tool sequencing is enforced in code** via `_TOOL_REQUIRES` in `harness/loop.py` — every call is validated against prerequisites before dispatch.
+All agents are OpenAI models (`gpt-5.3-chat-latest`). The orchestrator dispatches tool calls to skills (Python CLIs) and inline **agent sub-calls** — direct OpenAI chat completions that inject specialist intelligence between pipeline stages. Agents communicate through JSON evidence files on disk — no shared state or MCP. **Tool sequencing is enforced in code** via `_TOOL_REQUIRES` in `harness/loop.py`.
 
-| Agent | Model | Role |
+### Pipeline Agents (invoked by `agent-loop run`)
+
+| Agent | Role |
+|---|---|
+| Orchestrator | Plans and dispatches all pipeline steps |
+| Collector | Reviews raw evidence quality; flags missing scopes and stale refs |
+| Assessor | Reviews gap analysis confidence; flags low-confidence critical findings |
+| SFDC Expert | On-call Salesforce/Apex/API specialist for complex `needs_expert_review` findings |
+| Workday Expert | On-call Workday HCM/Finance specialist; proposes RaaS reports for permission-denied findings |
+| NIST Reviewer | Validates outputs; issues block/flag/pass verdicts against NIST AI RMF |
+| Reporter | Writes LLM narrative for governance reports |
+| Security Reviewer | Final AppSec pass on security report — flags credential exposure, scope violations |
+| Container Expert | Docker Compose, OpenSearch, NDJSON dashboards, JVM tuning |
+
+### Interactive Personas (Claude Code session — not part of `agent-loop run`)
+
+| Persona | Invoke with | Role |
 |---|---|---|
-| Orchestrator | `gpt-5.3-chat-latest` | Plans and dispatches all pipeline steps |
-| Collector | `gpt-5.3-chat-latest` | Interprets platform raw evidence data |
-| Assessor | `gpt-5.3-chat-latest` | Runs OSCAL gap analysis and benchmarks |
-| NIST Reviewer | `gpt-5.3-chat-latest` | Validates outputs; issues block/flag/pass verdicts |
-| Reporter | `gpt-5.3-chat-latest` | Writes LLM narrative for governance reports |
-| Security Reviewer | `gpt-5.3-chat-latest` | DevSecOps audit on CI/CD skill changes |
-| SFDC Expert | `gpt-5.3-chat-latest` | On-call specialist for complex Salesforce/Apex/API questions |
-| Workday Expert | `gpt-5.3-chat-latest` | On-call specialist for Workday HCM/Finance RaaS/REST |
-| Container Expert | `gpt-5.3-chat-latest` | Docker Compose, OpenSearch, NDJSON dashboards, JVM tuning |
-| Repo Reviewer | `gpt-5.3-chat-latest` | Periodic repo auditor — PII exposure, stale docs, strategic alignment (Claude Code only) |
-| OSCAL Expert | `gpt-5.3-chat-latest` | OSCAL 1.1.2 / SSCF / CCM / AICM specialist for catalog and mapping review (Claude Code only) |
+| Repo Reviewer | `@repo-reviewer` | Periodic repo auditor — PII exposure, stale docs, strategic alignment |
+| OSCAL Expert | `@oscal-expert` | OSCAL 1.1.2 / SSCF / CCM / AICM specialist for catalog and mapping review |
 
 ## Skills (CLIs)
 
