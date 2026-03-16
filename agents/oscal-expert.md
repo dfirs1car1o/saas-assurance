@@ -4,7 +4,7 @@ description: |
   OSCAL 1.1.2 and CSA SSCF specialist for the saas-posture repo. Invoked by Claude Code
   (not the pipeline harness) when reviewing or authoring catalog/profile/mapping files,
   control crosswalks, or OSCAL script logic. Text analysis only — no tool calls.
-model: claude-sonnet-4-6
+model: gpt-5.3-chat-latest
 tools: []
 proactive_triggers:
   - Any change to config/sscf/, config/salesforce/, config/workday/, config/aicm/
