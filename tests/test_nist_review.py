@@ -318,9 +318,9 @@ class TestAssessLiveModeStructuredParse:
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         # Pure prose — not valid JSON
-        mock_response.choices[0].message.content = (
-            "The assessment looks okay. verdict: flag. All functions were reviewed."
-        )
+        mock_response.choices[
+            0
+        ].message.content = "The assessment looks okay. verdict: flag. All functions were reviewed."
 
         with patch("openai.OpenAI") as mock_openai_cls:
             mock_client = MagicMock()
@@ -340,9 +340,7 @@ class TestAssessLiveModeStructuredParse:
         assert verdict["nist_ai_rmf_review"]["overall"] == "block"
         assert verdict["nist_ai_rmf_review"]["parser_mode"] == "fail_closed"
 
-    def test_malformed_response_is_fail_closed(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_malformed_response_is_fail_closed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """JSON parse failure returns fail-closed verdict wrapped in nist_ai_rmf_review."""
         from unittest.mock import MagicMock, patch
 
