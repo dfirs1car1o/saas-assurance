@@ -127,12 +127,12 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
         if not isinstance(analysis_val, str) or not analysis_val:
             return "analysis_empty_or_not_string"
 
-        # agent field must be a non-empty string matching expected name (case-insensitive)
+        # agent field must be a non-empty string (exact-name match not enforced — models
+        # self-identify from their system-prompt role name which may differ from the
+        # internal dispatch key; the authoritative name is always agent_name from the caller)
         agent_val = parsed.get("agent")
         if not isinstance(agent_val, str) or not agent_val:
             return "agent_not_a_string"
-        if agent_val.lower() != expected_agent.lower():
-            return f"agent_name_mismatch_{agent_val}"
 
         return None
 
@@ -158,7 +158,7 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
             severity_val = parsed["severity"]
             return {
                 "status": raw_status,
-                "agent": parsed.get("agent", agent_name),
+                "agent": agent_name,  # always use authoritative dispatch name
                 "analysis": parsed.get("analysis", raw),
                 "flags": flags_val,
                 "summary": parsed.get("summary", ""),

@@ -591,12 +591,13 @@ class TestValidateAgentResponse:
         assert result["severity"] == "critical"
         assert any("analysis" in f for f in result["flags"])
 
-    def test_strict_agent_agent_name_mismatch_returns_error(self) -> None:
-        """parsed['agent'] != expected agent_name (collector) → status=error for non-delivery-reviewer."""
+    def test_strict_agent_model_self_id_accepted_authoritative_name_returned(self) -> None:
+        """Model self-identifies with a different name than the dispatch key — accepted;
+        returned 'agent' field is always the authoritative dispatch name, not the model value."""
         payload = json.dumps(
             {
                 "status": "ok",
-                "agent": "wrong-agent",
+                "agent": "collector-reviewer",  # model self-id differs from dispatch key
                 "analysis": "Collection complete.",
                 "flags": [],
                 "summary": "All controls collected.",
@@ -604,16 +605,15 @@ class TestValidateAgentResponse:
             }
         )
         result = _validate_agent_response(payload, "collector")
-        assert result["status"] == "error"
-        assert result["severity"] == "critical"
-        assert any("agent" in f for f in result["flags"])
+        assert result["status"] == "ok"
+        assert result["agent"] == "collector"  # authoritative name, not model self-id
 
-    def test_delivery_reviewer_agent_name_mismatch_returns_block(self) -> None:
-        """parsed['agent'] != 'delivery-reviewer' for delivery-reviewer → status=block."""
+    def test_delivery_reviewer_model_self_id_accepted_authoritative_name_returned(self) -> None:
+        """delivery-reviewer model self-id mismatch is accepted; agent field pinned to dispatch name."""
         payload = json.dumps(
             {
                 "status": "ok",
-                "agent": "wrong-agent",
+                "agent": "delivery-review-agent",  # model self-id differs
                 "analysis": "Review complete.",
                 "flags": [],
                 "summary": "Report reviewed.",
@@ -621,9 +621,8 @@ class TestValidateAgentResponse:
             }
         )
         result = _validate_agent_response(payload, "delivery-reviewer")
-        assert result["status"] == "block"
-        assert result["severity"] == "critical"
-        assert any("agent" in f for f in result["flags"])
+        assert result["status"] == "ok"
+        assert result["agent"] == "delivery-reviewer"  # authoritative name pinned
 
 
 # ---------------------------------------------------------------------------
