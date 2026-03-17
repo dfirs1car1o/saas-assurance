@@ -364,13 +364,14 @@ class TestDispatchSecurityReviewerReview:
 
 class TestValidateAgentResponse:
     def test_structured_json_response_used_directly(self) -> None:
-        """Valid JSON with all required fields is used directly without FLAG: scraping."""
+        """Valid JSON with all 6 required fields is used directly without FLAG: scraping."""
         payload = json.dumps(
             {
                 "status": "ok",
                 "agent": "delivery-reviewer",
                 "analysis": "No issues found.",
                 "flags": ["scope_violation:section-x"],
+                "summary": "Report is clean.",
                 "severity": "critical",
             }
         )

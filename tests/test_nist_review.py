@@ -340,6 +340,92 @@ class TestAssessLiveModeStructuredParse:
         # Fallback sets overall = "flag"
         assert verdict["nist_ai_rmf_review"]["overall"] == "flag"
 
+    def test_malformed_response_has_degraded_marker(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Regex salvage path marks output with parser_mode=degraded_regex_salvage and REVIEW REQUIRED rec."""
+        from unittest.mock import MagicMock, patch
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        gap = self._gap_file(tmp_path)
+        backlog = self._backlog_file(tmp_path)
+        out = tmp_path / "nist_degraded.json"
+
+        # Return a response that is invalid JSON at the top level but contains a JSON substring
+        # so that regex salvage finds and parses it.
+        inner_json = json.dumps(
+            {
+                "nist_ai_rmf_review": {
+                    "assessment_id": "test-live-001",
+                    "reviewed_at_utc": "2026-01-01T00:00:00+00:00",
+                    "reviewer": "nist-reviewer",
+                    "govern": {"status": "partial", "notes": "degraded"},
+                    "map": {"status": "partial", "notes": "degraded"},
+                    "measure": {"status": "partial", "notes": "degraded"},
+                    "manage": {"status": "partial", "notes": "degraded"},
+                    "overall": "flag",
+                    "blocking_issues": [],
+                    "recommendations": [],
+                }
+            }
+        )
+        # Wrap the JSON in prose — this triggers json.JSONDecodeError on the outer parse
+        # but the regex r"\{.*\}" will salvage the inner JSON substring.
+        prose_wrapping = f"Here is my verdict: {inner_json} — end of review."
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = prose_wrapping
+
+        with patch("openai.OpenAI") as mock_openai_cls:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_openai_cls.return_value = mock_client
+
+            runner = __import__("click.testing", fromlist=["CliRunner"]).CliRunner()
+            result = runner.invoke(
+                cli,
+                ["assess", "--gap-analysis", str(gap), "--backlog", str(backlog), "--out", str(out)],
+            )
+
+        assert result.exit_code == 0, result.output
+        verdict = json.loads(out.read_text())
+        review = verdict["nist_ai_rmf_review"]
+        assert review.get("parser_mode") == "degraded_regex_salvage"
+        assert any("REVIEW REQUIRED" in rec for rec in review.get("recommendations", []))
+
+    def test_valid_structured_response_has_no_degraded_marker(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Valid structured JSON parse does NOT add parser_mode or REVIEW REQUIRED."""
+        from unittest.mock import MagicMock, patch
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        gap = self._gap_file(tmp_path)
+        backlog = self._backlog_file(tmp_path)
+        out = tmp_path / "nist_valid.json"
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = self._valid_verdict_json()
+
+        with patch("openai.OpenAI") as mock_openai_cls:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_openai_cls.return_value = mock_client
+
+            runner = __import__("click.testing", fromlist=["CliRunner"]).CliRunner()
+            result = runner.invoke(
+                cli,
+                ["assess", "--gap-analysis", str(gap), "--backlog", str(backlog), "--out", str(out)],
+            )
+
+        assert result.exit_code == 0, result.output
+        verdict = json.loads(out.read_text())
+        review = verdict["nist_ai_rmf_review"]
+        assert review.get("parser_mode") != "degraded_regex_salvage"
+        assert not any("REVIEW REQUIRED" in rec for rec in review.get("recommendations", []))
+
     def test_nist_review_response_format_requested_in_api_call(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
