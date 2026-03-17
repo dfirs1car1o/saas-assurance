@@ -7,6 +7,7 @@ and the full OWASP security harness. Complements arch-a2-agents.png.
 
 Output: docs/arch-b2-agents.png
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -51,17 +52,15 @@ def main() -> None:
 
         # ── Security Harness ──────────────────────────────────────────────────
         with Cluster("Security Harness  (harness/loop.py · harness/tools.py)"):
-            seq_gate  = Firewall("_TOOL_REQUIRES\nSequencing Gate  (A2)")
+            seq_gate = Firewall("_TOOL_REQUIRES\nSequencing Gate  (A2)")
             mem_guard = Firewall("Memory Guard\nInjection Strip  (A1/A3)")
-            path_val  = Firewall("_sanitize_org\n_safe_inp_path  (A5)")
+            path_val = Firewall("_sanitize_org\n_safe_inp_path  (A5)")
             audit_log = Storage("audit.jsonl\nper run  (A9)")
             allowlist = Firewall("Tool Allowlist\ndispatch()  (A7)")
 
         # ── Memory Layer ──────────────────────────────────────────────────────
         with Cluster("Session Memory  (Mem0 + Qdrant)"):
-            qdrant = Cassandra(
-                "org alias · prior score\ncritical findings\nQDRANT_IN_MEMORY=1"
-            )
+            qdrant = Cassandra("org alias · prior score\ncritical findings\nQDRANT_IN_MEMORY=1")
 
         # ── Agent Layer ───────────────────────────────────────────────────────
         with Cluster("Agent Layer  (OpenAI API · gpt-5.3-chat-latest)"):
@@ -69,10 +68,10 @@ def main() -> None:
 
             # Pipeline agents (dispatched in sequence)
             with Cluster("Pipeline Agents  (dispatched by sequencing gate)"):
-                collector  = Server("Collector  [STRICT]\nsfdc-connect · workday-connect")
-                assessor   = Server("Assessor  [STRICT]\noscal-assess · gap_map · sscf-benchmark")
-                nist_rev   = Server("NIST Reviewer\nnist-review · pass/flag/block")
-                reporter   = Server("Reporter\nreport-gen · MD + DOCX + AICM")
+                collector = Server("Collector  [STRICT]\nsfdc-connect · workday-connect")
+                assessor = Server("Assessor  [STRICT]\noscal-assess · gap_map · sscf-benchmark")
+                nist_rev = Server("NIST Reviewer\nnist-review · pass/flag/block")
+                reporter = Server("Reporter\nreport-gen · MD + DOCX + AICM")
 
             # Gate agents (quality control, fail-closed)
             with Cluster("Gate Agents  (fail-closed schema validation)"):
@@ -80,10 +79,10 @@ def main() -> None:
 
             # On-demand agents (not pipeline dispatched)
             with Cluster("On-Demand Agents"):
-                sec_rev  = Server("Security Reviewer\nAppSec + DevSecOps CI")
+                sec_rev = Server("Security Reviewer\nAppSec + DevSecOps CI")
                 sfdc_exp = Server("SFDC Expert  [STRICT]\nApex + SOQL specialist")
-                wd_exp   = Server("Workday Expert  [STRICT]\nRaaS + REST specialist")
-                ctr_exp  = Server("Container Expert\nDocker + OpenSearch")
+                wd_exp = Server("Workday Expert  [STRICT]\nRaaS + REST specialist")
+                ctr_exp = Server("Container Expert\nDocker + OpenSearch")
 
         # ── Connections ───────────────────────────────────────────────────────
         dashed = Edge(style="dashed", color="steelblue")
@@ -92,9 +91,9 @@ def main() -> None:
         human >> orchestrator
 
         # Harness gates around orchestrator
-        seq_gate  >> orange >> orchestrator
+        seq_gate >> orange >> orchestrator
         mem_guard >> orange >> orchestrator
-        path_val  >> orange >> orchestrator
+        path_val >> orange >> orchestrator
         audit_log >> orange >> orchestrator
         allowlist >> orange >> orchestrator
 
