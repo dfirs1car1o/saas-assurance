@@ -1102,7 +1102,7 @@ def _render_evidence_methodology(backlog: dict) -> str:  # NOSONAR
 # NIST section renderer
 # ---------------------------------------------------------------------------
 
-_NIST_STATUS_ICON = {"pass": "✅", "partial": "⚠️", "fail": "❌"}
+_NIST_STATUS_ICON = {"pass": "✅", "partial": "⚠️", "fail": "❌", "block": "⛔", "BLOCK": "⛔"}
 _NIST_OVERALL_ICON = {"block": "⛔", "flag": "🚩", "pass": "✅"}
 _NIST_GATE_BANNERS = {
     "block": (
