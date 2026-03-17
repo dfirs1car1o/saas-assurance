@@ -54,14 +54,14 @@ To route all calls through Azure OpenAI instead of the public OpenAI API, set:
 | File | Purpose | Controls |
 |---|---|---|
 | `config/sscf/sscf_v1_catalog.json` | SSCF v1.0 base catalog — all 36 controls with ODPs | 36 (parameterized) |
-| `config/salesforce/sbs_v1_profile.json` | Salesforce SBS profile — selects 35 controls, sets ODP values | 35 selected |
+| `config/salesforce/sbs_v1_profile.json` | Salesforce SBS profile — selects 45 controls, sets ODP values | 45 selected |
 | `config/workday/wscc_v1_profile.json` | Workday WSCC profile — selects 30 controls, sets ODP values | 30 selected |
 
 ### Resolved Catalogs (pre-generated — regenerate with `gen_resolved_profile.py`)
 
 | File | Platform | Controls | Description |
 |---|---|---|---|
-| `config/salesforce/sbs_resolved_catalog.json` | Salesforce | 35 | Params substituted, platform alters merged |
+| `config/salesforce/sbs_resolved_catalog.json` | Salesforce | 45 | Params substituted, platform alters merged |
 | `config/workday/wscc_resolved_catalog.json` | Workday | 30 | Params substituted, platform alters merged |
 
 Regenerate after editing a profile:

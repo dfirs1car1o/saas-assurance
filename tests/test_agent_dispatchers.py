@@ -470,6 +470,92 @@ class TestValidateAgentResponse:
         assert result["status"] == "error"
         assert result["severity"] == "critical"
 
+    # --- FIX 1: full strict-agent 6-field schema enforcement ---
+
+    def test_delivery_reviewer_missing_flags_returns_block(self) -> None:
+        """JSON response for delivery-reviewer missing 'flags' field → status=block."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "delivery-reviewer",
+                "analysis": "No issues.",
+                "summary": "Clean report.",
+                "severity": "info",
+                # 'flags' intentionally omitted
+            }
+        )
+        result = _validate_agent_response(payload, "delivery-reviewer")
+        assert result["status"] == "block"
+        assert any("flags" in f for f in result["flags"])
+        assert result["severity"] == "critical"
+
+    def test_delivery_reviewer_missing_summary_returns_block(self) -> None:
+        """JSON response for delivery-reviewer missing 'summary' field → status=block."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "delivery-reviewer",
+                "analysis": "No issues.",
+                "flags": [],
+                "severity": "info",
+                # 'summary' intentionally omitted
+            }
+        )
+        result = _validate_agent_response(payload, "delivery-reviewer")
+        assert result["status"] == "block"
+        assert any("summary" in f for f in result["flags"])
+        assert result["severity"] == "critical"
+
+    def test_strict_agent_missing_severity_returns_error(self) -> None:
+        """JSON response for collector (strict) missing 'severity' → status=error."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "collector",
+                "analysis": "Collection complete.",
+                "flags": [],
+                "summary": "All controls collected.",
+                # 'severity' intentionally omitted
+            }
+        )
+        result = _validate_agent_response(payload, "collector")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+
+    def test_strict_agent_invalid_severity_returns_error(self) -> None:
+        """JSON response with severity='high' (not in info|warning|critical) → status=error."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "collector",
+                "analysis": "Collection complete.",
+                "flags": [],
+                "summary": "All controls collected.",
+                "severity": "high",  # invalid — must be info|warning|critical
+            }
+        )
+        result = _validate_agent_response(payload, "collector")
+        assert result["status"] == "error"
+        assert any("severity" in f for f in result["flags"])
+        assert result["severity"] == "critical"
+
+    def test_strict_agent_non_list_flags_returns_error(self) -> None:
+        """JSON response with flags='none' (string, not list) → status=error."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "assessor",
+                "analysis": "Assessment complete.",
+                "flags": "none",  # invalid — must be a list
+                "summary": "All controls assessed.",
+                "severity": "info",
+            }
+        )
+        result = _validate_agent_response(payload, "assessor")
+        assert result["status"] == "error"
+        assert any("flags" in f for f in result["flags"])
+        assert result["severity"] == "critical"
+
 
 # ---------------------------------------------------------------------------
 # PATCH 1 — finish() blocked on security_review_flags

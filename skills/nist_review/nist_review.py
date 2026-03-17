@@ -335,11 +335,13 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
         lines = raw.splitlines()
         raw = "\n".join(lines[1:-1] if lines and lines[-1].strip() == "```" else lines[1:])
 
+    _used_regex_salvage = False
     try:
         verdict = json.loads(raw)
     except json.JSONDecodeError:
         # Regex salvage — explicit fallback; should not be reached with json_object mode.
         logger.warning("nist_review: structured parse failed, using regex salvage — review output carefully")
+        _used_regex_salvage = True
         match = re.search(r"\{.*\}", raw, re.DOTALL)
         if match:
             try:
@@ -348,6 +350,21 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
                 verdict = None
         else:
             verdict = None
+
+    # Mark degraded output so consumers can detect untrustworthy verdicts.
+    if _used_regex_salvage and verdict is not None and "nist_ai_rmf_review" in verdict:
+        review = verdict["nist_ai_rmf_review"]
+        review["parser_mode"] = "degraded_regex_salvage"
+        recs = review.setdefault("recommendations", [])
+        recs.insert(
+            0,
+            "REVIEW REQUIRED: This verdict was produced by regex salvage after structured parse failure. "
+            "Human review is mandatory before acting on this output.",
+        )
+        if not review.get("blocking_issues"):
+            review.setdefault("blocking_issues", []).append(
+                "Verdict produced via degraded parsing — treat as unverified"
+            )
 
     if verdict is None:
         click.echo(f"WARNING: LLM response not valid JSON. Falling back to flag verdict.\n{raw[:300]}", err=True)

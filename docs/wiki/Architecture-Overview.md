@@ -94,7 +94,7 @@ Post-processing (run manually after pipeline — not automated tool calls):
 sfdc-connect collect (--platform salesforce)
     → sfdc_raw.json
         → oscal-assess assess
-            → gap_analysis.json (35 SBS controls)
+            → gap_analysis.json (45 SBS controls)
                 → oscal_gap_map.py
                     → backlog.json (SSCF-mapped remediation items)
                         → sscf-benchmark benchmark
@@ -208,7 +208,7 @@ For persistent cross-session memory, run a Qdrant container and set `QDRANT_HOST
 Platform Config (Salesforce or Workday)
        ↓
   Platform OSCAL Catalog
-    SBS:  config/salesforce/sbs_v1_profile.json   (35 controls, OSCAL 1.1.2)
+    SBS:  config/salesforce/sbs_v1_profile.json   (45 controls, OSCAL 1.1.2)
     WSCC: config/workday/wscc_v1_profile.json      (30 controls, OSCAL 1.1.2)
        ↓
   Platform → SSCF mapping
@@ -268,7 +268,7 @@ Full threat model: [`docs/security/threat-model.md`](../security/threat-model.md
 | `agents/orchestrator.md` | Orchestrator routing table, quality gates, finish() trigger |
 | `config/sscf/sscf_v1_catalog.json` | SSCF OSCAL 1.1.2 catalog (36 controls, 6 domains) |
 | `config/sscf/sscf_to_ccm_mapping.yaml` | SSCF→CCM v4.1 bridge |
-| `config/salesforce/sbs_v1_profile.json` | SBS OSCAL 1.1.2 sub-profile (35 controls) |
+| `config/salesforce/sbs_v1_profile.json` | SBS OSCAL 1.1.2 sub-profile (45 controls) |
 | `config/workday/wscc_v1_profile.json` | WSCC OSCAL 1.1.2 sub-profile (30 controls) |
 | `schemas/baseline_assessment_schema.json` | v2 platform-agnostic assessment schema |
 | `skills/workday_connect/SKILL.md` | Workday connector reference (transport matrix, auth, output shape) |

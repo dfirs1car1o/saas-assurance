@@ -54,7 +54,7 @@ SF_DOMAIN=login
 
 **Binary:** `oscal-assess`
 **File:** `skills/oscal_assess/oscal_assess.py`
-**Purpose:** Evaluates 35 SBS controls against the collected org configuration.
+**Purpose:** Evaluates 45 SBS controls against the collected org configuration.
 
 ### Commands
 

@@ -97,7 +97,7 @@ flowchart TD
     end
 
     subgraph LAYER2["Layer 2 — Profiles (platform subsets)"]
-        SBS["SBS v1.0 Profile\n35 controls\nSalesforce-specific\nconfig/salesforce/sbs_v1_profile.json"]
+        SBS["SBS v1.0 Profile\n45 controls\nSalesforce-specific\nconfig/salesforce/sbs_v1_profile.json"]
         WSCC["WSCC v1.0 Profile\n30 controls\nWorkday-specific\nconfig/workday/wscc_v1_profile.json"]
     end
 

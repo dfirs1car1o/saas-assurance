@@ -70,11 +70,27 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
       - delivery-reviewer → status=block (hard gate)
       - all other strict agents → status=error (pipeline blocked)
 
+    Strict agents must return ALL 6 canonical fields with valid values:
+      status, agent, analysis, flags (list), summary, severity (info|warning|critical)
+
     For non-strict agents, falls back to FLAG: line scraping (legacy behaviour).
     Always returns a dict with all required canonical fields.
     """
-    _REQUIRED = {"status", "agent", "analysis"}
+    _REQUIRED_BASE = {"status", "agent", "analysis"}
+    _REQUIRED_STRICT = {"status", "agent", "analysis", "flags", "summary", "severity"}
     _VALID_STATUS = {"ok", "error", "block"}
+    _VALID_SEVERITY = {"info", "warning", "critical"}
+
+    def _schema_violation_response(field: str) -> dict:
+        block_status = "block" if agent_name == "delivery-reviewer" else "error"
+        return {
+            "status": block_status,
+            "agent": agent_name,
+            "analysis": "Schema violation — required field missing or invalid",
+            "flags": [f"FLAG:schema_violation:{field}"],
+            "summary": "",
+            "severity": "critical",
+        }
 
     # --- Attempt 1: JSON parse ---
     json_ok = False
@@ -88,32 +104,47 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
         pass
 
     if json_ok and parsed is not None:
-        # Validate required fields are present
-        missing = _REQUIRED - parsed.keys()
-        if missing and agent_name in _STRICT_AGENTS:
-            # Strict agent returned JSON but is missing required fields — fail closed
-            block_status = "block" if agent_name == "delivery-reviewer" else "error"
+        if agent_name in _STRICT_AGENTS:
+            # Enforce all 6 required fields for strict agents
+            missing = _REQUIRED_STRICT - parsed.keys()
+            if missing:
+                field_label = "missing_fields_" + ",".join(sorted(missing))
+                return _schema_violation_response(field_label)
+
+            # Validate severity is one of the allowed values
+            severity_val = parsed.get("severity")
+            if severity_val not in _VALID_SEVERITY:
+                return _schema_violation_response(f"invalid_severity_{severity_val}")
+
+            # Validate flags is a list
+            flags_val = parsed.get("flags")
+            if not isinstance(flags_val, list):
+                return _schema_violation_response("flags_not_a_list")
+
+            # Validate status is a recognised value
+            raw_status = parsed.get("status", "ok")
+            if raw_status not in _VALID_STATUS:
+                return _schema_violation_response(f"invalid_status_{raw_status}")
+
             return {
-                "status": block_status,
-                "agent": agent_name,
-                "analysis": f"Agent response missing required fields: {sorted(missing)}",
-                "flags": [f"FLAG:schema_violation:missing_fields_{','.join(sorted(missing))}"],
-                "summary": "",
-                "severity": "critical",
+                "status": raw_status,
+                "agent": parsed.get("agent", agent_name),
+                "analysis": parsed.get("analysis", raw),
+                "flags": flags_val,
+                "summary": parsed.get("summary", ""),
+                "severity": severity_val,
             }
 
-        # Normalise status field — reject invalid values on strict agents
+        # Non-strict agent — only require the base 3 fields; fill defaults for the rest
+        missing = _REQUIRED_BASE - parsed.keys()
+        if missing and agent_name in _STRICT_AGENTS:
+            # Belt-and-suspenders (unreachable given branch above, kept for safety)
+            return _schema_violation_response("missing_fields_" + ",".join(sorted(missing)))
+
+        # Normalise status field — reject invalid values on strict agents (non-strict: default to ok)
         raw_status = parsed.get("status", "ok")
         if raw_status not in _VALID_STATUS and agent_name in _STRICT_AGENTS:
-            block_status = "block" if agent_name == "delivery-reviewer" else "error"
-            return {
-                "status": block_status,
-                "agent": agent_name,
-                "analysis": f"Agent returned invalid status value: {raw_status!r}",
-                "flags": [f"FLAG:schema_violation:invalid_status_{raw_status}"],
-                "summary": parsed.get("summary", ""),
-                "severity": "critical",
-            }
+            return _schema_violation_response(f"invalid_status_{raw_status}")
 
         # All checks passed — fill any optional missing fields with safe defaults
         analysis = parsed.get("analysis", raw)
