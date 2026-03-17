@@ -131,7 +131,7 @@ label(9, TOP - 0.05, "saas-assurance — Reference Architecture", size=13, bold=
 label(
     9,
     TOP - 0.42,
-    "Read-only · JWT Bearer (SFDC) · OAuth 2.0 (Workday) · OWASP Agentic App Top 10 · 64 tests",
+    "Read-only · JWT Bearer (SFDC) · OAuth 2.0 (Workday) · OWASP Agentic App Top 10 · 191 tests",
     size=8,
     color=C_GREY,
 )
@@ -205,18 +205,20 @@ section(
 )
 
 # Orchestrator — centrepiece
-ORC_X, ORC_Y, ORC_W, ORC_H = 0.65, 13.2, 3.0, 1.1
+ORC_X, ORC_Y, ORC_W, ORC_H = 0.65, 12.8, 3.0, 1.1
 agent_box(ORC_X, ORC_Y, ORC_W, ORC_H, "Orchestrator", "plans + dispatches", fc="#BBDEFB", ec=C_BLUE_DARK)
 
-# Sub-agents column
+# Sub-agents column  (9 agents, 1.4-unit spacing)
 sub_agents = [
     ("Security Reviewer", "DevSecOps CI gate", 19.8),
-    ("Collector", "sfdc + workday", 18.2),
-    ("Assessor", "OSCAL gap analysis", 16.6),
-    ("NIST Reviewer", "AI RMF gate", 15.0),
-    ("Reporter", "MD + DOCX narrative", 13.4),
-    ("SFDC Expert", "on-call specialist", 11.8),
-    ("Workday Expert", "on-call specialist", 10.2),
+    ("Delivery Reviewer", "delivery readiness gate", 18.4),
+    ("Collector", "sfdc + workday", 17.0),
+    ("Assessor", "OSCAL gap analysis", 15.6),
+    ("NIST Reviewer", "AI RMF gate", 14.2),
+    ("Reporter", "MD + DOCX narrative", 12.8),
+    ("SFDC Expert", "on-call specialist", 11.4),
+    ("Workday Expert", "on-call specialist", 10.0),
+    ("Container Expert", "Docker / infra checks", 8.6),
 ]
 for name, sub, y_pos in sub_agents:
     agent_box(4.6, y_pos - 0.55, 2.9, 0.95, name, sub)
@@ -335,7 +337,7 @@ label(SEC6_X + 3.05, SEC6_Y + 0.57, "Score trend · POA&M · Domain risk · Seve
 # ARROWS between sections
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Orchestrator ↔ skills (right)
+# Orchestrator ↔ skills (right)  — arrows align with skill_box y-centres
 for y_pos in [19.8 - 0.04, 18.1 - 0.04, 16.4 - 0.04, 14.7 - 0.04, 13.0 - 0.04, 11.3 - 0.04, 9.6 - 0.04]:
     arrow(SEC3_X + SEC3_W, y_pos, SEC4_X, y_pos, color=C_TEAL, lw=1.0)
 
