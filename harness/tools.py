@@ -1219,14 +1219,15 @@ def _dispatch_security_reviewer_review(inp: dict[str, Any], out_dir: Path) -> st
 
     user_content = (
         "Review the following security assessment report for delivery to a human stakeholder.\n"
-        "Check three areas:\n"
+        "Check three areas and respond in JSON with fields: status, agent, analysis, flags, summary.\n"
         "1. Credentials, org URLs, usernames, or internal identifiers that should not appear "
-        "   in a deliverable — emit 'FLAG: credential_exposure:<detail>'.\n"
+        "   in a deliverable — add 'FLAG: credential_exposure:<detail>' to the flags array.\n"
         "2. Language in any finding that downplays or softens a fail/critical status — "
-        "   emit 'FLAG: status_misrepresentation:<control_id>'.\n"
+        "   add 'FLAG: status_misrepresentation:<control_id>' to the flags array.\n"
         "3. Any section granting or implying permissions beyond the read-only OSCAL/SSCF "
-        "   assessment scope in mission.md — emit 'FLAG: scope_violation:<section>'.\n\n"
-        "End with a '### Security Posture Summary' block (1-3 sentences).\n\n"
+        "   assessment scope in mission.md — add 'FLAG: scope_violation:<section>' to the flags array.\n\n"
+        "Set 'summary' to 1-3 sentences on overall delivery readiness. "
+        "Set 'status' to 'ok' if no blocking flags, 'block' if credential_exposure or scope_violation found.\n\n"
         f"Report content (truncated to 6000 chars):\n{report_text[:6000]}"
     )
     return _dispatch_agent_call("delivery-reviewer", load_agent_prompt("delivery-reviewer"), user_content)
