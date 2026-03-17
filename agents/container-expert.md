@@ -345,7 +345,7 @@ def wait_for_opensearch(url: str, retries: int = 20, delay: float = 3.0) -> None
 | Dashboards healthcheck: **unhealthy** | Wrong healthcheck pattern (Kibana `"level":"available"` vs OSD `"state":"green"`) | Use `grep -q '"state":"green"'` in healthcheck command |
 | `dashboard-init` exits non-zero | Dashboards not ready when init ran | `docker compose restart dashboard-init` or increase `start_period` on dashboards healthcheck |
 | `dashboard-init` exits 0 but no objects | Import succeeded but `overwrite=false` (default) skipped existing | Add `?overwrite=true` to the import URL |
-| Export script: `opensearch-py not installed` | Dependency missing | `pip install opensearch-py` or `pip install -e ".[monitoring]"` |
+| Export script: `opensearch-py not installed` | Dependency missing | `pip install opensearch-py` or `pip install -e ".[dev]"` |
 | Export script: `Connection refused: 9200` | OpenSearch not running or wrong URL | `docker compose up -d && python scripts/export_to_opensearch.py ...` |
 | Dashboard shows **no data** | Time range defaults to "Last 15 minutes"; assessments are historical | Set dashboard `timeFrom: now-1y` in saved object, or adjust time picker in UI |
 | Platform shows as **"sscf"** on findings | `export_to_opensearch.py` using `framework` field fallback instead of WD- heuristic | Fixed in `_build_run_doc`: use WD- prefix detection on `sbs_control_id` |

@@ -232,3 +232,140 @@ class TestDryRunStubs:
     def test_both_platforms_have_blocking_issues_list(self) -> None:
         for platform in ("salesforce", "workday"):
             assert isinstance(_DRY_RUN_VERDICTS[platform]["nist_ai_rmf_review"]["blocking_issues"], list)
+
+
+# ---------------------------------------------------------------------------
+# Live mode — structured JSON parse and regex salvage fallback (FIX 3)
+# ---------------------------------------------------------------------------
+
+
+class TestAssessLiveModeStructuredParse:
+    """Tests for live-mode structured JSON output and regex salvage fallback."""
+
+    def _gap_file(self, tmp_path: Path) -> Path:
+        f = tmp_path / "gap.json"
+        f.write_text(json.dumps({"assessment_id": "test-live-001", "findings": []}))
+        return f
+
+    def _backlog_file(self, tmp_path: Path) -> Path:
+        f = tmp_path / "backlog.json"
+        f.write_text(json.dumps({"org": "test", "mapped_items": []}))
+        return f
+
+    def _valid_verdict_json(self, assessment_id: str = "test-live-001") -> str:
+        return json.dumps(
+            {
+                "nist_ai_rmf_review": {
+                    "assessment_id": assessment_id,
+                    "reviewed_at_utc": "2026-01-01T00:00:00+00:00",
+                    "reviewer": "nist-reviewer",
+                    "govern": {"status": "pass", "notes": "Accountability defined."},
+                    "map": {"status": "pass", "notes": "Scope bounded."},
+                    "measure": {"status": "pass", "notes": "Confidence tracked."},
+                    "manage": {"status": "partial", "notes": "Due dates missing."},
+                    "overall": "flag",
+                    "blocking_issues": [],
+                    "recommendations": ["Add due dates to critical findings."],
+                }
+            }
+        )
+
+    def test_nist_review_structured_parse_produces_correct_verdict(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Successful structured JSON parse from nist_review live mode produces correct verdict."""
+        from unittest.mock import MagicMock, patch
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        gap = self._gap_file(tmp_path)
+        backlog = self._backlog_file(tmp_path)
+        out = tmp_path / "nist_review.json"
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = self._valid_verdict_json()
+
+        with patch("openai.OpenAI") as mock_openai_cls:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_openai_cls.return_value = mock_client
+
+            runner = __import__("click.testing", fromlist=["CliRunner"]).CliRunner()
+            result = runner.invoke(
+                cli,
+                ["assess", "--gap-analysis", str(gap), "--backlog", str(backlog), "--out", str(out)],
+            )
+
+        assert result.exit_code == 0, result.output
+        verdict = json.loads(out.read_text())
+        assert "nist_ai_rmf_review" in verdict
+        review = verdict["nist_ai_rmf_review"]
+        assert review["overall"] == "flag"
+        assert review["govern"]["status"] == "pass"
+        assert isinstance(review["blocking_issues"], list)
+
+    def test_nist_review_malformed_response_triggers_fallback_not_exception(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Malformed nist_review response triggers fallback verdict, not an exception."""
+        from unittest.mock import MagicMock, patch
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        gap = self._gap_file(tmp_path)
+        backlog = self._backlog_file(tmp_path)
+        out = tmp_path / "nist_review_fallback.json"
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # Pure prose — not valid JSON even after regex salvage
+        mock_response.choices[0].message.content = (
+            "The assessment looks okay. verdict: flag. All functions were reviewed."
+        )
+
+        with patch("openai.OpenAI") as mock_openai_cls:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_openai_cls.return_value = mock_client
+
+            runner = __import__("click.testing", fromlist=["CliRunner"]).CliRunner()
+            result = runner.invoke(
+                cli,
+                ["assess", "--gap-analysis", str(gap), "--backlog", str(backlog), "--out", str(out)],
+            )
+
+        # Must not raise — fallback verdict is written
+        assert result.exit_code == 0, result.output
+        verdict = json.loads(out.read_text())
+        assert "nist_ai_rmf_review" in verdict
+        # Fallback sets overall = "flag"
+        assert verdict["nist_ai_rmf_review"]["overall"] == "flag"
+
+    def test_nist_review_response_format_requested_in_api_call(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Live mode passes response_format=json_object to the OpenAI API call."""
+        from unittest.mock import MagicMock, patch
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        gap = self._gap_file(tmp_path)
+        backlog = self._backlog_file(tmp_path)
+        out = tmp_path / "nist_review_rf.json"
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = self._valid_verdict_json()
+
+        with patch("openai.OpenAI") as mock_openai_cls:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_openai_cls.return_value = mock_client
+
+            runner = __import__("click.testing", fromlist=["CliRunner"]).CliRunner()
+            runner.invoke(
+                cli,
+                ["assess", "--gap-analysis", str(gap), "--backlog", str(backlog), "--out", str(out)],
+            )
+
+        call_kwargs = mock_client.chat.completions.create.call_args
+        kwargs = call_kwargs.kwargs if call_kwargs.kwargs else call_kwargs[1]
+        assert kwargs.get("response_format") == {"type": "json_object"}

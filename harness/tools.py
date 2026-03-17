@@ -32,6 +32,24 @@ _AGENT_CLIENT: Any = None
 
 _FLAG_PREFIX = "FLAG:"
 
+# ---------------------------------------------------------------------------
+# Canonical sub-agent response schema (v2)
+# {
+#   "status":   "ok" | "error" | "block",
+#   "agent":    "<agent-name>",
+#   "analysis": "<findings text>",
+#   "flags":    ["FLAG:category:detail", ...],
+#   "summary":  "<1-3 sentence summary>",
+#   "severity": "info" | "warning" | "critical"
+# }
+# ---------------------------------------------------------------------------
+
+# Agents that MUST return valid JSON — non-JSON responses are fail-closed.
+# delivery-reviewer → status=block; all other strict agents → status=error.
+_STRICT_AGENTS: frozenset[str] = frozenset(
+    {"delivery-reviewer", "collector", "assessor", "sfdc-expert", "workday-expert"}
+)
+
 
 def set_openai_client(client: Any) -> None:
     """Inject the already-instantiated OpenAI client from loop.py.
@@ -47,38 +65,95 @@ def set_openai_client(client: Any) -> None:
 def _validate_agent_response(raw: str, agent_name: str) -> dict:
     """Parse and validate an agent response string into a well-formed dict.
 
-    Tries JSON parse first (structured output). Falls back to FLAG: line scraping
-    for legacy free-text responses. Always returns a dict with all required fields.
-    Never silently degrades — missing fields are filled with safe defaults.
+    Tries JSON parse first (structured output). For strict agents (_STRICT_AGENTS),
+    a non-JSON or schema-incomplete response fails closed:
+      - delivery-reviewer → status=block (hard gate)
+      - all other strict agents → status=error (pipeline blocked)
+
+    For non-strict agents, falls back to FLAG: line scraping (legacy behaviour).
+    Always returns a dict with all required canonical fields.
     """
-    _REQUIRED = {"status", "agent", "analysis", "flags"}
+    _REQUIRED = {"status", "agent", "analysis"}
+    _VALID_STATUS = {"ok", "error", "block"}
+
     # --- Attempt 1: JSON parse ---
+    json_ok = False
+    parsed: dict | None = None
     try:
-        parsed = json.loads(raw)
-        if isinstance(parsed, dict):
-            if _REQUIRED.issubset(parsed.keys()):
-                # All required fields present — use directly
-                return parsed
-            # Partial JSON — fill in missing fields from text content
-            analysis = parsed.get("analysis", raw)
-            flags = parsed.get("flags")
-            if not isinstance(flags, list):
-                flags = [
-                    line.split(_FLAG_PREFIX, 1)[1].strip()
-                    for line in str(analysis).splitlines()
-                    if line.strip().startswith(_FLAG_PREFIX)
-                ]
-            return {
-                "status": parsed.get("status", "ok"),
-                "agent": parsed.get("agent", agent_name),
-                "analysis": analysis,
-                "flags": flags,
-                "severity": parsed.get("severity", "info"),
-            }
+        candidate = json.loads(raw)
+        if isinstance(candidate, dict):
+            json_ok = True
+            parsed = candidate
     except (json.JSONDecodeError, TypeError):
         pass
-    # --- Attempt 2: FLAG: line scraping (legacy free-text) ---
-    import sys  # noqa: PLC0415 — local import to keep module top clean
+
+    if json_ok and parsed is not None:
+        # Validate required fields are present
+        missing = _REQUIRED - parsed.keys()
+        if missing and agent_name in _STRICT_AGENTS:
+            # Strict agent returned JSON but is missing required fields — fail closed
+            block_status = "block" if agent_name == "delivery-reviewer" else "error"
+            return {
+                "status": block_status,
+                "agent": agent_name,
+                "analysis": f"Agent response missing required fields: {sorted(missing)}",
+                "flags": [f"FLAG:schema_violation:missing_fields_{','.join(sorted(missing))}"],
+                "summary": "",
+                "severity": "critical",
+            }
+
+        # Normalise status field — reject invalid values on strict agents
+        raw_status = parsed.get("status", "ok")
+        if raw_status not in _VALID_STATUS and agent_name in _STRICT_AGENTS:
+            block_status = "block" if agent_name == "delivery-reviewer" else "error"
+            return {
+                "status": block_status,
+                "agent": agent_name,
+                "analysis": f"Agent returned invalid status value: {raw_status!r}",
+                "flags": [f"FLAG:schema_violation:invalid_status_{raw_status}"],
+                "summary": parsed.get("summary", ""),
+                "severity": "critical",
+            }
+
+        # All checks passed — fill any optional missing fields with safe defaults
+        analysis = parsed.get("analysis", raw)
+        flags = parsed.get("flags")
+        if not isinstance(flags, list):
+            flags = [
+                line.split(_FLAG_PREFIX, 1)[1].strip()
+                for line in str(analysis).splitlines()
+                if line.strip().startswith(_FLAG_PREFIX)
+            ]
+        return {
+            "status": raw_status if raw_status in _VALID_STATUS else "ok",
+            "agent": parsed.get("agent", agent_name),
+            "analysis": analysis,
+            "flags": flags,
+            "summary": parsed.get("summary", ""),
+            "severity": parsed.get("severity", "info"),
+        }
+
+    # --- Attempt 2: non-JSON response ---
+    # Strict agents fail closed; non-strict agents fall back to FLAG: scraping.
+    if agent_name in _STRICT_AGENTS:
+        import sys  # noqa: PLC0415
+
+        print(  # noqa: T201
+            f"[agent] ERROR: {agent_name} returned non-JSON response — pipeline blocked (fail-closed).",
+            file=sys.stderr,
+        )
+        block_status = "block" if agent_name == "delivery-reviewer" else "error"
+        return {
+            "status": block_status,
+            "agent": agent_name,
+            "analysis": "Non-JSON response from strict agent — pipeline blocked",
+            "flags": ["FLAG:parse_failure:non_json_response"],
+            "summary": "",
+            "severity": "critical",
+        }
+
+    # --- Attempt 3: FLAG: line scraping (legacy free-text, non-strict agents only) ---
+    import sys  # noqa: PLC0415
 
     print(  # noqa: T201
         f"[agent] WARNING: {agent_name} returned non-JSON response — falling back to FLAG: scraping.",
@@ -92,6 +167,7 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
         "agent": agent_name,
         "analysis": raw,
         "flags": flags,
+        "summary": "",
         "severity": "info",
     }
 
@@ -122,8 +198,14 @@ def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str)
         )
     model = os.getenv("LLM_MODEL_ANALYST", "gpt-5.3-chat-latest")
     json_instruction = (
-        "\n\nYou MUST respond with a valid JSON object. Required fields: "
-        '{"status": "ok"|"error", "agent": "<name>", "analysis": "<text>", "flags": [...]}'
+        "\n\nYou MUST respond with a valid JSON object containing ALL of the following fields: "
+        '"status" ("ok"|"error"|"block"), '
+        '"agent" ("<agent-name>"), '
+        '"analysis" ("<detailed findings text>"), '
+        '"flags" (["FLAG:category:detail", ...] or []), '
+        '"summary" ("<1-3 sentence summary>"), '
+        '"severity" ("info"|"warning"|"critical"). '
+        "No text outside the JSON object."
     )
     try:
         response = _AGENT_CLIENT.chat.completions.create(

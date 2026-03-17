@@ -59,10 +59,11 @@ class TestDispatchAgentCall:
         assert isinstance(result["flags"], list)
 
     def test_flags_extracted_from_response(self, injected_client: MagicMock) -> None:
+        # Use a non-strict agent so FLAG: scraping fallback is exercised (strict agents fail-closed).
         injected_client.chat.completions.create.return_value.choices[
             0
         ].message.content = "Some analysis.\nFLAG: missing_scope:event-monitoring\nFLAG: stale_evidence:SBS-LOG-001"
-        result = json.loads(_dispatch_agent_call("collector", "sys", "user"))
+        result = json.loads(_dispatch_agent_call("reporter", "sys", "user"))
         assert result["flags"] == ["missing_scope:event-monitoring", "stale_evidence:SBS-LOG-001"]
 
     def test_exception_returns_structured_error(self, injected_client: MagicMock) -> None:
@@ -378,22 +379,96 @@ class TestValidateAgentResponse:
         assert result["flags"] == ["scope_violation:section-x"]
         assert result["analysis"] == "No issues found."
 
-    def test_malformed_json_falls_back_to_flag_scraping(self) -> None:
-        """Non-JSON free-text response falls back to FLAG: line extraction."""
+    def test_malformed_json_non_strict_falls_back_to_flag_scraping(self) -> None:
+        """Non-JSON free-text response falls back to FLAG: scraping for non-strict agents."""
         raw = "Some analysis text.\nFLAG: missing_scope:event-monitoring\nEnd of review."
-        result = _validate_agent_response(raw, "collector")
+        result = _validate_agent_response(raw, "reporter")  # non-strict agent
         assert result["status"] == "ok"
         assert result["flags"] == ["missing_scope:event-monitoring"]
         assert result["analysis"] == raw
 
-    def test_missing_fields_filled_with_defaults(self) -> None:
-        """Partial JSON (missing flags/status) gets defaults filled in."""
-        partial = json.dumps({"agent": "assessor", "analysis": "FLAG: low_confidence_critical:SBS-AUTH-001"})
-        result = _validate_agent_response(partial, "assessor")
+    def test_strict_agent_non_json_returns_error_not_ok(self) -> None:
+        """Non-JSON response from collector (strict agent) returns error, not ok."""
+        raw = "Some analysis text.\nFLAG: missing_scope:event-monitoring\nEnd of review."
+        result = _validate_agent_response(raw, "collector")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+        assert any("parse_failure" in f for f in result["flags"])
+
+    def test_missing_fields_filled_with_defaults_non_strict(self) -> None:
+        """Partial JSON (missing flags/status) gets defaults filled in for non-strict agents."""
+        partial = json.dumps({"agent": "reporter", "analysis": "FLAG: low_confidence_critical:SBS-AUTH-001"})
+        result = _validate_agent_response(partial, "reporter")
         assert "status" in result
         assert "flags" in result
         # flags should be extracted from analysis text since they were missing in JSON
         assert "low_confidence_critical:SBS-AUTH-001" in result["flags"]
+
+    def test_missing_required_fields_strict_agent_returns_error(self) -> None:
+        """JSON missing 'analysis' field on strict agent (assessor) returns error."""
+        partial = json.dumps({"status": "ok", "agent": "assessor"})
+        result = _validate_agent_response(partial, "assessor")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+
+    # --- Fail-closed regression tests (FIX 1+2) ---
+
+    def test_delivery_reviewer_nonjson_returns_block(self) -> None:
+        """Non-JSON response from delivery-reviewer must return status=block, not ok."""
+        raw = "The report looks fine, no issues detected, all controls are green."
+        result = _validate_agent_response(raw, "delivery-reviewer")
+        assert result["status"] == "block"
+        assert any("parse_failure" in f for f in result["flags"])
+        assert result["severity"] == "critical"
+
+    def test_strict_agent_nonjson_returns_error_with_critical_severity(self) -> None:
+        """Non-JSON response from a strict agent (collector) returns status=error with critical severity."""
+        raw = "I collected the Salesforce configuration but could not format as JSON."
+        result = _validate_agent_response(raw, "collector")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+        assert any("parse_failure" in f for f in result["flags"])
+
+    def test_valid_block_status_parses_cleanly(self) -> None:
+        """Valid JSON with status=block parses without error — block is a valid status value."""
+        payload = json.dumps(
+            {
+                "status": "block",
+                "agent": "delivery-reviewer",
+                "analysis": "Credential exposure detected in executive summary section.",
+                "flags": ["FLAG:credential_exposure:org-id-in-title"],
+                "summary": "Report blocked due to credential exposure.",
+                "severity": "critical",
+            }
+        )
+        result = _validate_agent_response(payload, "delivery-reviewer")
+        assert result["status"] == "block"
+        assert result["severity"] == "critical"
+
+    def test_strict_agent_missing_analysis_field_returns_error(self) -> None:
+        """JSON with only status+agent (missing analysis) on strict agent returns error."""
+        payload = json.dumps({"status": "ok", "agent": "assessor"})
+        result = _validate_agent_response(payload, "assessor")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+
+    def test_assessor_non_json_returns_error_not_ok(self) -> None:
+        """Non-JSON response from assessor (strict agent) returns error status."""
+        result = _validate_agent_response("prose analysis without json", "assessor")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+
+    def test_sfdc_expert_nonjson_returns_error(self) -> None:
+        """Non-JSON response from sfdc-expert (strict agent) returns status=error."""
+        result = _validate_agent_response("Here are the Apex script suggestions...", "sfdc-expert")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+
+    def test_workday_expert_nonjson_returns_error(self) -> None:
+        """Non-JSON response from workday-expert (strict agent) returns status=error."""
+        result = _validate_agent_response("Workday configuration review complete.", "workday-expert")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
 
 
 # ---------------------------------------------------------------------------

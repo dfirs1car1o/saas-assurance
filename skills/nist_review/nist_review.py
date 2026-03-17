@@ -12,6 +12,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import sys
@@ -21,6 +22,8 @@ from typing import Any
 
 import click
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 _REPO = Path(__file__).resolve().parents[2]
 load_dotenv(_REPO / ".env")
@@ -278,13 +281,30 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
     assessment_id = gap_data.get("assessment_id", "unknown")
 
     reviewer_md = _REPO / "agents" / "nist-reviewer.md"
+    _json_schema_instruction = (
+        "\n\nYou MUST respond with a valid JSON object. "
+        "Required schema: "
+        '{"nist_ai_rmf_review": {'
+        '"assessment_id": "<id>", '
+        '"reviewed_at_utc": "<iso8601>", '
+        '"reviewer": "nist-reviewer", '
+        '"govern": {"status": "pass|partial|fail", "notes": "<text>"}, '
+        '"map": {"status": "pass|partial|fail", "notes": "<text>"}, '
+        '"measure": {"status": "pass|partial|fail", "notes": "<text>"}, '
+        '"manage": {"status": "pass|partial|fail", "notes": "<text>"}, '
+        '"overall": "pass|flag|block", '
+        '"blocking_issues": [...], '
+        '"recommendations": [...]'
+        "}}. No text outside the JSON object."
+    )
     system_prompt = (
-        reviewer_md.read_text()
+        (reviewer_md.read_text() + _json_schema_instruction)
         if reviewer_md.exists()
         else (
             "You are a NIST AI RMF 1.0 reviewer. "
             "Validate the assessment outputs against Govern, Map, Measure, Manage functions. "
             "Return ONLY a JSON verdict in the format specified."
+            + _json_schema_instruction
         )
     )
 
@@ -301,6 +321,7 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
     response = client.chat.completions.create(
         model=os.getenv("LLM_MODEL_ANALYST", "gpt-5.3-chat-latest"),
         max_completion_tokens=2048,
+        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_msg},
@@ -308,15 +329,17 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
     )
     raw = response.choices[0].message.content.strip()
 
-    # Strip markdown code fences (```json ... ``` or ``` ... ```)
+    # Primary parse: response_format=json_object guarantees valid JSON from the API.
+    # Strip markdown code fences defensively in case the model wraps anyway.
     if raw.startswith("```"):
         lines = raw.splitlines()
         raw = "\n".join(lines[1:-1] if lines and lines[-1].strip() == "```" else lines[1:])
 
-    # Try direct parse first; if that fails, extract the first JSON object via regex
     try:
         verdict = json.loads(raw)
     except json.JSONDecodeError:
+        # Regex salvage — explicit fallback; should not be reached with json_object mode.
+        logger.warning("nist_review: structured parse failed, using regex salvage — review output carefully")
         match = re.search(r"\{.*\}", raw, re.DOTALL)
         if match:
             try:
