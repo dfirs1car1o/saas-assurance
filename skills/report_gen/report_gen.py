@@ -1137,12 +1137,24 @@ def _render_nist_section(nist: dict[str, Any]) -> str:
     overall_icon = _NIST_OVERALL_ICON.get(overall, "ℹ️")
     reviewed_at = review.get("reviewed_at_utc", "unknown")
     reviewer = review.get("reviewer", "nist-reviewer")
+    is_fail_closed = review.get("parser_mode") == "fail_closed"
 
     lines = [
         "---",
         "",
         "## NIST AI RMF Governance Review",
         "",
+    ]
+
+    if is_fail_closed:
+        lines += [
+            "> ⛔ **NIST REVIEW DEGRADED** — Structured parse failed. "
+            "This verdict was produced by fail-closed fallback. "
+            "Human review is mandatory before acting on this output.",
+            "",
+        ]
+
+    lines += [
         f"### {overall_icon} Overall Verdict: {overall.upper()}",
         "",
         "| Function | Status | Notes |",

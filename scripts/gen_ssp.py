@@ -155,7 +155,7 @@ def build_ssp(
     overall_score = sscf_report.get("overall_score", 0.0)
     overall_status = sscf_report.get("overall_status", "red")
     sensitivity = _score_to_sensitivity(overall_score, overall_status)
-    nist_verdict = nist_review.get("overall_verdict", "flag")
+    nist_verdict = nist_review.get("nist_ai_rmf_review", {}).get("overall", nist_review.get("overall_verdict", "flag"))
 
     # Load and deep-copy template
     if not TEMPLATE_PATH.exists():

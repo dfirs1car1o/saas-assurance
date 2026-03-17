@@ -336,24 +336,26 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
         verdict = json.loads(raw)
     except json.JSONDecodeError:
         logger.error("nist_review: structured parse failed — returning explicit review-required verdict")
+        _fail_note = "Structured parse failure — verdict is unverified."
         verdict = {
-            "verdict": "block",
-            "parser_mode": "fail_closed",
-            "functions": {
-                "GOVERN": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
-                "MAP": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
-                "MEASURE": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
-                "MANAGE": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
-            },
-            "blocking_issues": [
-                "Structured parse failure — nist_review output must be treated as unverified. Do not distribute."
-            ],
-            "recommendations": [
-                "REVIEW REQUIRED: nist_review failed to parse structured output. "
-                "Rerun assessment and inspect raw model output."
-            ],
-            "reviewed_at": datetime.now(UTC).isoformat(),
-            "reviewer": "nist-reviewer",
+            "nist_ai_rmf_review": {
+                "assessment_id": assessment_id,
+                "reviewed_at_utc": datetime.now(UTC).isoformat(),
+                "reviewer": "nist-reviewer",
+                "govern": {"status": "BLOCK", "notes": _fail_note},
+                "map": {"status": "BLOCK", "notes": _fail_note},
+                "measure": {"status": "BLOCK", "notes": _fail_note},
+                "manage": {"status": "BLOCK", "notes": _fail_note},
+                "overall": "block",
+                "blocking_issues": [
+                    "Structured parse failure — nist_review output must be treated as unverified. Do not distribute."
+                ],
+                "recommendations": [
+                    "REVIEW REQUIRED: nist_review failed to parse structured output. "
+                    "Rerun assessment and inspect raw model output."
+                ],
+                "parser_mode": "fail_closed",
+            }
         }
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path = out_path.resolve()

@@ -336,13 +336,14 @@ class TestAssessLiveModeStructuredParse:
         # Must not raise — fail-closed verdict is written
         assert result.exit_code == 0, result.output
         verdict = json.loads(out.read_text())
-        assert verdict["verdict"] == "block"
-        assert verdict["parser_mode"] == "fail_closed"
+        assert "nist_ai_rmf_review" in verdict
+        assert verdict["nist_ai_rmf_review"]["overall"] == "block"
+        assert verdict["nist_ai_rmf_review"]["parser_mode"] == "fail_closed"
 
     def test_malformed_response_is_fail_closed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """JSON parse failure returns fail-closed verdict (verdict=block, parser_mode=fail_closed)."""
+        """JSON parse failure returns fail-closed verdict wrapped in nist_ai_rmf_review."""
         from unittest.mock import MagicMock, patch
 
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
@@ -370,10 +371,12 @@ class TestAssessLiveModeStructuredParse:
 
         assert result.exit_code == 0, result.output
         verdict = json.loads(out.read_text())
-        assert verdict["verdict"] == "block"
-        assert verdict["parser_mode"] == "fail_closed"
-        assert "Structured parse failure" in verdict["blocking_issues"][0]
-        assert verdict["functions"]["GOVERN"]["status"] == "BLOCK"
+        assert "nist_ai_rmf_review" in verdict
+        review = verdict["nist_ai_rmf_review"]
+        assert review["overall"] == "block"
+        assert review["parser_mode"] == "fail_closed"
+        assert "Structured parse failure" in review["blocking_issues"][0]
+        assert review["govern"]["status"] == "BLOCK"
 
     def test_valid_structured_response_has_no_degraded_marker(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

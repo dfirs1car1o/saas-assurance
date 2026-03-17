@@ -7,6 +7,8 @@ Exercises three output variants:
 
 Uses the real salesforce_oscal_backlog_latest.json already in the repo.
 All tests are skipped if that file is not present (matches pipeline smoke pattern).
+
+Also covers unit-level tests for _render_nist_section with normal and fail-closed inputs.
 """
 
 import shutil
@@ -182,3 +184,88 @@ def test_docx_created(tmp_path: Path) -> None:
     # DOCX is a ZIP — verify magic bytes (PK header)
     header = docx_out.read_bytes()[:4]
     assert header == b"PK\x03\x04", f"Output is not a valid DOCX/ZIP: {header!r}"
+
+
+# ---------------------------------------------------------------------------
+# Unit tests — _render_nist_section (normal and fail-closed)
+# ---------------------------------------------------------------------------
+
+
+def _make_normal_nist() -> dict:
+    return {
+        "nist_ai_rmf_review": {
+            "assessment_id": "test-001",
+            "reviewed_at_utc": "2026-01-01T00:00:00+00:00",
+            "reviewer": "nist-reviewer",
+            "govern": {"status": "pass", "notes": "Accountability defined."},
+            "map": {"status": "pass", "notes": "Scope bounded."},
+            "measure": {"status": "pass", "notes": "Confidence tracked."},
+            "manage": {"status": "partial", "notes": "Due dates missing."},
+            "overall": "flag",
+            "blocking_issues": [],
+            "recommendations": ["Add due dates."],
+        }
+    }
+
+
+def _make_fail_closed_nist() -> dict:
+    return {
+        "nist_ai_rmf_review": {
+            "assessment_id": "test-002",
+            "reviewed_at_utc": "2026-01-01T00:00:00+00:00",
+            "reviewer": "nist-reviewer",
+            "govern": {"status": "BLOCK", "notes": "Structured parse failure — verdict is unverified."},
+            "map": {"status": "BLOCK", "notes": "Structured parse failure — verdict is unverified."},
+            "measure": {"status": "BLOCK", "notes": "Structured parse failure — verdict is unverified."},
+            "manage": {"status": "BLOCK", "notes": "Structured parse failure — verdict is unverified."},
+            "overall": "block",
+            "blocking_issues": [
+                "Structured parse failure — nist_review output must be treated as unverified. Do not distribute."
+            ],
+            "recommendations": [
+                "REVIEW REQUIRED: nist_review failed to parse structured output. "
+                "Rerun assessment and inspect raw model output."
+            ],
+            "parser_mode": "fail_closed",
+        }
+    }
+
+
+class TestRenderNistSection:
+    def test_normal_nist_renders_verdict(self) -> None:
+        from skills.report_gen.report_gen import _render_nist_section
+
+        output = _render_nist_section(_make_normal_nist())
+        assert "## NIST AI RMF Governance Review" in output
+        assert "FLAG" in output
+        assert "NIST REVIEW DEGRADED" not in output
+
+    def test_normal_nist_has_no_degraded_warning(self) -> None:
+        from skills.report_gen.report_gen import _render_nist_section
+
+        output = _render_nist_section(_make_normal_nist())
+        assert "NIST REVIEW DEGRADED" not in output
+        assert "fail_closed" not in output
+
+    def test_fail_closed_nist_renders_degraded_warning(self) -> None:
+        from skills.report_gen.report_gen import _render_nist_section
+
+        output = _render_nist_section(_make_fail_closed_nist())
+        assert "NIST REVIEW DEGRADED" in output
+        assert "Structured parse failed" in output
+        assert "Human review is mandatory" in output
+
+    def test_fail_closed_nist_shows_block_verdict(self) -> None:
+        from skills.report_gen.report_gen import _render_nist_section
+
+        output = _render_nist_section(_make_fail_closed_nist())
+        assert "BLOCK" in output
+        assert "## NIST AI RMF Governance Review" in output
+
+    def test_fail_closed_nist_still_renders_function_table(self) -> None:
+        from skills.report_gen.report_gen import _render_nist_section
+
+        output = _render_nist_section(_make_fail_closed_nist())
+        assert "| Function | Status | Notes |" in output
+        assert "GOVERN" in output
+        assert "MAP" in output
