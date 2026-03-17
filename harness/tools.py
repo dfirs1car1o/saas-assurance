@@ -121,12 +121,17 @@ def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str)
             }
         )
     model = os.getenv("LLM_MODEL_ANALYST", "gpt-5.3-chat-latest")
+    json_instruction = (
+        "\n\nYou MUST respond with a valid JSON object. Required fields: "
+        '{"status": "ok"|"error", "agent": "<name>", "analysis": "<text>", "flags": [...]}'
+    )
     try:
         response = _AGENT_CLIENT.chat.completions.create(
             model=model,
             max_completion_tokens=2048,
+            response_format={"type": "json_object"},
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": system_prompt + json_instruction},
                 {"role": "user", "content": user_content},
             ],
         )
