@@ -166,6 +166,10 @@ def main() -> int:  # NOSONAR
     findings = _findings(gap)
     assessment_id = str(gap.get("assessment_id", "unknown-assessment"))
     assessment_owner = str(gap.get("assessment_owner", ""))
+    org = str(gap.get("org", ""))
+    platform = str(gap.get("platform", ""))
+    data_source = str(gap.get("data_source", ""))
+    ai_generated_findings_notice = str(gap.get("ai_generated_findings_notice", ""))
 
     mapping_cfg = _load_yaml(mapping_path)
     mappings = mapping_cfg.get("mappings", [])
@@ -331,10 +335,16 @@ def main() -> int:  # NOSONAR
     backlog_payload = {
         "assessment_id": assessment_id,
         "assessment_owner": assessment_owner,
+        "org": org,
+        "platform": platform,
+        "data_source": data_source,
+        "ai_generated_findings_notice": ai_generated_findings_notice,
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "catalog_version": controls_payload.get("catalog", {}).get("version"),
         "framework": "CSA_SSCF",
         "summary": {
+            "org": org,
+            "platform": platform,
             "catalog_controls": len(controls_by_id),
             "findings_total": len(findings),
             "mapped_findings": len(mapped_items),

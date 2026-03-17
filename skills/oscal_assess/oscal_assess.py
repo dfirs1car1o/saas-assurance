@@ -1360,6 +1360,7 @@ def assess(  # NOSONAR
         "assessment_id": assessment_id,
         "assessed_at_utc": datetime.now(UTC).isoformat(),
         "org": org_label,
+        "platform": platform,
         "env": env,
         # Issue #12 — NIST GOVERN-PARTIAL: named individual accountable for the assessment
         "assessment_owner": assessment_owner or "SaaS Security Architect",
