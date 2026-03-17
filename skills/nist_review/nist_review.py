@@ -300,8 +300,7 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
         else (
             "You are a NIST AI RMF 1.0 reviewer. "
             "Validate the assessment outputs against Govern, Map, Measure, Manage functions. "
-            "Return ONLY a JSON verdict in the format specified."
-            + _json_schema_instruction
+            "Return ONLY a JSON verdict in the format specified." + _json_schema_instruction
         )
     )
 
