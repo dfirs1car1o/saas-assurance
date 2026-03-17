@@ -193,11 +193,19 @@ def _build_review_context(assessment_id: str, gap_data: dict[str, Any], backlog_
     priority_items = [
         i for i in items if i.get("severity") in ("critical", "high") and i.get("status") in ("fail", "partial")
     ]
+    bl_summary = backlog_data.get("summary", {})
     backlog_summary = {
+        # governance metadata — required by NIST GOVERN / MAP / MEASURE functions
+        "assessment_owner": backlog_data.get("assessment_owner"),
+        "data_source": backlog_data.get("data_source"),
+        "ai_generated_findings_notice": backlog_data.get("ai_generated_findings_notice"),
         "org": backlog_data.get("org"),
         "platform": backlog_data.get("platform"),
+        # findings metadata
         "overall_score": backlog_data.get("overall_score"),
         "total_items": len(items),
+        "unmapped_findings": bl_summary.get("unmapped_findings", 0),
+        "mapping_confidence_counts": bl_summary.get("mapping_confidence_counts", {}),
         "priority_items_full": priority_items,
         "iso27001_summary": backlog_data.get("iso27001_summary"),
     }
