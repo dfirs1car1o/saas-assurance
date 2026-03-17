@@ -8,7 +8,9 @@ Read-only SaaS security assessment pipeline for commercial platforms such as Sal
 
 > **New here?** Start with the **[Wiki →](https://github.com/dfirs1car1o/saas-assurance/wiki)** for full onboarding instructions, platform-specific setup guides (macOS, Linux, Windows), pipeline walkthroughs, and a complete skill and agent reference.
 
-![Architecture](docs/architecture.png)
+![System Overview](docs/arch-a1-overview.png)
+
+> **Detailed views:** [Agent Architecture](docs/arch-a2-agents.png) · [Data Pipeline](docs/arch-a3-pipeline.png) · [diagrams-lib variants](docs/wiki/Architecture-Overview.md)
 
 ## What This Is
 

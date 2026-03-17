@@ -1,9 +1,10 @@
-name: Regenerate Architecture Diagram
+name: Regenerate Architecture Diagrams
 
 on:
   push:
     branches: [main]
     paths:
+      - 'scripts/gen_arch_*.py'
       - 'scripts/gen_diagram.py'
       - 'harness/**'
       - 'skills/**'
@@ -21,17 +22,37 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -y graphviz
-          pip install diagrams
+      - name: Install system dependencies
+        run: sudo apt-get install -y graphviz
 
-      - name: Generate architecture diagram
+      - name: Install Python dependencies
+        run: pip install diagrams matplotlib
+
+      - name: Generate diagrams (A-series — matplotlib)
+        run: |
+          python3 scripts/gen_arch_a1_overview.py
+          python3 scripts/gen_arch_a2_agents.py
+          python3 scripts/gen_arch_a3_pipeline.py
+
+      - name: Generate diagrams (B-series — diagrams lib)
+        run: |
+          python3 scripts/gen_arch_b1_overview.py
+          python3 scripts/gen_arch_b2_agents.py
+          python3 scripts/gen_arch_b3_pipeline.py
+
+      - name: Generate legacy diagram
         run: python3 scripts/gen_diagram.py
 
-      - name: Upload diagram artifact
+      - name: Upload diagram artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: architecture-diagram
-          path: docs/architecture.png
+          name: architecture-diagrams
+          path: |
+            docs/arch-a1-overview.png
+            docs/arch-a2-agents.png
+            docs/arch-a3-pipeline.png
+            docs/arch-b1-overview.png
+            docs/arch-b2-agents.png
+            docs/arch-b3-pipeline.png
+            docs/architecture.png
           retention-days: 30

@@ -106,7 +106,7 @@ for i, (phase_lbl, skill, artifact) in enumerate(phases):
     cx = phase_cx[i]
     # phase box (teal)
     box(px, SFDC_PHASE_Y, PH_W, PH_H, C_TL, C_T, lw=1.0)
-    lbl(cx, SFDC_PHASE_Y + PH_H - 0.35, phase_lbl, sz=7.2, bold=True, c=C_T)
+    lbl(cx, SFDC_PHASE_Y + PH_H - 0.35, phase_lbl, sz=8.0, bold=True, c=C_T)
     lbl(cx, SFDC_PHASE_Y + 0.42, skill, sz=6.2, c=C_GR)
     # artifact box (green)
     box(px, SFDC_ART_Y, PH_W, ART_H, C_GL, C_GD, lw=0.8)
@@ -135,7 +135,7 @@ for i, (phase_lbl, skill, artifact) in enumerate(phases):
     cx = phase_cx[i]
     # phase box (purple-teal)
     box(px, WD_PHASE_Y, PH_W, PH_H, "#E0F2F1", "#5C6BC0", lw=1.0)
-    lbl(cx, WD_PHASE_Y + PH_H - 0.35, phase_lbl, sz=7.2, bold=True, c="#5C6BC0")
+    lbl(cx, WD_PHASE_Y + PH_H - 0.35, phase_lbl, sz=8.0, bold=True, c="#5C6BC0")
     lbl(cx, WD_PHASE_Y + 0.42, skill, sz=6.2, c=C_GR)
     # artifact box
     box(px, WD_ART_Y, PH_W, ART_H, C_GL, C_GD, lw=0.8)

@@ -2,8 +2,8 @@
 """
 gen_arch_b1_overview.py  —  Architecture (1/3): System Overview (diagrams lib)
 
-Clean graphviz-laid-out overview: SaaS Platforms → Skills → Agent Layer → Outputs.
-Complements arch-a1-overview.png (matplotlib) with auto-layout and iconography.
+Top-down flow: Human/CI + Config at top → Skills (read-only collectors) →
+Agent Layer (orchestration) → Generated Outputs at bottom.
 
 Output: docs/arch-b1-overview.png
 """
@@ -21,12 +21,12 @@ from diagrams.programming.language import Python
 _OUT = str(Path(__file__).resolve().parents[1] / "docs" / "arch-b1-overview")
 
 _GRAPH = {
-    "fontsize": "13",
+    "fontsize": "12",
     "bgcolor": "#FAFAFA",
-    "pad": "0.8",
+    "pad": "1.0",
     "splines": "ortho",
-    "nodesep": "0.7",
-    "ranksep": "1.1",
+    "nodesep": "0.8",
+    "ranksep": "1.2",
     "label": (
         "saas-assurance — Reference Architecture (1/3): System Overview\n"
         "Read-only  ·  JWT Bearer (SFDC)  ·  OAuth 2.0 (Workday)  ·  OWASP Agentic App Top 10"
@@ -44,25 +44,25 @@ def main() -> None:
         show=False,
         graph_attr=_GRAPH,
         node_attr=_NODE,
-        direction="LR",
+        direction="TB",
     ):
+        # ── Row 1: Entry points ───────────────────────────────────────────────
         human = Users("Human / CI\nagent-loop run")
 
-        # ── OSCAL Config ──────────────────────────────────────────────────────
         with Cluster("OSCAL Config  (config/)"):
             sscf_cat  = Storage("SSCF v1.0\n36 controls · 6 domains")
             sbs_prof  = Storage("SBS Profile\n45 Salesforce controls")
             wscc_prof = Storage("WSCC Profile\n30 Workday controls")
             ccm_aicm  = Storage("CCM v4.1 · AICM v1.0.3\nISO 27001 · EU AI Act")
 
-        # ── SaaS Platforms ────────────────────────────────────────────────────
+        # ── Row 2: SaaS Platforms (read-only targets) ─────────────────────────
         with Cluster("SaaS Platforms  (read-only)"):
             with Cluster("Salesforce Org"):
-                sfdc = Server("JWT Bearer Flow\nREST + Tooling + Metadata API")
-            with Cluster("Workday Tenant"):
+                sfdc    = Server("JWT Bearer Flow\nREST + Tooling + Metadata API")
+            with Cluster("Workday Tenant  (HCM / Finance)"):
                 workday = Server("OAuth 2.0 Client Credentials\nREST API · RaaS · Manual")
 
-        # ── Skills ────────────────────────────────────────────────────────────
+        # ── Row 3: Skill CLIs ─────────────────────────────────────────────────
         with Cluster("Skills  (Python CLIs · shell=False · read-only)"):
             sk_sfdc  = Python("sfdc-connect")
             sk_wd    = Python("workday-connect")
@@ -72,7 +72,7 @@ def main() -> None:
             sk_rep   = Python("report-gen")
             sk_aicm  = Python("gen_aicm_crosswalk")
 
-        # ── Agent Layer ───────────────────────────────────────────────────────
+        # ── Row 4: Agent Layer ────────────────────────────────────────────────
         with Cluster("Agent Layer  (gpt-5.3-chat-latest · 10 agents · 14-turn ReAct)"):
             orchestrator = Server("Orchestrator\nplans + dispatches")
             with Cluster("Assessment Agents"):
@@ -80,15 +80,13 @@ def main() -> None:
                 assessor  = Server("Assessor")
                 reporter  = Server("Reporter")
                 nist_rev  = Server("NIST Reviewer\nAI RMF gate")
-            with Cluster("Review Agents"):
-                del_rev  = Server("Delivery Reviewer\n(STRICT)")
-                sec_rev  = Server("Security Reviewer\nAppSec CI")
-            with Cluster("Expert Agents  (on-call)"):
-                sfdc_exp = Server("SFDC Expert")
-                wd_exp   = Server("Workday Expert")
-                ctr_exp  = Server("Container Expert")
+            with Cluster("Gate + Expert Agents"):
+                del_rev  = Server("Delivery Reviewer  (STRICT)")
+                sec_rev  = Server("Security Reviewer")
+                sfdc_exp = Server("SFDC Expert  (STRICT)")
+                wd_exp   = Server("Workday Expert  (STRICT)")
 
-        # ── Generated Outputs ─────────────────────────────────────────────────
+        # ── Row 5: Generated Outputs ──────────────────────────────────────────
         with Cluster("Generated Outputs  (docs/oscal-salesforce-poc/generated/)"):
             artifacts = Storage(
                 "gap_analysis.json · backlog.json\n"
@@ -96,7 +94,7 @@ def main() -> None:
                 "aicm_coverage.json · audit.jsonl"
             )
             reports = MultipleDocuments(
-                "report_*.md (app-owner + security)\n"
+                "report_*.md  (app-owner + security)\n"
                 "report_*.docx  +  AICM annex"
             )
 
@@ -106,14 +104,14 @@ def main() -> None:
         dashed_blue = Edge(style="dashed", color="steelblue")
         gray        = Edge(style="dashed", color="gray")
 
-        # Config → assessment agents via assessor
+        # Human → Orchestrator
+        human >> orchestrator
+
+        # Config → Assessor
         sscf_cat  >> dotted_cfg >> assessor
         sbs_prof  >> dotted_cfg >> assessor
         wscc_prof >> dotted_cfg >> assessor
         ccm_aicm  >> dotted_cfg >> sk_aicm
-
-        # Human → Orchestrator
-        human >> orchestrator
 
         # Orchestrator → agents
         orchestrator >> dashed_blue >> collector
@@ -124,7 +122,6 @@ def main() -> None:
         orchestrator >> dashed_blue >> sec_rev
         orchestrator >> dashed_blue >> sfdc_exp
         orchestrator >> dashed_blue >> wd_exp
-        orchestrator >> dashed_blue >> ctr_exp
 
         # Agents → skills
         collector >> gray >> sk_sfdc
@@ -135,7 +132,7 @@ def main() -> None:
         nist_rev  >> gray >> sk_nist
         reporter  >> gray >> sk_rep
 
-        # Skills → platforms (read)
+        # Skills → platforms (read-only)
         sk_sfdc >> solid_green >> sfdc
         sk_wd   >> solid_green >> workday
 
