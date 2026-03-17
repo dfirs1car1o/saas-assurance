@@ -304,10 +304,10 @@ class TestAssessLiveModeStructuredParse:
         assert review["govern"]["status"] == "pass"
         assert isinstance(review["blocking_issues"], list)
 
-    def test_nist_review_malformed_response_triggers_fallback_not_exception(
+    def test_nist_review_malformed_response_triggers_fail_closed_not_exception(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Malformed nist_review response triggers fallback verdict, not an exception."""
+        """Malformed nist_review response triggers fail-closed verdict, not an exception."""
         from unittest.mock import MagicMock, patch
 
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
@@ -317,7 +317,7 @@ class TestAssessLiveModeStructuredParse:
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
-        # Pure prose — not valid JSON even after regex salvage
+        # Pure prose — not valid JSON
         mock_response.choices[0].message.content = (
             "The assessment looks okay. verdict: flag. All functions were reviewed."
         )
@@ -333,45 +333,25 @@ class TestAssessLiveModeStructuredParse:
                 ["assess", "--gap-analysis", str(gap), "--backlog", str(backlog), "--out", str(out)],
             )
 
-        # Must not raise — fallback verdict is written
+        # Must not raise — fail-closed verdict is written
         assert result.exit_code == 0, result.output
         verdict = json.loads(out.read_text())
-        assert "nist_ai_rmf_review" in verdict
-        # Fallback sets overall = "flag"
-        assert verdict["nist_ai_rmf_review"]["overall"] == "flag"
+        assert verdict["verdict"] == "block"
+        assert verdict["parser_mode"] == "fail_closed"
 
-    def test_malformed_response_has_degraded_marker(
+    def test_malformed_response_is_fail_closed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Regex salvage path marks output with parser_mode=degraded_regex_salvage and REVIEW REQUIRED rec."""
+        """JSON parse failure returns fail-closed verdict (verdict=block, parser_mode=fail_closed)."""
         from unittest.mock import MagicMock, patch
 
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         gap = self._gap_file(tmp_path)
         backlog = self._backlog_file(tmp_path)
-        out = tmp_path / "nist_degraded.json"
+        out = tmp_path / "nist_fail_closed.json"
 
-        # Return a response that is invalid JSON at the top level but contains a JSON substring
-        # so that regex salvage finds and parses it.
-        inner_json = json.dumps(
-            {
-                "nist_ai_rmf_review": {
-                    "assessment_id": "test-live-001",
-                    "reviewed_at_utc": "2026-01-01T00:00:00+00:00",
-                    "reviewer": "nist-reviewer",
-                    "govern": {"status": "partial", "notes": "degraded"},
-                    "map": {"status": "partial", "notes": "degraded"},
-                    "measure": {"status": "partial", "notes": "degraded"},
-                    "manage": {"status": "partial", "notes": "degraded"},
-                    "overall": "flag",
-                    "blocking_issues": [],
-                    "recommendations": [],
-                }
-            }
-        )
-        # Wrap the JSON in prose — this triggers json.JSONDecodeError on the outer parse
-        # but the regex r"\{.*\}" will salvage the inner JSON substring.
-        prose_wrapping = f"Here is my verdict: {inner_json} — end of review."
+        # Pure prose wrapping that cannot be parsed as JSON
+        prose_wrapping = "Here is my verdict: flag. All functions were reviewed. The org is okay."
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -390,9 +370,10 @@ class TestAssessLiveModeStructuredParse:
 
         assert result.exit_code == 0, result.output
         verdict = json.loads(out.read_text())
-        review = verdict["nist_ai_rmf_review"]
-        assert review.get("parser_mode") == "degraded_regex_salvage"
-        assert any("REVIEW REQUIRED" in rec for rec in review.get("recommendations", []))
+        assert verdict["verdict"] == "block"
+        assert verdict["parser_mode"] == "fail_closed"
+        assert "Structured parse failure" in verdict["blocking_issues"][0]
+        assert verdict["functions"]["GOVERN"]["status"] == "BLOCK"
 
     def test_valid_structured_response_has_no_degraded_marker(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -423,7 +404,7 @@ class TestAssessLiveModeStructuredParse:
         assert result.exit_code == 0, result.output
         verdict = json.loads(out.read_text())
         review = verdict["nist_ai_rmf_review"]
-        assert review.get("parser_mode") != "degraded_regex_salvage"
+        assert "parser_mode" not in review
         assert not any("REVIEW REQUIRED" in rec for rec in review.get("recommendations", []))
 
     def test_nist_review_response_format_requested_in_api_call(

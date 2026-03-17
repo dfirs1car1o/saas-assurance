@@ -92,6 +92,50 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
             "severity": "critical",
         }
 
+    def _check_strict_schema(parsed: dict, expected_agent: str) -> str | None:
+        """Return a violation description string if the strict-agent schema is violated, else None."""
+        # All 6 required fields must be present
+        missing = _REQUIRED_STRICT - parsed.keys()
+        if missing:
+            return "missing_fields_" + ",".join(sorted(missing))
+
+        # severity must be one of the allowed values
+        severity_val = parsed.get("severity")
+        if severity_val not in _VALID_SEVERITY:
+            return f"invalid_severity_{severity_val}"
+
+        # flags must be a list
+        flags_val = parsed.get("flags")
+        if not isinstance(flags_val, list):
+            return "flags_not_a_list"
+
+        # each element of flags must be a string
+        if any(not isinstance(f, str) for f in flags_val):
+            return "flags_element_not_string"
+
+        # status must be a recognised value
+        raw_status = parsed.get("status", "ok")
+        if raw_status not in _VALID_STATUS:
+            return f"invalid_status_{raw_status}"
+
+        # summary must be a string (empty string is allowed)
+        if not isinstance(parsed.get("summary"), str):
+            return "summary_not_a_string"
+
+        # analysis must be a non-empty string
+        analysis_val = parsed.get("analysis")
+        if not isinstance(analysis_val, str) or not analysis_val:
+            return "analysis_empty_or_not_string"
+
+        # agent field must be a non-empty string matching expected name (case-insensitive)
+        agent_val = parsed.get("agent")
+        if not isinstance(agent_val, str) or not agent_val:
+            return "agent_not_a_string"
+        if agent_val.lower() != expected_agent.lower():
+            return f"agent_name_mismatch_{agent_val}"
+
+        return None
+
     # --- Attempt 1: JSON parse ---
     json_ok = False
     parsed: dict | None = None
@@ -105,27 +149,13 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
 
     if json_ok and parsed is not None:
         if agent_name in _STRICT_AGENTS:
-            # Enforce all 6 required fields for strict agents
-            missing = _REQUIRED_STRICT - parsed.keys()
-            if missing:
-                field_label = "missing_fields_" + ",".join(sorted(missing))
-                return _schema_violation_response(field_label)
+            violation = _check_strict_schema(parsed, agent_name)
+            if violation:
+                return _schema_violation_response(violation)
 
-            # Validate severity is one of the allowed values
-            severity_val = parsed.get("severity")
-            if severity_val not in _VALID_SEVERITY:
-                return _schema_violation_response(f"invalid_severity_{severity_val}")
-
-            # Validate flags is a list
-            flags_val = parsed.get("flags")
-            if not isinstance(flags_val, list):
-                return _schema_violation_response("flags_not_a_list")
-
-            # Validate status is a recognised value
-            raw_status = parsed.get("status", "ok")
-            if raw_status not in _VALID_STATUS:
-                return _schema_violation_response(f"invalid_status_{raw_status}")
-
+            flags_val = parsed["flags"]
+            raw_status = parsed["status"]
+            severity_val = parsed["severity"]
             return {
                 "status": raw_status,
                 "agent": parsed.get("agent", agent_name),

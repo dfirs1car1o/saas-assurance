@@ -557,6 +557,74 @@ class TestValidateAgentResponse:
         assert any("flags" in f for f in result["flags"])
         assert result["severity"] == "critical"
 
+    def test_strict_agent_flags_with_non_string_element_returns_error(self) -> None:
+        """flags list containing a non-string element (e.g. int) → status=error for strict agent."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "collector",
+                "analysis": "Collection complete.",
+                "flags": ["valid_flag", 42],  # 42 is not a string
+                "summary": "All controls collected.",
+                "severity": "info",
+            }
+        )
+        result = _validate_agent_response(payload, "collector")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+        assert any("flags" in f for f in result["flags"])
+
+    def test_strict_agent_empty_analysis_returns_error(self) -> None:
+        """analysis="" (empty string) for strict agent (assessor) → status=error."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "assessor",
+                "analysis": "",  # empty string is not allowed
+                "flags": [],
+                "summary": "All controls assessed.",
+                "severity": "info",
+            }
+        )
+        result = _validate_agent_response(payload, "assessor")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+        assert any("analysis" in f for f in result["flags"])
+
+    def test_strict_agent_agent_name_mismatch_returns_error(self) -> None:
+        """parsed['agent'] != expected agent_name (collector) → status=error for non-delivery-reviewer."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "wrong-agent",
+                "analysis": "Collection complete.",
+                "flags": [],
+                "summary": "All controls collected.",
+                "severity": "info",
+            }
+        )
+        result = _validate_agent_response(payload, "collector")
+        assert result["status"] == "error"
+        assert result["severity"] == "critical"
+        assert any("agent" in f for f in result["flags"])
+
+    def test_delivery_reviewer_agent_name_mismatch_returns_block(self) -> None:
+        """parsed['agent'] != 'delivery-reviewer' for delivery-reviewer → status=block."""
+        payload = json.dumps(
+            {
+                "status": "ok",
+                "agent": "wrong-agent",
+                "analysis": "Review complete.",
+                "flags": [],
+                "summary": "Report reviewed.",
+                "severity": "info",
+            }
+        )
+        result = _validate_agent_response(payload, "delivery-reviewer")
+        assert result["status"] == "block"
+        assert result["severity"] == "critical"
+        assert any("agent" in f for f in result["flags"])
+
 
 # ---------------------------------------------------------------------------
 # PATCH 1 — finish() blocked on security_review_flags

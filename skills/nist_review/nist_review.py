@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 _REPO = Path(__file__).resolve().parents[2]
 load_dotenv(_REPO / ".env")
-
-_PARSE_ERROR_MSG = "Parse error — manual review required."
 
 # ---------------------------------------------------------------------------
 # Dry-run stub verdict (realistic weak-org scenario)
@@ -335,53 +332,34 @@ def assess(gap_analysis: str | None, backlog: str | None, out: str, dry_run: boo
         lines = raw.splitlines()
         raw = "\n".join(lines[1:-1] if lines and lines[-1].strip() == "```" else lines[1:])
 
-    _used_regex_salvage = False
     try:
         verdict = json.loads(raw)
     except json.JSONDecodeError:
-        # Regex salvage — explicit fallback; should not be reached with json_object mode.
-        logger.warning("nist_review: structured parse failed, using regex salvage — review output carefully")
-        _used_regex_salvage = True
-        match = re.search(r"\{.*\}", raw, re.DOTALL)
-        if match:
-            try:
-                verdict = json.loads(match.group())
-            except json.JSONDecodeError:
-                verdict = None
-        else:
-            verdict = None
-
-    # Mark degraded output so consumers can detect untrustworthy verdicts.
-    if _used_regex_salvage and verdict is not None and "nist_ai_rmf_review" in verdict:
-        review = verdict["nist_ai_rmf_review"]
-        review["parser_mode"] = "degraded_regex_salvage"
-        recs = review.setdefault("recommendations", [])
-        recs.insert(
-            0,
-            "REVIEW REQUIRED: This verdict was produced by regex salvage after structured parse failure. "
-            "Human review is mandatory before acting on this output.",
-        )
-        if not review.get("blocking_issues"):
-            review.setdefault("blocking_issues", []).append(
-                "Verdict produced via degraded parsing — treat as unverified"
-            )
-
-    if verdict is None:
-        click.echo(f"WARNING: LLM response not valid JSON. Falling back to flag verdict.\n{raw[:300]}", err=True)
+        logger.error("nist_review: structured parse failed — returning explicit review-required verdict")
         verdict = {
-            "nist_ai_rmf_review": {
-                "assessment_id": assessment_id,
-                "reviewed_at_utc": datetime.now(UTC).isoformat(),
-                "reviewer": "nist-reviewer",
-                "govern": {"status": "partial", "notes": _PARSE_ERROR_MSG},
-                "map": {"status": "partial", "notes": _PARSE_ERROR_MSG},
-                "measure": {"status": "partial", "notes": _PARSE_ERROR_MSG},
-                "manage": {"status": "partial", "notes": _PARSE_ERROR_MSG},
-                "overall": "flag",
-                "blocking_issues": ["LLM response could not be parsed as JSON."],
-                "recommendations": [],
-            }
+            "verdict": "block",
+            "parser_mode": "fail_closed",
+            "functions": {
+                "GOVERN": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
+                "MAP": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
+                "MEASURE": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
+                "MANAGE": {"status": "BLOCK", "notes": "Structured parse failed — verdict is unverified."},
+            },
+            "blocking_issues": [
+                "Structured parse failure — nist_review output must be treated as unverified. Do not distribute."
+            ],
+            "recommendations": [
+                "REVIEW REQUIRED: nist_review failed to parse structured output. "
+                "Rerun assessment and inspect raw model output."
+            ],
+            "reviewed_at": datetime.now(UTC).isoformat(),
+            "reviewer": "nist-reviewer",
         }
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path = out_path.resolve()
+        out_path.write_text(json.dumps(verdict, indent=2))  # NOSONAR — intentional CLI output path
+        click.echo(f"nist-review: wrote fail-closed verdict -> {out_path}", err=True)
+        return
 
     if "nist_ai_rmf_review" in verdict:
         verdict["nist_ai_rmf_review"].setdefault("reviewed_at_utc", datetime.now(UTC).isoformat())
