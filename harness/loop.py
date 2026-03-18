@@ -214,7 +214,13 @@ def _handle_tool_error(
     """
     # Critical pipeline stages: halt immediately.
     # A hidden collector or assessor failure produces zero findings → false-pass assessment.
-    _CRITICAL_TOOLS = {"sfdc_connect_collect", "workday_connect_collect", "oscal_assess_assess"}
+    _CRITICAL_TOOLS = {
+        "sfdc_connect_collect",
+        "workday_connect_collect",
+        "oscal_assess_assess",
+        "sfdc_expert_enrich",
+        "workday_expert_enrich",
+    }
     if tool_name in _CRITICAL_TOOLS:
         raise RuntimeError(f"Critical tool '{tool_name}' failed — aborting to prevent false-pass assessment.\n{error}")
     # Downstream stages (gap_map, benchmark): return structured error payload.
@@ -323,7 +329,7 @@ def _run_loop(  # NOSONAR
 
         response = client.chat.completions.create(
             model=ORCHESTRATOR.model,
-            max_completion_tokens=4096,
+            max_completion_tokens=int(os.getenv("LLM_MAX_TOKENS_ORCHESTRATOR", "8192")),
             tools=ALL_TOOLS,
             messages=messages,
         )

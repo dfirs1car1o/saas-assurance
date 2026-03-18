@@ -443,7 +443,7 @@ def build_workday_raw(org: str, env: str) -> dict:
         "environment": env,
         "assessor": "workday-connect v0.1.0 (dry-run)",
         "assessment_owner": _SECURITY_TEAM,
-        "data_source": "workday-connect dry-run demo data",
+        "data_source": "dry_run_stub",  # schema enum: live_api | dry_run_stub | manual_questionnaire
         "ai_generated_findings_notice": (
             "Findings are simulated dry-run demo data. "
             "Not based on a live Workday tenant. For demonstration purposes only."

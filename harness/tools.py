@@ -819,9 +819,9 @@ def _out_dir(org: str) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def _run(args: list[str]) -> str:
-    """Run subprocess, return stdout. Raise RuntimeError on non-zero exit."""
-    result = subprocess.run(args, capture_output=True, text=True, cwd=_REPO)  # noqa: S603
+def _run(args: list[str], timeout: int = 300) -> str:
+    """Run subprocess, return stdout. Raise RuntimeError on non-zero exit or timeout."""
+    result = subprocess.run(args, capture_output=True, text=True, cwd=_REPO, timeout=timeout)  # noqa: S603
     if result.returncode != 0:
         raise RuntimeError(f"Tool '{args[0]}' failed (exit {result.returncode}):\n{result.stderr.strip()}")
     return result.stdout
@@ -1004,7 +1004,7 @@ def _dispatch_report_gen(inp: dict[str, Any], out_dir: Path) -> str:
         out_path,
         *_report_gen_optional_args(inp),
     ]
-    _run(args)
+    _run(args, timeout=600)  # report_gen makes LLM calls — allow up to 10 min
     return json.dumps({"status": "ok", "output_file": out_path})
 
 

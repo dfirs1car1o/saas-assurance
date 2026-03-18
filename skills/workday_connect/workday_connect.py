@@ -354,7 +354,8 @@ def run_collect(
         "environment": env,
         "assessor": f"workday-connect v{_VERSION}",
         "assessment_owner": assessment_owner,
-        "data_source": f"workday-connect OAuth 2.0 REST + RaaS {api_version}",
+        "data_source": "live_api",  # schema enum: live_api | dry_run_stub | manual_questionnaire
+        "collector_detail": f"workday-connect OAuth 2.0 REST + RaaS {api_version}",
         "ai_generated_findings_notice": (
             "Findings produced by automated collector workday-connect. "
             "Requires human review before use in audit evidence."

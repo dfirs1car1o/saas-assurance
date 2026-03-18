@@ -651,7 +651,7 @@ def _run_interactive(controls: list[ControlQuestion], org: str, env: str) -> lis
                     "observed_value": observed,
                     "remediation": remediation,
                     "evidence_ref": evidence_ref,
-                    "data_source": "manual-intake",
+                    "data_source": "manual_questionnaire",
                 }
             )
             print(f"  → Recorded: {status.upper()}")
@@ -790,8 +790,9 @@ def _merge(gap_path: Path, new_findings: list[dict]) -> None:
             existing[cid] = nf
 
     data["findings"] = list(existing.values())
-    # Update data_source to reflect combined collection
-    data["data_source"] = "live-collection+manual-intake"
+    # Preserve the primary data_source enum; record manual supplement separately
+    data["data_source"] = data.get("data_source", "live_api")
+    data["manual_supplement"] = True
     gap_path = gap_path.resolve()
     gap_path.write_text(json.dumps(data, indent=2))  # NOSONAR — intentional CLI output path
     print(f"  Merged {updated} manual findings into {gap_path}", file=sys.stderr)
@@ -849,11 +850,14 @@ def main() -> int:
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
     payload = {
+        "schema_version": "2.0",
         "assessment_id": f"sfdc-manual-{args.org}-{args.env}-{datetime.now(UTC).strftime('%Y%m%d')}",
-        "assessed_at_utc": assessed_at,
+        "platform": "salesforce",
+        "assessment_time_utc": assessed_at,
+        "assessor": "manual-controls-questionnaire",
         "org": args.org,
         "env": args.env,
-        "data_source": "manual-intake",
+        "data_source": "manual_questionnaire",
         "ai_generated_findings_notice": (
             "Findings in this file are based on human-provided answers to structured questions. "
             "Evidence references must be verified by the assessment owner before delivery."

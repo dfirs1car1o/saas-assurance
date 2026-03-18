@@ -1378,17 +1378,19 @@ def assess(  # NOSONAR
     )
 
     payload = {
+        # baseline_assessment_schema.json v2 required fields
+        "schema_version": "2.0",
         "assessment_id": assessment_id,
-        "assessed_at_utc": datetime.now(UTC).isoformat(),
-        "org": org_label,
         "platform": platform,
+        "assessment_time_utc": datetime.now(UTC).isoformat(),
+        "assessor": f"oscal-assess/{platform}",
+        # Additional context fields
+        "org": org_label,
         "env": env,
-        # Issue #12 — NIST GOVERN-PARTIAL: named individual accountable for the assessment
         "assessment_owner": _normalize_assessment_owner(assessment_owner),
-        # Issue #11 — NIST MAP-BLOCK: declare collection mode with compliant enum values
         "data_source": _normalize_data_source(dry_run),
         "ai_generated_findings_notice": (
-            "Findings are AI-generated assessments derived from sfdc-connect API data. "
+            "Findings are AI-generated assessments derived from API-collected data. "
             "Human verification is required before delivery to governance stakeholders."
         ),
         "findings": findings,

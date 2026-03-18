@@ -22,19 +22,21 @@ You apply NIST AI Risk Management Framework 1.0 to the outputs produced by this 
 ## Calling nist-review
 
 ```bash
-# Salesforce assessment
+# Salesforce assessment (live mode — --gap-analysis and --backlog are both required)
 python -m skills.nist_review.nist_review assess \
   --platform salesforce \
+  --gap-analysis <ABSOLUTE PATH>/gap_analysis.json \
   --backlog <ABSOLUTE PATH>/backlog.json \
   --out <ABSOLUTE PATH>/nist_review.json
 
-# Workday assessment
+# Workday assessment (live mode)
 python -m skills.nist_review.nist_review assess \
   --platform workday \
+  --gap-analysis <ABSOLUTE PATH>/gap_analysis.json \
   --backlog <ABSOLUTE PATH>/backlog.json \
   --out <ABSOLUTE PATH>/nist_review.json
 
-# Dry-run (no API key needed — uses platform-specific stub verdicts)
+# Dry-run (no API key needed — uses platform-specific stub verdicts; --gap-analysis not required)
 python -m skills.nist_review.nist_review assess \
   --platform salesforce \
   --dry-run \
