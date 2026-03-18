@@ -45,8 +45,8 @@ def test_oscal_assess_dry_run_produces_valid_json(tmp_path: Path) -> None:
     assert "assessment_id" in data
     assert "findings" in data
     # Issue #11: data_source and AI notice must be present
-    assert data.get("data_source") == "dry-run-mock", (
-        f"Expected data_source=dry-run-mock, got {data.get('data_source')}"
+    assert data.get("data_source") == "dry_run_stub", (
+        f"Expected data_source=dry_run_stub, got {data.get('data_source')}"
     )
     assert "ai_generated_findings_notice" in data
     # Issue #12: assessment_owner field must be present

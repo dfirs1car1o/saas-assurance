@@ -54,7 +54,8 @@
     },
     "data_source": {
       "type": "string",
-      "description": "Description of data source used (e.g., 'sfdc-connect v1.0 REST/SOQL API', 'workday-connect SOAP WWS v40')."
+      "enum": ["live_api", "dry_run_stub", "manual_questionnaire"],
+      "description": "Normalized collection mode used to produce the findings. Use 'live_api' for collector-backed live runs, 'dry_run_stub' for synthetic/demo runs, or 'manual_questionnaire' for human-collected assessments."
     },
     "ai_generated_findings_notice": {
       "type": "string",

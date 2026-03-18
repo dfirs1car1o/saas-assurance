@@ -59,7 +59,7 @@ SF_DOMAIN=login
 ### Commands
 
 ```bash
-oscal-assess assess --collector-output sfdc_raw.json --org my-org [--out PATH]
+oscal-assess assess --collector-output sfdc_raw.json --assessment-owner "Jane Smith" [--out PATH]
 ```
 
 ### Rule Engine
@@ -78,8 +78,9 @@ oscal-assess assess --collector-output sfdc_raw.json --org my-org [--out PATH]
 ```json
 {
   "assessment_id": "sfdc-assess-my-org-dev",
-  "generated_at_utc": "2026-03-02T15:00:00Z",
+  "assessed_at_utc": "2026-03-02T15:00:00Z",
   "assessment_owner": "SaaS Security Architect",
+  "data_source": "live_api",
   "findings": [
     {
       "control_id": "SBS-AUTH-001",

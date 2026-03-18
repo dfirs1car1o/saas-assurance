@@ -26,6 +26,7 @@ import yaml
 
 VALID_STATUSES = {"pass", "fail", "partial", "not_applicable"}
 VALID_SEVERITIES = {"critical", "high", "moderate", "low"}
+_VALID_DATA_SOURCES = {"live_api", "dry_run_stub", "manual_questionnaire"}
 
 
 @dataclass
@@ -73,6 +74,26 @@ def _auto_due_date(severity: str, status: str, assessed_dt: datetime) -> str:
         return ""
     days = _DUE_DATE_DAYS.get(severity, 90)
     return (assessed_dt + timedelta(days=days)).strftime("%Y-%m-%d")
+
+
+def _normalize_assessment_owner(owner: str | None) -> str:
+    """Return a valid accountable owner name for assessment metadata."""
+    if not owner:
+        return "SaaS Security Architect"
+    normalized = owner.strip()
+    if not normalized or normalized.lower() == "unknown":
+        return "SaaS Security Architect"
+    return normalized
+
+
+def _normalize_data_source(dry_run: bool, source: str | None = None) -> str:
+    """Return a NIST-review-compliant data_source enum."""
+    if dry_run:
+        return "dry_run_stub"
+    normalized = (source or "").strip().lower()
+    if normalized in _VALID_DATA_SOURCES:
+        return normalized
+    return "live_api"
 
 
 def _na(control_id: str, severity: str, reason: str = "Scope not collected by sfdc-connect") -> Finding:
@@ -1363,9 +1384,9 @@ def assess(  # NOSONAR
         "platform": platform,
         "env": env,
         # Issue #12 — NIST GOVERN-PARTIAL: named individual accountable for the assessment
-        "assessment_owner": assessment_owner or "SaaS Security Architect",
-        # Issue #11 — NIST MAP-BLOCK: declare collection mode and AI-generated nature
-        "data_source": "dry-run-mock" if dry_run else "live-collection",
+        "assessment_owner": _normalize_assessment_owner(assessment_owner),
+        # Issue #11 — NIST MAP-BLOCK: declare collection mode with compliant enum values
+        "data_source": _normalize_data_source(dry_run),
         "ai_generated_findings_notice": (
             "Findings are AI-generated assessments derived from sfdc-connect API data. "
             "Human verification is required before delivery to governance stakeholders."

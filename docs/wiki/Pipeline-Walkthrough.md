@@ -84,10 +84,13 @@ Produces a synthetic weak-org snapshot (no real Salesforce connection needed).
 
 **Command:**
 ```bash
-oscal-assess assess --collector-output sfdc_raw.json --org my-org --out gap_analysis.json
+oscal-assess assess \
+  --collector-output sfdc_raw.json \
+  --assessment-owner "Jane Smith" \
+  --out gap_analysis.json
 ```
 
-**Output:** `gap_analysis.json` — findings array with `control_id`, `status`, `severity`, `owner`, `evidence_ref`, `due_date`.
+**Output:** `gap_analysis.json` — findings array with `control_id`, `status`, `severity`, `owner`, `evidence_ref`, `due_date`, plus top-level governance metadata including `assessment_owner` and normalized `data_source` (`live_api` or `dry_run_stub`).
 
 ---
 

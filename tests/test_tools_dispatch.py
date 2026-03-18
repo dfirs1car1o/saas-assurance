@@ -123,6 +123,16 @@ class TestDispatchOscalAssess:
             )
         assert json.loads(result)["status"] == "ok"
 
+    def test_unknown_assessment_owner_not_forwarded(self) -> None:
+        with patch("harness.tools._run", return_value="") as run_mock:
+            result = dispatch(
+                "oscal_assess_assess",
+                {"org": _TEST_ORG, "dry_run": True, "assessment_owner": "unknown"},
+            )
+        assert json.loads(result)["status"] == "ok"
+        forwarded_args = run_mock.call_args.args[0]
+        assert "--assessment-owner" not in forwarded_args
+
 
 # ---------------------------------------------------------------------------
 # oscal_gap_map

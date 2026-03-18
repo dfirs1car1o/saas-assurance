@@ -170,10 +170,12 @@ Platform-agnostic assessment schema. Supports Salesforce, Workday, and future pl
   "assessor": "workday-connect v0.1.0",
   "oscal_catalog_ref": "config/workday/workday_catalog.json",
   "assessment_owner": "Jane Smith",
-  "data_source": "workday-connect OAuth 2.0 + RaaS + REST",
+  "data_source": "live_api",
   "findings": [...]
 }
 ```
+
+`data_source` is a normalized enum: `live_api`, `dry_run_stub`, or `manual_questionnaire`.
 
 **Per-finding required fields:**
 

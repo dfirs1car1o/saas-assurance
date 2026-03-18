@@ -47,7 +47,7 @@ python -m skills.nist_review.nist_review assess \
 - Workday dry-run: references WSCC v0.3.0 catalog language
 
 **Note:** Uses `max_completion_tokens` (not `max_tokens`) — required for gpt-5.x models.
-If JSON response is truncated, the skill applies a regex fallback to extract the verdict.
+If the model returns invalid JSON, the skill fails closed and writes a blocking verdict instead of attempting best-effort salvage.
 
 ---
 
@@ -93,11 +93,11 @@ If JSON response is truncated, the skill applies a regex fallback to extract the
     "platform": "salesforce|workday",
     "reviewed_at_utc": "<ISO 8601>",
     "reviewer": "nist-reviewer",
-    "govern": { "status": "pass|flag|block", "notes": "" },
-    "map":     { "status": "pass|flag|block", "notes": "" },
-    "measure": { "status": "pass|flag|block", "notes": "" },
-    "manage":  { "status": "pass|flag|block", "notes": "" },
-    "overall": "clear|flag|block",
+    "govern": { "status": "pass|partial|fail", "notes": "" },
+    "map":     { "status": "pass|partial|fail", "notes": "" },
+    "measure": { "status": "pass|partial|fail", "notes": "" },
+    "manage":  { "status": "pass|partial|fail", "notes": "" },
+    "overall": "pass|flag|block",
     "blocking_issues": [],
     "recommendations": []
   }
@@ -106,7 +106,7 @@ If JSON response is truncated, the skill applies a regex fallback to extract the
 
 | Verdict | Meaning |
 |---|---|
-| `clear` | Output may be delivered |
+| `pass` | Output may be delivered |
 | `flag` | Output may be delivered with noted caveats surfaced to recipient |
 | `block` | Output must NOT be delivered until `blocking_issues` are resolved |
 

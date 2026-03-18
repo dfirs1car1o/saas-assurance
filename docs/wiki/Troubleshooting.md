@@ -89,6 +89,29 @@ Fixes:
 
 ---
 
+## NIST review blocks a live report on metadata
+
+Symptoms:
+- `assessment_owner is missing or invalid (currently 'unknown')`
+- `data_source field is not compliant`
+
+Cause: the assessment metadata used a placeholder owner or an old free-form data source label.
+
+Fix:
+```bash
+oscal-assess assess \
+  --collector-output sfdc_raw.json \
+  --assessment-owner "Jane Smith" \
+  --out gap_analysis.json
+```
+
+Use only normalized `data_source` values in generated artifacts:
+- `live_api`
+- `dry_run_stub`
+- `manual_questionnaire`
+
+---
+
 ## pytest failures
 
 ```
