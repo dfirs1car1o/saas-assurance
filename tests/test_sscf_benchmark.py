@@ -16,12 +16,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from click.testing import CliRunner
 
 from skills.sscf_benchmark.sscf_benchmark import (
     _domain_status,
     _load_backlog,
+    _load_sscf_index,
     _score_findings,
     _to_markdown,
+    cli,
     run_benchmark,
 )
 
@@ -264,3 +267,162 @@ class TestLoadBacklog:
         f.write_text("[1, 2, 3]")
         with pytest.raises(ValueError, match="Expected JSON object"):
             _load_backlog(f)
+
+
+# ---------------------------------------------------------------------------
+# _load_sscf_index
+# ---------------------------------------------------------------------------
+
+
+class TestLoadSscfIndex:
+    def test_loads_valid_yaml(self, tmp_path: Path) -> None:
+        yaml_content = """controls:
+  - sscf_control_id: SSCF-TST-001
+    domain: Test Domain
+    title: Test Control
+    owner_team: test-team
+  - sscf_control_id: SSCF-TST-002
+    domain: Test Domain
+    title: Another Control
+    owner_team: test-team
+"""
+        f = tmp_path / "index.yaml"
+        f.write_text(yaml_content)
+        index = _load_sscf_index(f)
+        assert "SSCF-TST-001" in index
+        assert "SSCF-TST-002" in index
+        assert index["SSCF-TST-001"]["domain"] == "Test Domain"
+
+    def test_skips_entries_with_no_id(self, tmp_path: Path) -> None:
+        yaml_content = """controls:
+  - sscf_control_id: SSCF-VALID-001
+    domain: D
+    title: Valid
+  - domain: D
+    title: Missing ID entry
+"""
+        f = tmp_path / "index.yaml"
+        f.write_text(yaml_content)
+        index = _load_sscf_index(f)
+        assert len(index) == 1
+        assert "SSCF-VALID-001" in index
+
+    def test_empty_controls_list_returns_empty_dict(self, tmp_path: Path) -> None:
+        f = tmp_path / "empty.yaml"
+        f.write_text("controls: []\n")
+        index = _load_sscf_index(f)
+        assert index == {}
+
+    def test_real_config_index_loads(self) -> None:
+        """Smoke test against the actual repo config file."""
+        repo_root = Path(__file__).resolve().parents[1]
+        index_path = repo_root / "config" / "sscf_control_index.yaml"
+        if not index_path.exists():
+            pytest.skip("sscf_control_index.yaml not present")
+        index = _load_sscf_index(index_path)
+        assert len(index) > 0
+        # Every entry should have a domain field
+        for ctrl in index.values():
+            assert "domain" in ctrl
+
+
+# ---------------------------------------------------------------------------
+# CLI — benchmark command
+# ---------------------------------------------------------------------------
+
+
+class TestBenchmarkCli:
+    def _make_backlog(self, tmp_path: Path) -> Path:
+        backlog = {
+            "assessment_id": "cli-test-001",
+            "org": "test-org",
+            "mapped_items": [
+                {"sbs_control_id": "AUTH-001", "status": "fail", "severity": "critical",
+                 "sscf_control_ids": ["SSCF-IAM-01"]},
+                {"sbs_control_id": "LOG-001", "status": "pass", "severity": "high",
+                 "sscf_control_ids": ["SSCF-LOG-01"]},
+            ],
+        }
+        p = tmp_path / "backlog.json"
+        p.write_text(json.dumps(backlog))
+        return p
+
+    def _make_index(self, tmp_path: Path) -> Path:
+        yaml_content = """controls:
+  - sscf_control_id: SSCF-IAM-01
+    domain: Identity & Access Management
+    title: MFA Enforcement
+    owner_team: IAM
+  - sscf_control_id: SSCF-LOG-01
+    domain: Logging & Monitoring
+    title: Audit Logging
+    owner_team: SecOps
+"""
+        p = tmp_path / "sscf_index.yaml"
+        p.write_text(yaml_content)
+        return p
+
+    def test_cli_outputs_json_to_stdout(self, tmp_path: Path) -> None:
+        backlog = self._make_backlog(tmp_path)
+        index = self._make_index(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["benchmark", "--backlog", str(backlog), "--sscf-index", str(index)],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+        # Progress lines go to stderr; extract the JSON object from combined output
+        json_start = result.output.find("{")
+        assert json_start >= 0, f"No JSON in output: {result.output[:200]}"
+        data = json.loads(result.output[json_start:])
+        assert "overall_score" in data
+        assert "domains" in data
+
+    def test_cli_writes_json_to_file(self, tmp_path: Path) -> None:
+        backlog = self._make_backlog(tmp_path)
+        index = self._make_index(tmp_path)
+        out = tmp_path / "report.json"
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["benchmark", "--backlog", str(backlog), "--sscf-index", str(index), "--out", str(out)],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+        assert out.exists()
+        data = json.loads(out.read_text())
+        assert "benchmark_id" in data
+
+    def test_cli_writes_markdown_output(self, tmp_path: Path) -> None:
+        backlog = self._make_backlog(tmp_path)
+        index = self._make_index(tmp_path)
+        out = tmp_path / "report.md"
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["benchmark", "--backlog", str(backlog), "--sscf-index", str(index),
+             "--format", "markdown", "--out", str(out)],
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+        content = out.read_text()
+        assert "# SSCF Compliance Benchmark" in content
+
+    def test_cli_exits_nonzero_on_missing_backlog(self, tmp_path: Path) -> None:
+        index = self._make_index(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["benchmark", "--backlog", str(tmp_path / "nonexistent.json"), "--sscf-index", str(index)],
+        )
+        assert result.exit_code != 0
+
+    def test_cli_exits_nonzero_on_missing_index(self, tmp_path: Path) -> None:
+        backlog = self._make_backlog(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            ["benchmark", "--backlog", str(backlog), "--sscf-index", str(tmp_path / "no_index.yaml")],
+        )
+        assert result.exit_code != 0
