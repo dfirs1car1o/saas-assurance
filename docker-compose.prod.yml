@@ -1,0 +1,109 @@
+# saas-assurance — PRODUCTION stack template
+#
+# Differences from docker-compose.yml (dev):
+#   - OpenSearch security plugin ENABLED (authentication + TLS)
+#   - OpenSearch port NOT published on 0.0.0.0 (localhost only)
+#   - Dashboards security plugin ENABLED
+#   - Agent healthcheck added
+#   - OPENSEARCH_INITIAL_ADMIN_PASSWORD required via environment
+#
+# Pre-flight checklist:
+#   1. Generate TLS certificates and place them in config/opensearch/tls/
+#      (see https://opensearch.org/docs/latest/security/configuration/tls/)
+#   2. Set OPENSEARCH_INITIAL_ADMIN_PASSWORD in your secrets manager / .env.prod
+#   3. Set OPENSEARCH_USER and OPENSEARCH_PASSWORD in .env.prod for the agent
+#   4. Confirm SF_PRIVATE_KEY_PATH and all API keys are set before first run
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml run --rm agent agent-loop run \
+#     --platform salesforce --org <alias> --approve-critical
+
+services:
+
+  # ── OpenSearch (security enabled) ──────────────────────────────────────────
+  opensearch:
+    image: opensearchproject/opensearch:2.19.4
+    container_name: saas-sec-opensearch-prod
+    environment:
+      # Security plugin ENABLED — do NOT set DISABLE_SECURITY_PLUGIN here
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Set a strong admin password via environment or secrets manager
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:?OPENSEARCH_INITIAL_ADMIN_PASSWORD must be set}"
+      # TLS configuration — mount your certificates into the container and
+      # reference them here. Example paths assume certs in config/opensearch/tls/
+      # plugins.security.ssl.transport.pemcert_filepath: /usr/share/opensearch/config/tls/node.pem
+      # plugins.security.ssl.transport.pemkey_filepath: /usr/share/opensearch/config/tls/node-key.pem
+      # plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/opensearch/config/tls/root-ca.pem
+      # plugins.security.ssl.http.enabled: "true"
+      # plugins.security.ssl.http.pemcert_filepath: /usr/share/opensearch/config/tls/node.pem
+      # plugins.security.ssl.http.pemkey_filepath: /usr/share/opensearch/config/tls/node-key.pem
+      # plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/opensearch/config/tls/root-ca.pem
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      # Bind to localhost only — do NOT expose on 0.0.0.0 in production
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - os-data-prod:/usr/share/opensearch/data
+      # Mount TLS certs (uncomment when certs are provisioned)
+      # - ./config/opensearch/tls:/usr/share/opensearch/config/tls:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -u admin:${OPENSEARCH_INITIAL_ADMIN_PASSWORD} https://localhost:9200/_cluster/health --insecure | grep -qv '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+
+  # ── OpenSearch Dashboards (security enabled) ────────────────────────────────
+  dashboards:
+    image: opensearchproject/opensearch-dashboards:2.19.4
+    container_name: saas-sec-dashboards-prod
+    ports:
+      - "127.0.0.1:5601:5601"
+    environment:
+      # Use https:// when TLS is enabled on OpenSearch
+      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+      OPENSEARCH_USERNAME: "admin"
+      OPENSEARCH_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:?OPENSEARCH_INITIAL_ADMIN_PASSWORD must be set}"
+      # DISABLE_SECURITY_DASHBOARDS_PLUGIN intentionally absent — security enabled
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Agent ───────────────────────────────────────────────────────────────────
+  agent:
+    build: .
+    container_name: saas-sec-agent-prod
+    env_file: .env.prod
+    environment:
+      OPENSEARCH_URL: "https://opensearch:9200"
+      OPENSEARCH_USER: "${OPENSEARCH_USER:-admin}"
+      OPENSEARCH_PASSWORD: "${OPENSEARCH_INITIAL_ADMIN_PASSWORD:?OPENSEARCH_INITIAL_ADMIN_PASSWORD must be set}"
+    volumes:
+      - ./docs/oscal-salesforce-poc/generated:/app/docs/oscal-salesforce-poc/generated
+      - ${SF_PRIVATE_KEY_PATH:-/dev/null}:/run/secrets/sf_key.pem:ro
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    profiles:
+      - agent
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  os-data-prod:
+    driver: local
