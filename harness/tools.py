@@ -62,143 +62,95 @@ def set_openai_client(client: Any) -> None:
     _AGENT_CLIENT = client
 
 
-def _validate_agent_response(raw: str, agent_name: str) -> dict:
-    """Parse and validate an agent response string into a well-formed dict.
+# ---------------------------------------------------------------------------
+# Agent response validation helpers (module-level to keep _validate_agent_response
+# below the S3776 cognitive-complexity limit of 15)
+# ---------------------------------------------------------------------------
 
-    Tries JSON parse first (structured output). For strict agents (_STRICT_AGENTS),
-    a non-JSON or schema-incomplete response fails closed:
-      - delivery-reviewer → status=block (hard gate)
-      - all other strict agents → status=error (pipeline blocked)
+_REQUIRED_STRICT: frozenset[str] = frozenset({"status", "agent", "analysis", "flags", "summary", "severity"})
+_VALID_STATUS: frozenset[str] = frozenset({"ok", "error", "block"})
+_VALID_SEVERITY: frozenset[str] = frozenset({"info", "warning", "critical"})
 
-    Strict agents must return ALL 6 canonical fields with valid values:
-      status, agent, analysis, flags (list), summary, severity (info|warning|critical)
 
-    For non-strict agents, falls back to FLAG: line scraping (legacy behaviour).
-    Always returns a dict with all required canonical fields.
+def _agent_violation_response(agent_name: str, field: str) -> dict:
+    """Return a fail-closed schema-violation response for a strict agent."""
+    block_status = "block" if agent_name == "delivery-reviewer" else "error"
+    return {
+        "status": block_status,
+        "agent": agent_name,
+        "analysis": "Schema violation — required field missing or invalid",
+        "flags": [f"FLAG:schema_violation:{field}"],
+        "summary": "",
+        "severity": "critical",
+    }
+
+
+def _check_strict_schema(parsed: dict) -> str | None:
+    """Return a violation description if the strict-agent schema is violated, else None."""
+    missing = _REQUIRED_STRICT - parsed.keys()
+    if missing:
+        return "missing_fields_" + ",".join(sorted(missing))
+    if parsed.get("severity") not in _VALID_SEVERITY:
+        return f"invalid_severity_{parsed.get('severity')}"
+    if not isinstance(parsed.get("flags"), list):
+        return "flags_not_a_list"
+    if any(not isinstance(f, str) for f in parsed["flags"]):
+        return "flags_element_not_string"
+    if parsed.get("status", "ok") not in _VALID_STATUS:
+        return f"invalid_status_{parsed.get('status', 'ok')}"
+    if not isinstance(parsed.get("summary"), str):
+        return "summary_not_a_string"
+    if not isinstance(parsed.get("analysis"), str) or not parsed.get("analysis"):
+        return "analysis_empty_or_not_string"
+    # agent field must be a non-empty string (exact-name match not enforced — models
+    # self-identify from their system-prompt role name which may differ from the
+    # internal dispatch key; the authoritative name is always agent_name from the caller)
+    if not isinstance(parsed.get("agent"), str) or not parsed.get("agent"):
+        return "agent_not_a_string"
+    return None
+
+
+def _build_strict_result(parsed: dict, agent_name: str) -> dict:
+    """Assemble a canonical result dict from a schema-valid strict-agent response."""
+    return {
+        "status": parsed["status"],
+        "agent": agent_name,  # always use authoritative dispatch name
+        "analysis": parsed.get("analysis", ""),
+        "flags": parsed["flags"],
+        "summary": parsed.get("summary", ""),
+        "severity": parsed["severity"],
+    }
+
+
+def _build_nonstrict_result(parsed: dict, agent_name: str, raw: str) -> dict:
+    """Assemble a canonical result dict from a non-strict agent JSON response."""
+    raw_status = parsed.get("status", "ok")
+    analysis = parsed.get("analysis", raw)
+    flags = parsed.get("flags")
+    if not isinstance(flags, list):
+        flags = [
+            line.split(_FLAG_PREFIX, 1)[1].strip()
+            for line in str(analysis).splitlines()
+            if line.strip().startswith(_FLAG_PREFIX)
+        ]
+    return {
+        "status": raw_status if raw_status in _VALID_STATUS else "ok",
+        "agent": parsed.get("agent", agent_name),
+        "analysis": analysis,
+        "flags": flags,
+        "summary": parsed.get("summary", ""),
+        "severity": parsed.get("severity", "info"),
+    }
+
+
+def _handle_non_json_response(raw: str, agent_name: str) -> dict:
+    """Handle an agent response that is not valid JSON.
+
+    Strict agents fail closed; non-strict agents fall back to FLAG: line scraping.
     """
-    _REQUIRED_BASE = {"status", "agent", "analysis"}
-    _REQUIRED_STRICT = {"status", "agent", "analysis", "flags", "summary", "severity"}
-    _VALID_STATUS = {"ok", "error", "block"}
-    _VALID_SEVERITY = {"info", "warning", "critical"}
+    import sys  # noqa: PLC0415
 
-    def _schema_violation_response(field: str) -> dict:
-        block_status = "block" if agent_name == "delivery-reviewer" else "error"
-        return {
-            "status": block_status,
-            "agent": agent_name,
-            "analysis": "Schema violation — required field missing or invalid",
-            "flags": [f"FLAG:schema_violation:{field}"],
-            "summary": "",
-            "severity": "critical",
-        }
-
-    def _check_strict_schema(parsed: dict, expected_agent: str) -> str | None:
-        """Return a violation description string if the strict-agent schema is violated, else None."""
-        # All 6 required fields must be present
-        missing = _REQUIRED_STRICT - parsed.keys()
-        if missing:
-            return "missing_fields_" + ",".join(sorted(missing))
-
-        # severity must be one of the allowed values
-        severity_val = parsed.get("severity")
-        if severity_val not in _VALID_SEVERITY:
-            return f"invalid_severity_{severity_val}"
-
-        # flags must be a list
-        flags_val = parsed.get("flags")
-        if not isinstance(flags_val, list):
-            return "flags_not_a_list"
-
-        # each element of flags must be a string
-        if any(not isinstance(f, str) for f in flags_val):
-            return "flags_element_not_string"
-
-        # status must be a recognised value
-        raw_status = parsed.get("status", "ok")
-        if raw_status not in _VALID_STATUS:
-            return f"invalid_status_{raw_status}"
-
-        # summary must be a string (empty string is allowed)
-        if not isinstance(parsed.get("summary"), str):
-            return "summary_not_a_string"
-
-        # analysis must be a non-empty string
-        analysis_val = parsed.get("analysis")
-        if not isinstance(analysis_val, str) or not analysis_val:
-            return "analysis_empty_or_not_string"
-
-        # agent field must be a non-empty string (exact-name match not enforced — models
-        # self-identify from their system-prompt role name which may differ from the
-        # internal dispatch key; the authoritative name is always agent_name from the caller)
-        agent_val = parsed.get("agent")
-        if not isinstance(agent_val, str) or not agent_val:
-            return "agent_not_a_string"
-
-        return None
-
-    # --- Attempt 1: JSON parse ---
-    json_ok = False
-    parsed: dict | None = None
-    try:
-        candidate = json.loads(raw)
-        if isinstance(candidate, dict):
-            json_ok = True
-            parsed = candidate
-    except (json.JSONDecodeError, TypeError):
-        pass
-
-    if json_ok and parsed is not None:
-        if agent_name in _STRICT_AGENTS:
-            violation = _check_strict_schema(parsed, agent_name)
-            if violation:
-                return _schema_violation_response(violation)
-
-            flags_val = parsed["flags"]
-            raw_status = parsed["status"]
-            severity_val = parsed["severity"]
-            return {
-                "status": raw_status,
-                "agent": agent_name,  # always use authoritative dispatch name
-                "analysis": parsed.get("analysis", raw),
-                "flags": flags_val,
-                "summary": parsed.get("summary", ""),
-                "severity": severity_val,
-            }
-
-        # Non-strict agent — only require the base 3 fields; fill defaults for the rest
-        missing = _REQUIRED_BASE - parsed.keys()
-        if missing and agent_name in _STRICT_AGENTS:
-            # Belt-and-suspenders (unreachable given branch above, kept for safety)
-            return _schema_violation_response("missing_fields_" + ",".join(sorted(missing)))
-
-        # Normalise status field — reject invalid values on strict agents (non-strict: default to ok)
-        raw_status = parsed.get("status", "ok")
-        if raw_status not in _VALID_STATUS and agent_name in _STRICT_AGENTS:
-            return _schema_violation_response(f"invalid_status_{raw_status}")
-
-        # All checks passed — fill any optional missing fields with safe defaults
-        analysis = parsed.get("analysis", raw)
-        flags = parsed.get("flags")
-        if not isinstance(flags, list):
-            flags = [
-                line.split(_FLAG_PREFIX, 1)[1].strip()
-                for line in str(analysis).splitlines()
-                if line.strip().startswith(_FLAG_PREFIX)
-            ]
-        return {
-            "status": raw_status if raw_status in _VALID_STATUS else "ok",
-            "agent": parsed.get("agent", agent_name),
-            "analysis": analysis,
-            "flags": flags,
-            "summary": parsed.get("summary", ""),
-            "severity": parsed.get("severity", "info"),
-        }
-
-    # --- Attempt 2: non-JSON response ---
-    # Strict agents fail closed; non-strict agents fall back to FLAG: scraping.
     if agent_name in _STRICT_AGENTS:
-        import sys  # noqa: PLC0415
-
         print(  # noqa: T201
             f"[agent] ERROR: {agent_name} returned non-JSON response — pipeline blocked (fail-closed).",
             file=sys.stderr,
@@ -213,9 +165,6 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
             "severity": "critical",
         }
 
-    # --- Attempt 3: FLAG: line scraping (legacy free-text, non-strict agents only) ---
-    import sys  # noqa: PLC0415
-
     print(  # noqa: T201
         f"[agent] WARNING: {agent_name} returned non-JSON response — falling back to FLAG: scraping.",
         file=sys.stderr,
@@ -223,14 +172,31 @@ def _validate_agent_response(raw: str, agent_name: str) -> dict:
     flags = [
         line.split(_FLAG_PREFIX, 1)[1].strip() for line in raw.splitlines() if line.strip().startswith(_FLAG_PREFIX)
     ]
-    return {
-        "status": "ok",
-        "agent": agent_name,
-        "analysis": raw,
-        "flags": flags,
-        "summary": "",
-        "severity": "info",
-    }
+    return {"status": "ok", "agent": agent_name, "analysis": raw, "flags": flags, "summary": "", "severity": "info"}
+
+
+def _validate_agent_response(raw: str, agent_name: str) -> dict:
+    """Parse and validate an agent response string into a well-formed canonical dict.
+
+    Strict agents (_STRICT_AGENTS) must return all 6 schema fields as valid JSON;
+    non-JSON or schema-incomplete responses fail closed. Non-strict agents fall back
+    to FLAG: line scraping. Always returns a dict with all 6 canonical fields.
+    """
+    try:
+        candidate = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return _handle_non_json_response(raw, agent_name)
+
+    if not isinstance(candidate, dict):
+        return _handle_non_json_response(raw, agent_name)
+
+    if agent_name in _STRICT_AGENTS:
+        violation = _check_strict_schema(candidate)
+        if violation:
+            return _agent_violation_response(agent_name, violation)
+        return _build_strict_result(candidate, agent_name)
+
+    return _build_nonstrict_result(candidate, agent_name, raw)
 
 
 def _dispatch_agent_call(agent_name: str, system_prompt: str, user_content: str) -> str:
