@@ -1,0 +1,73 @@
+name: Feature Request
+description: Suggest a new capability or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement to saas-assurance.
+        Features that require write access to SaaS orgs or expand beyond the read-only assessment scope will require additional security review.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this feature solve? What use case drives the request?
+      placeholder: "When assessing orgs with many connected apps, there's no way to filter OSCAL controls by domain..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior you'd like to see. Be as specific as you can about CLI flags, output formats, or agent behavior changes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you considered or workarounds you're currently using.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - New SaaS connector (platform)
+        - New compliance framework / control catalog
+        - Assessment logic (oscal-assess / sscf-benchmark)
+        - Report output (report-gen)
+        - NIST AI RMF gate (nist-review)
+        - Agent harness / orchestration
+        - OpenSearch / dashboards
+        - Docker / deployment
+        - CI / developer experience
+        - Documentation
+        - Other
+
+  - type: dropdown
+    id: scope_impact
+    attributes:
+      label: Read/write scope impact
+      description: Does this feature require write access to any SaaS org or external system?
+      options:
+        - "No — read-only, stays within existing scope"
+        - "No — local changes only (output files, reports)"
+        - "Yes — requires write access (needs security review)"
+        - "Unsure"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched existing issues and this hasn't already been requested.
+          required: true
+        - label: I've read AGENTS.md and confirmed this isn't already implemented.
+          required: false
