@@ -14,13 +14,13 @@
 ## Screenshots
 
 ### Salesforce Security Posture
-![Salesforce Dashboard](../screenshots/sfdc-dashboard.png)
+![Salesforce Dashboard](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/screenshots/sfdc-dashboard.png)
 
 ### Workday Security Posture
-![Workday Dashboard](../screenshots/workday-dashboard.png)
+![Workday Dashboard](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/screenshots/workday-dashboard.png)
 
 ### SSCF Security Posture Overview (Combined)
-![SSCF Main Dashboard](../screenshots/sscf-main-dashboard.png)
+![SSCF Main Dashboard](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/screenshots/sscf-main-dashboard.png)
 
 ---
 
