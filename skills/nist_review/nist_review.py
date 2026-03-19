@@ -166,6 +166,14 @@ def _build_review_context(assessment_id: str, gap_data: dict[str, Any], backlog_
 
     Produces a token-efficient summary instead of raw JSON truncation, ensuring
     the NIST gate never silently drops critical findings.
+
+    MEASURE note: mapping_confidence="low" is assigned exclusively to not_applicable findings
+    (controls outside the API collector scope — code review, CI/CD, manual governance, etc.).
+    The NIST MEASURE flag threshold (>30% low confidence) must be evaluated against
+    *assessable* findings only (pass + fail + partial), NOT against the full catalog count
+    which includes structurally out-of-scope controls.  The derived fields
+    ``low_confidence_assessable_count`` and ``low_confidence_assessable_pct`` reflect
+    this correct denominator and are what should be used for the >30% threshold check.
     """
     # --- gap_analysis summary ---
     findings = gap_data.get("findings", [])
@@ -181,11 +189,16 @@ def _build_review_context(assessment_id: str, gap_data: dict[str, Any], backlog_
         f for f in findings if f.get("severity") in ("critical", "high") and f.get("status") in ("fail", "partial")
     ]
 
+    # Collect needs_expert_review control IDs from gap_analysis for explicit MEASURE tracking
+    needs_expert_review_ids = [f.get("control_id") for f in findings if f.get("needs_expert_review")]
+
     gap_summary = {
         "assessment_id": assessment_id,
         "total_findings": total,
         "status_counts": status_counts,
         "priority_findings_full": priority_findings,
+        "needs_expert_review_ids": needs_expert_review_ids,
+        "needs_expert_review_count": len(needs_expert_review_ids),
     }
 
     # --- backlog summary ---
@@ -194,6 +207,28 @@ def _build_review_context(assessment_id: str, gap_data: dict[str, Any], backlog_
         i for i in items if i.get("severity") in ("critical", "high") and i.get("status") in ("fail", "partial")
     ]
     bl_summary = backlog_data.get("summary", {})
+    conf_counts = bl_summary.get("mapping_confidence_counts", {})
+
+    # Compute low_confidence among ASSESSABLE findings only (exclude not_applicable).
+    # not_applicable findings are structurally low-confidence (outside API scope) and must
+    # not be counted against the >30% threshold, which targets assessment quality of
+    # findings that WERE evaluated.
+    assessable_items = [i for i in items if i.get("status") != "not_applicable"]
+    low_conf_assessable = [i for i in assessable_items if i.get("mapping_confidence") == "low"]
+    assessable_count = len(assessable_items)
+    low_conf_assessable_count = len(low_conf_assessable)
+    low_conf_assessable_pct = round(low_conf_assessable_count / assessable_count * 100, 1) if assessable_count else 0.0
+
+    # Collect needs_expert_review items and their expert_review_status from backlog
+    needs_review_items = [i for i in items if i.get("needs_expert_review")]
+    needs_review_with_status = [
+        {
+            "control_id": i.get("sbs_control_id", i.get("legacy_control_id")),
+            "expert_review_status": i.get("expert_review_status"),
+        }
+        for i in needs_review_items
+    ]
+
     backlog_summary = {
         # governance metadata — required by NIST GOVERN / MAP / MEASURE functions
         "assessment_owner": backlog_data.get("assessment_owner"),
@@ -204,8 +239,27 @@ def _build_review_context(assessment_id: str, gap_data: dict[str, Any], backlog_
         # findings metadata
         "overall_score": backlog_data.get("overall_score"),
         "total_items": len(items),
+        "not_applicable_count": len(items) - assessable_count,
+        "assessable_count": assessable_count,
         "unmapped_findings": bl_summary.get("unmapped_findings", 0),
-        "mapping_confidence_counts": bl_summary.get("mapping_confidence_counts", {}),
+        # Raw confidence counts across ALL items (including not_applicable).
+        "mapping_confidence_counts": conf_counts,
+        # Derived: low confidence among assessable findings ONLY — use this for >30% threshold.
+        # not_applicable findings are always low-confidence (outside API collector scope)
+        # and are NOT assessment-quality defects.
+        "low_confidence_assessable_count": low_conf_assessable_count,
+        "low_confidence_assessable_pct": low_conf_assessable_pct,
+        "measure_note": (
+            "mapping_confidence='low' applies exclusively to not_applicable findings "
+            "(controls outside the API collector scope). The >30% low-confidence FLAG "
+            "threshold applies to assessable findings (pass+fail+partial) only. "
+            f"Assessable findings: {assessable_count}. "
+            f"Low-confidence assessable findings: {low_conf_assessable_count} "
+            f"({low_conf_assessable_pct}%)."
+        ),
+        # needs_expert_review tracking
+        "needs_expert_review_count": len(needs_review_items),
+        "needs_expert_review_items": needs_review_with_status,
         "priority_items_full": priority_items,
         "iso27001_summary": backlog_data.get("iso27001_summary"),
     }

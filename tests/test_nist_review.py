@@ -118,6 +118,281 @@ class TestBuildReviewContext:
         inner = json.loads(ctx[inner_start:inner_end].strip())
         assert inner["backlog_summary"]["org"] is None
 
+    # -----------------------------------------------------------------------
+    # FLAG trigger 1: mapping_confidence denominator (not_applicable exclusion)
+    # -----------------------------------------------------------------------
+
+    def _gap_data_with_na(self) -> dict:
+        """Simulates a live run: 15 not_applicable + 10 pass/fail + 20 partial = 45 findings.
+
+        Matches the cyber-coach-dev 2026-03-18 run exactly.
+        """
+        findings = []
+        # 5 pass
+        for i in range(5):
+            findings.append({"status": "pass", "severity": "high", "control_id": f"SBS-PASS-{i:03d}"})
+        # 5 fail
+        for i in range(5):
+            findings.append({"status": "fail", "severity": "critical", "control_id": f"SBS-FAIL-{i:03d}"})
+        # 20 partial (13 with needs_expert_review)
+        for i in range(20):
+            f = {"status": "partial", "severity": "high", "control_id": f"SBS-PART-{i:03d}"}
+            if i < 13:
+                f["needs_expert_review"] = True
+            findings.append(f)
+        # 15 not_applicable
+        for i in range(15):
+            findings.append({"status": "not_applicable", "severity": "moderate", "control_id": f"SBS-NA-{i:03d}"})
+        return {"assessment_id": "test-flag-001", "findings": findings}
+
+    def _backlog_data_with_na(self) -> dict:
+        """Backlog matching the gap data: low confidence only for not_applicable items."""
+        items = []
+        for i in range(5):
+            items.append(
+                {
+                    "status": "pass",
+                    "severity": "high",
+                    "sbs_control_id": f"SBS-PASS-{i:03d}",
+                    "mapping_confidence": "high",
+                }
+            )
+        for i in range(5):
+            items.append(
+                {
+                    "status": "fail",
+                    "severity": "critical",
+                    "sbs_control_id": f"SBS-FAIL-{i:03d}",
+                    "mapping_confidence": "high",
+                }
+            )
+        for i in range(20):
+            item = {
+                "status": "partial",
+                "severity": "high",
+                "sbs_control_id": f"SBS-PART-{i:03d}",
+                "mapping_confidence": "medium",
+            }
+            if i < 13:
+                item["needs_expert_review"] = True
+            items.append(item)
+        for i in range(15):
+            items.append(
+                {
+                    "status": "not_applicable",
+                    "severity": "moderate",
+                    "sbs_control_id": f"SBS-NA-{i:03d}",
+                    "mapping_confidence": "low",
+                }
+            )
+        return {
+            "assessment_id": "test-flag-001",
+            "assessment_owner": "Security Architect",
+            "org": "test-org",
+            "platform": "salesforce",
+            "data_source": "live_api",
+            "ai_generated_findings_notice": "AI-generated.",
+            "overall_score": 0.44,
+            "mapped_items": items,
+            "summary": {
+                "mapping_confidence_counts": {"high": 10, "medium": 20, "low": 15},
+                "unmapped_findings": 0,
+            },
+        }
+
+    def test_low_confidence_assessable_pct_excludes_not_applicable(self) -> None:
+        """low_confidence_assessable_pct must be 0% when all low items are not_applicable."""
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        # All 15 low-confidence items are not_applicable — assessable low count must be 0
+        assert bs["low_confidence_assessable_count"] == 0
+        assert bs["low_confidence_assessable_pct"] == 0.0
+
+    def test_assessable_count_excludes_not_applicable(self) -> None:
+        """assessable_count must equal total_items minus not_applicable_count."""
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        assert bs["assessable_count"] == 30  # 5 pass + 5 fail + 20 partial
+        assert bs["not_applicable_count"] == 15
+
+    def test_measure_note_present_in_context(self) -> None:
+        """measure_note must be present to guide the LLM on the correct denominator."""
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        assert "measure_note" in inner["backlog_summary"]
+        assert "not_applicable" in inner["backlog_summary"]["measure_note"]
+
+    def test_raw_confidence_counts_still_present(self) -> None:
+        """mapping_confidence_counts (raw) must still be present for transparency."""
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        conf = inner["backlog_summary"]["mapping_confidence_counts"]
+        assert conf == {"high": 10, "medium": 20, "low": 15}
+
+    # -----------------------------------------------------------------------
+    # FLAG trigger 2: needs_expert_review tracking
+    # -----------------------------------------------------------------------
+
+    def test_needs_expert_review_ids_in_gap_summary(self) -> None:
+        """needs_expert_review_ids must list all flagged control IDs from gap_analysis."""
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        ids = inner["gap_summary"]["needs_expert_review_ids"]
+        assert len(ids) == 13
+        # All should be SBS-PART-000 through SBS-PART-012
+        assert "SBS-PART-000" in ids
+        assert "SBS-PART-012" in ids
+        assert "SBS-PART-013" not in ids  # item 13 has no needs_expert_review
+
+    def test_needs_expert_review_count_in_gap_summary(self) -> None:
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        assert inner["gap_summary"]["needs_expert_review_count"] == 13
+
+    def test_needs_expert_review_items_in_backlog_summary(self) -> None:
+        """needs_expert_review_items must list items and their expert_review_status."""
+        ctx = _build_review_context("test-flag-001", self._gap_data_with_na(), self._backlog_data_with_na())
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        assert bs["needs_expert_review_count"] == 13
+        items = bs["needs_expert_review_items"]
+        assert len(items) == 13
+        # expert_review_status should be None (not set in test data)
+        assert all(item["expert_review_status"] is None for item in items)
+
+    def test_needs_expert_review_items_with_status(self) -> None:
+        """When expert_review_status is set, it must appear in the context."""
+        gap_data = {
+            "assessment_id": "er-001",
+            "findings": [
+                {"status": "partial", "severity": "high", "control_id": "SBS-ACS-005", "needs_expert_review": True},
+                {"status": "partial", "severity": "high", "control_id": "SBS-ACS-006", "needs_expert_review": True},
+            ],
+        }
+        backlog_data = {
+            "org": "test-org",
+            "platform": "salesforce",
+            "mapped_items": [
+                {
+                    "status": "partial",
+                    "severity": "high",
+                    "sbs_control_id": "SBS-ACS-005",
+                    "mapping_confidence": "medium",
+                    "needs_expert_review": True,
+                    "expert_review_status": "pending",
+                },
+                {
+                    "status": "partial",
+                    "severity": "high",
+                    "sbs_control_id": "SBS-ACS-006",
+                    "mapping_confidence": "medium",
+                    "needs_expert_review": True,
+                    "expert_review_status": "completed",
+                },
+            ],
+            "summary": {"mapping_confidence_counts": {"medium": 2}, "unmapped_findings": 0},
+        }
+        ctx = _build_review_context("er-001", gap_data, backlog_data)
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        statuses = {item["control_id"]: item["expert_review_status"] for item in bs["needs_expert_review_items"]}
+        assert statuses["SBS-ACS-005"] == "pending"
+        assert statuses["SBS-ACS-006"] == "completed"
+
+    def test_low_conf_pct_zero_for_all_assessable_high(self) -> None:
+        """If all assessable findings have high confidence, pct must be 0."""
+        gap_data = {
+            "assessment_id": "hi-conf-001",
+            "findings": [
+                {"status": "pass", "severity": "high", "control_id": "SBS-A"},
+                {"status": "fail", "severity": "critical", "control_id": "SBS-B"},
+                {"status": "not_applicable", "severity": "moderate", "control_id": "SBS-C"},
+            ],
+        }
+        backlog_data = {
+            "org": "x",
+            "platform": "salesforce",
+            "mapped_items": [
+                {"status": "pass", "severity": "high", "sbs_control_id": "SBS-A", "mapping_confidence": "high"},
+                {"status": "fail", "severity": "critical", "sbs_control_id": "SBS-B", "mapping_confidence": "high"},
+                {
+                    "status": "not_applicable",
+                    "severity": "moderate",
+                    "sbs_control_id": "SBS-C",
+                    "mapping_confidence": "low",
+                },
+            ],
+            "summary": {"mapping_confidence_counts": {"high": 2, "low": 1}, "unmapped_findings": 0},
+        }
+        ctx = _build_review_context("hi-conf-001", gap_data, backlog_data)
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        assert bs["low_confidence_assessable_count"] == 0
+        assert bs["low_confidence_assessable_pct"] == 0.0
+        assert bs["assessable_count"] == 2  # only pass + fail
+
+    def test_low_conf_pct_nonzero_when_assessable_item_is_low(self) -> None:
+        """If an assessable finding (not not_applicable) has low confidence, pct must reflect it."""
+        gap_data = {
+            "assessment_id": "low-conf-001",
+            "findings": [
+                {"status": "partial", "severity": "high", "control_id": "SBS-A"},
+                {"status": "partial", "severity": "high", "control_id": "SBS-B"},
+                {"status": "partial", "severity": "high", "control_id": "SBS-C"},
+                {"status": "partial", "severity": "high", "control_id": "SBS-D"},
+            ],
+        }
+        backlog_data = {
+            "org": "x",
+            "platform": "salesforce",
+            "mapped_items": [
+                {"status": "partial", "severity": "high", "sbs_control_id": "SBS-A", "mapping_confidence": "medium"},
+                {"status": "partial", "severity": "high", "sbs_control_id": "SBS-B", "mapping_confidence": "medium"},
+                # Two genuinely low-confidence PARTIAL findings (e.g. from legacy mapping path)
+                {"status": "partial", "severity": "high", "sbs_control_id": "SBS-C", "mapping_confidence": "low"},
+                {"status": "partial", "severity": "high", "sbs_control_id": "SBS-D", "mapping_confidence": "low"},
+            ],
+            "summary": {"mapping_confidence_counts": {"medium": 2, "low": 2}, "unmapped_findings": 0},
+        }
+        ctx = _build_review_context("low-conf-001", gap_data, backlog_data)
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        assert bs["low_confidence_assessable_count"] == 2
+        assert bs["low_confidence_assessable_pct"] == 50.0  # 2/4 = 50%
+
+    def test_empty_backlog_low_conf_pct_is_zero(self) -> None:
+        """Empty backlog must not raise ZeroDivisionError; pct must be 0.0."""
+        gap_data = {"assessment_id": "empty-002", "findings": []}
+        backlog_data = {"org": "x", "mapped_items": [], "summary": {}}
+        ctx = _build_review_context("empty-002", gap_data, backlog_data)
+        start = ctx.index("<assessment_context>") + len("<assessment_context>")
+        end = ctx.index("</assessment_context>")
+        inner = json.loads(ctx[start:end].strip())
+        bs = inner["backlog_summary"]
+        assert bs["low_confidence_assessable_pct"] == 0.0
+
 
 # ---------------------------------------------------------------------------
 # assess CLI — dry-run

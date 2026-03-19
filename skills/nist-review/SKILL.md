@@ -65,7 +65,32 @@ nist-review assess \
 
 ## Live Mode
 
-In live mode (`--dry-run` omitted), calls `gpt-5.3-chat-latest` with `agents/nist-reviewer.md` as the system prompt. Both input JSONs are truncated to 6 000 characters each to stay within the token budget. Requires `OPENAI_API_KEY` in the environment.
+In live mode (`--dry-run` omitted), calls `gpt-5.3-chat-latest` with `agents/nist-reviewer.md` as the system prompt. Input artifacts are summarised by `_build_review_context` (token-efficient structured summary — critical/high findings always included in full). Requires `OPENAI_API_KEY` in the environment.
+
+## MEASURE Flag — Low Confidence Denominator
+
+`mapping_confidence="low"` is assigned exclusively to `not_applicable` findings (controls outside the API collector scope — code review, CI/CD audit, manual governance, browser extension inventory, etc.). These are structural scope limits of the tool, not assessment quality defects.
+
+The NIST MEASURE >`30% low confidence` FLAG threshold applies to **assessable findings only** (`pass + fail + partial`). The context sent to the LLM includes derived fields:
+
+| Field | Meaning |
+|---|---|
+| `low_confidence_assessable_count` | Count of low-confidence items among pass/fail/partial only |
+| `low_confidence_assessable_pct` | `low_confidence_assessable_count / assessable_count × 100` |
+| `assessable_count` | Total items minus `not_applicable` items |
+| `not_applicable_count` | Items outside collector scope (always `low` confidence) |
+| `measure_note` | Plain-text explanation of the denominator for the LLM |
+
+For a healthy live Salesforce run where all low-confidence items are scope exclusions, `low_confidence_assessable_pct` will be 0%, and the MEASURE threshold will not be exceeded from confidence alone.
+
+## needs_expert_review Tracking
+
+The context also includes:
+- `gap_summary.needs_expert_review_ids` — list of control IDs with `needs_expert_review=true` from `gap_analysis.json`
+- `backlog_summary.needs_expert_review_items` — list of `{control_id, expert_review_status}` from `backlog.json`
+- `backlog_summary.needs_expert_review_count` — count of pending expert reviews
+
+`expert_review_status` is set by the sfdc-expert / workday-expert enrichment step. If `null`, expert review has not yet been performed — this triggers the FLAG condition in `nist-reviewer.md`.
 
 ## Dry-Run Mode
 
