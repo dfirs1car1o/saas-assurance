@@ -99,7 +99,7 @@ If a prior adversarial assessment run poisoned the Qdrant store, this gate preve
 
 ## Structured Audit Log
 
-Every run writes `docs/oscal-salesforce-poc/generated/<org>/<date>/audit.jsonl`:
+Every run writes `.saas-assurance/audit/<org>/<date>/audit.jsonl` (never committed — `.saas-assurance/` is in `.gitignore`):
 
 ```jsonl
 {"event": "loop_start", "ts": "...", "org": "my-org", "env": "dev", "platform": "salesforce", "dry_run": false}

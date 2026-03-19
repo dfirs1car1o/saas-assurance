@@ -86,6 +86,15 @@ docker compose logs -f
 docker compose ps
 ```
 
+> **Production deployment?** Use `docker-compose.prod.yml` instead — it enables the OpenSearch
+> security plugin, binds ports to 127.0.0.1 only, requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD`,
+> and adds a healthcheck to the agent service. See `docker-compose.prod.yml` for the full
+> checklist (TLS certs, secrets management, etc.).
+>
+> ```bash
+> docker compose -f docker-compose.prod.yml up -d
+> ```
+
 Expected output once healthy:
 
 ```

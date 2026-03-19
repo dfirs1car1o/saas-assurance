@@ -59,6 +59,8 @@ critical_fails: 0
 Result written → docs/oscal-salesforce-poc/generated/test-org/loop_result.json
 ```
 
+> **Note:** The audit log (`audit.jsonl`) is written to `.saas-assurance/audit/<org>/<date>/` and is never committed.
+
 ### Optional post-processing (run manually after pipeline)
 
 The OSCAL machine-readable artifacts are **not** produced by the automated pipeline. Run these scripts separately after `agent-loop` completes if needed for GRC tooling or audit packages:

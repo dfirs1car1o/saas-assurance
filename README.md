@@ -41,7 +41,7 @@ Phase 7 — Monitor      export_to_opensearch + dashboards  →  OpenSearch tren
 **OSCAL output:** Resolved catalog · Assessment Results · System Security Plan · POA&M — all OSCAL 1.1.2 valid
 **AI governance:** Every output passes through a NIST AI RMF gate before delivery — distinguishes live collection from stubs, requires human acknowledgment on block verdicts
 
-This system **never writes to any SaaS org**. All evidence stays in `docs/oscal-salesforce-poc/generated/`.
+This system **never writes to any SaaS org**. All evidence stays in `docs/oscal-salesforce-poc/generated/<org>/<date>/` (audit.jsonl goes to `.saas-assurance/audit/` — never committed).
 
 ## Quick Start
 
@@ -276,7 +276,7 @@ MEMORY_ENABLED=0               # Disable Mem0 by default
 
 - Read-only against all SaaS orgs by default. No writes without explicit human approval.
 - Credentials sourced from environment only — never passed as CLI flags or logged.
-- All generated evidence written to `docs/oscal-salesforce-poc/generated/` — never to `/tmp`.
+- All generated evidence written to `docs/oscal-salesforce-poc/generated/<org>/<date>/` — never to `/tmp`. Audit log (`audit.jsonl`) goes to `.saas-assurance/audit/<org>/<date>/` and is never committed.
 - **Tool sequencing enforced in code** — `_TOOL_REQUIRES` map in `harness/loop.py` blocks out-of-order LLM tool calls (OWASP A2 Excessive Agency).
 - **Input path validation** — all LLM-provided file paths checked against artifact root before subprocess; org aliases restricted to `[a-zA-Z0-9_-]{1,64}` (OWASP A5).
 - **Memory guard** — injection patterns stripped from Qdrant-stored memories before reaching the orchestrator prompt (OWASP A3).
@@ -309,6 +309,15 @@ If you want the full containerized platform (OpenSearch + pre-built Dashboards +
 ```bash
 docker compose up -d        # starts OpenSearch + OpenSearch Dashboards
 open http://localhost:5601  # three dashboards auto-imported and ready
+```
+
+> **Production deployment?** Use `docker-compose.prod.yml` instead — it enables the OpenSearch
+> security plugin, binds ports to 127.0.0.1 only, requires `OPENSEARCH_INITIAL_ADMIN_PASSWORD`,
+> and adds a healthcheck to the agent service. See `docker-compose.prod.yml` for the full
+> checklist (TLS certs, secrets management, etc.).
+
+```bash
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 Three pre-built dashboards are imported automatically on first start — no manual setup:

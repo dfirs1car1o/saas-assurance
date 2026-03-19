@@ -41,9 +41,9 @@
 | **Threat** | LLM calls tools out of sequence, calls non-pipeline tools, or exceeds its authorized scope |
 | **Likelihood** | Medium — GPT models occasionally hallucinate extra tool calls |
 | **Impact** | High — an out-of-order `report_gen_generate` without assessment data produces misleading governance output |
-| **Controls** | `_MAX_TURNS = 14` hard stop; `finish()` tool breaks loop cleanly after step 6b; `dispatch()` rejects unknown tool names with `ValueError`; `--approve-critical` flag required for critical gate bypass |
-| **Residual risk** | Medium — no enforced tool sequencing (e.g., can't enforce `oscal_assess` before `report_gen` at the harness level without state machine) |
-| **Status** | ⚠️ Partially mitigated — sequencing enforced by task prompt, not by code |
+| **Controls** | `_MAX_TURNS = 14` hard stop; `finish()` tool breaks loop cleanly after step 6b; `dispatch()` rejects unknown tool names with `ValueError`; `--approve-critical` flag required for critical gate bypass; `_TOOL_REQUIRES` dependency map in `harness/loop.py` gates every dispatch |
+| **Residual risk** | Low — sequencing gate fires before every dispatch; violations return structured error JSON; orchestrator retries on error |
+| **Status** | ✅ Mitigated |
 
 ---
 
@@ -155,7 +155,7 @@
 | Risk | Likelihood | Impact | Status |
 |---|---|---|---|
 | A1 Prompt Injection | Low | Medium | ✅ Mitigated |
-| A2 Excessive Agency | Medium | High | ⚠️ Partial |
+| A2 Excessive Agency | Medium | High | ✅ Mitigated |
 | A3 Memory Poisoning | Very Low | Medium | ✅ Mitigated |
 | A4 Supply Chain | Low-Med | Critical | ✅ Mitigated |
 | A5 Code Execution (LLM args) | Low | High | ✅ Mitigated |
@@ -171,7 +171,7 @@
 
 | # | Risk | Status | Mitigation Roadmap |
 |---|---|---|---|
-| R1 | **Tool sequencing not enforced in code** — LLM could call `report_gen` before `oscal_assess` | ✅ Resolved | `_TOOL_REQUIRES` dependency map in `harness/loop.py`; sequencing gate fires before every dispatch; violations return structured error JSON to orchestrator; `dry_run` waives collector prerequisites |
+| R1 | **Tool sequencing fully enforced in code** — `_TOOL_REQUIRES` dependency map gates every dispatch; violations return structured error JSON to orchestrator; `dry_run` waives collector prerequisites | ✅ Resolved | `_TOOL_REQUIRES` dependency map in `harness/loop.py`; sequencing gate fires before every dispatch; violations return structured error JSON to orchestrator; `dry_run` waives collector prerequisites |
 | R2 | **Human review is process-dependent** — `--approve-critical` can be scripted away | ⚠️ Open | Add required named approver field to the critical gate; require human-signed artifact |
 | R3 | **Qdrant has no authentication in local dev** — any local process can read/write memories | ✅ Resolved | `QDRANT_API_KEY` env var wired into networked Qdrant config in `harness/memory.py`; documented in `.env.example` |
 
