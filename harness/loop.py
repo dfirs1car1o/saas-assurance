@@ -81,7 +81,7 @@ def _make_openai_client(api_key: str | None = None, max_retries: int = 5):
 # Load .env at import time so OPENAI_API_KEY and SF_* vars are in os.environ
 # before Click reads envvar= options or os.getenv() is called anywhere.
 load_dotenv(_REPO / ".env")
-_MAX_TURNS = 14  # hard stop: 7 pipeline steps + LLM-only turns; extra headroom for finish() call
+_MAX_TURNS = 18  # hard stop: 7 pipeline steps + LLM-only turns; extra headroom for finish() call
 
 # Tool sequencing dependency map (OWASP A2 — Excessive Agency mitigation).
 # Before dispatching a tool, verify all required predecessors have completed.
@@ -489,6 +489,19 @@ def _run_loop(  # NOSONAR
                             + "\n".join(f"    - {f}" for f in critical_flags),
                             err=True,
                         )
+                    else:
+                        # Harness nudge: guide the orchestrator to call finish() now that all
+                        # pipeline steps are complete and the security review passed cleanly.
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": result_str})
+                        messages.append({
+                            "role": "user",
+                            "content": (
+                                "[harness] Security review complete — no critical flags detected. "
+                                "All pipeline steps are done. Call finish() now to conclude the run."
+                            ),
+                        })
+                        # Skip the default append below (already appended above)
+                        continue
             except (json.JSONDecodeError, AttributeError):
                 pass
 
