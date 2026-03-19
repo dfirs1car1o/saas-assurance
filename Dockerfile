@@ -33,7 +33,8 @@ RUN mkdir -p docs/oscal-salesforce-poc/generated && \
 USER agent
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    REPO_ROOT=/app
 
 ENTRYPOINT ["agent-loop"]
 CMD ["--help"]

@@ -29,7 +29,7 @@ from harness.agents import ORCHESTRATOR
 from harness.memory import build_client, load_memories, save_assessment
 from harness.tools import ALL_TOOLS, dispatch, set_openai_client
 
-_REPO = Path(__file__).resolve().parents[1]
+_REPO = Path(os.environ.get("REPO_ROOT", str(Path(__file__).resolve().parents[1])))
 
 
 # ---------------------------------------------------------------------------
@@ -250,7 +250,7 @@ def _run_loop(  # NOSONAR
 
     # --- Audit log: one JSONL file per run, co-located with other outputs ---
     run_date = datetime.now(UTC).strftime("%Y-%m-%d")
-    audit_dir = _REPO / "docs" / "oscal-salesforce-poc" / "generated" / org / run_date
+    audit_dir = _REPO / ".saas-assurance" / "audit" / org / run_date
     audit_dir.mkdir(parents=True, exist_ok=True)
     audit_path = audit_dir / "audit.jsonl"
     _append_audit(

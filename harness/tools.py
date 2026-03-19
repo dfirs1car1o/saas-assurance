@@ -22,7 +22,7 @@ from typing import Any
 
 from harness.agents import load_agent_prompt
 
-_REPO = Path(__file__).resolve().parents[1]
+_REPO = Path(os.environ.get("REPO_ROOT", str(Path(__file__).resolve().parents[1])))
 
 # ---------------------------------------------------------------------------
 # Agent sub-call client (injected by loop.py at startup via set_openai_client)

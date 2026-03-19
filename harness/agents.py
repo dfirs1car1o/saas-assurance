@@ -12,7 +12,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-_REPO = Path(__file__).resolve().parents[1]
+_REPO = Path(os.environ.get("REPO_ROOT", str(Path(__file__).resolve().parents[1])))
 
 DEFAULT_MODEL = "gpt-5.3-chat-latest"
 

@@ -37,6 +37,9 @@ docs/oscal-salesforce-poc/generated/**/audit.jsonl
 # report-gen deliverables output (generated artifacts, not tracked)
 docs/oscal-salesforce-poc/deliverables/
 
+# Runtime audit log and session state (never committed)
+.saas-assurance/
+
 # Claude Code session state
 .claude/
 

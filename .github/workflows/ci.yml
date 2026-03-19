@@ -155,7 +155,7 @@ jobs:
               --cov=skills --cov=harness \
               --cov-report=xml:coverage.xml \
               --cov-report=term-missing \
-              --cov-fail-under=25
+              --cov-fail-under=60
           else
             echo "No tests directory yet — skipping"
           fi
