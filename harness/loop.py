@@ -493,13 +493,15 @@ def _run_loop(  # NOSONAR
                         # Harness nudge: guide the orchestrator to call finish() now that all
                         # pipeline steps are complete and the security review passed cleanly.
                         messages.append({"role": "tool", "tool_call_id": tc.id, "content": result_str})
-                        messages.append({
-                            "role": "user",
-                            "content": (
-                                "[harness] Security review complete — no critical flags detected. "
-                                "All pipeline steps are done. Call finish() now to conclude the run."
-                            ),
-                        })
+                        messages.append(
+                            {
+                                "role": "user",
+                                "content": (
+                                    "[harness] Security review complete — no critical flags detected. "
+                                    "All pipeline steps are done. Call finish() now to conclude the run."
+                                ),
+                            }
+                        )
                         # Skip the default append below (already appended above)
                         continue
             except (json.JSONDecodeError, AttributeError):
