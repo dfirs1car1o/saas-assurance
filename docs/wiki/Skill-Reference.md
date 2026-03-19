@@ -77,8 +77,11 @@ oscal-assess assess --collector-output sfdc_raw.json --assessment-owner "Jane Sm
 `gap_analysis.json`:
 ```json
 {
+  "schema_version": "2.0",
   "assessment_id": "sfdc-assess-my-org-dev",
-  "assessed_at_utc": "2026-03-02T15:00:00Z",
+  "platform": "salesforce",
+  "assessment_time_utc": "2026-03-02T15:00:00Z",
+  "assessor": "oscal-assess/salesforce",
   "assessment_owner": "SaaS Security Architect",
   "data_source": "live_api",
   "findings": [

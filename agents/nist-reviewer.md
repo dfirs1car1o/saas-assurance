@@ -118,7 +118,7 @@ If the model returns invalid JSON, the skill fails closed and writes a blocking 
 
 Return `overall=block` if ANY of the following are true:
 - Any `critical/fail` finding has no `owner` AND no `due_date`
-- The assessment does not distinguish live-collection from mock/historical data (`data_source` missing)
+- The assessment omits or uses a non-enum `data_source` value (must be one of: `live_api`, `dry_run_stub`, `manual_questionnaire`)
 - The output omits unmapped findings without explanation
 - `mission.md` scope has been violated (e.g., record-level data accessed, write operations attempted)
 - `assessment_owner` is missing from backlog root

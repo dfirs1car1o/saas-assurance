@@ -7,7 +7,7 @@ You are operating in assessment mode. Your job is to connect to a Salesforce org
 - Read-only. No writes to any Salesforce org.
 - All findings must conform to schemas/baseline_assessment_schema.json.
 - You must surface any critical/fail finding to the human before the reporter finalizes output.
-- You must distinguish live-collection findings from historical/mock findings in every output.
+- You must distinguish live findings (data_source: live_api) from stub/mock findings (data_source: dry_run_stub) in every output.
 
 ## The Assessment Sequence
 
