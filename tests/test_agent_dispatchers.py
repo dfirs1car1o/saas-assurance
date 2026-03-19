@@ -774,7 +774,7 @@ class TestSfdcExpertWritesExpertNotes:
                 {
                     "control_id": "SBS-LOG-001",
                     "status": "pass",
-                    "severity": "medium",
+                    "severity": "moderate",
                     "needs_expert_review": False,
                 },
             ]

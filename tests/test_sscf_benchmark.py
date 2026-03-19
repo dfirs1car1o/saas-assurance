@@ -58,7 +58,7 @@ _MINI_BACKLOG: dict[str, Any] = {
     "org": "test-org",
     "mapped_items": [
         {"sbs_control_id": "AUTH-001", "status": "fail", "severity": "critical", "sscf_control_ids": ["SSCF-IAM-01"]},
-        {"sbs_control_id": "AUTH-002", "status": "pass", "severity": "medium", "sscf_control_ids": ["SSCF-IAM-02"]},
+        {"sbs_control_id": "AUTH-002", "status": "pass", "severity": "moderate", "sscf_control_ids": ["SSCF-IAM-02"]},
         {"sbs_control_id": "LOG-001", "status": "partial", "severity": "high", "sscf_control_ids": ["SSCF-LOG-01"]},
     ],
 }

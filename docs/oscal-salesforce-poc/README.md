@@ -26,13 +26,19 @@ Stand up an OSCAL-aligned Salesforce baseline pipeline under the SaaS Risk Progr
 - `scripts/oscal_gap_map.py`: apply mappings and generate backlog + scorecard artifacts.
 
 ## Inputs
-- Existing gap-analysis export (JSON), expected shape:
+- Existing gap-analysis export (JSON), expected shape (schema v2):
+  - `schema_version` (`"2.0"`)
   - `assessment_id`
-  - `assessment_time_utc`
+  - `platform` (`salesforce|workday`)
+  - `assessment_time_utc` (ISO 8601)
+  - `assessor`
+  - `assessment_owner`
+  - `data_source` (`live_api|dry_run_stub|manual_questionnaire`)
   - `findings[]` with at least:
     - `control_id` (internal legacy ID)
     - `status` (`pass|fail|partial|not_applicable`)
-    - `severity` (`critical|high|medium|low`)
+    - `severity` (`critical|high|moderate|low`)
+    - `mapping_confidence` (`high|medium|low`)
     - optional `owner`, `remediation`, `due_date`, `evidence_ref`
 - Sample input for dry runs:
   - `docs/oscal-salesforce-poc/examples/gap-analysis-sample.json`
