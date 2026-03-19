@@ -242,7 +242,7 @@ def test_audit_log_written_with_correct_events(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
 
     run_date = datetime.now(UTC).strftime("%Y-%m-%d")
-    audit_path = _REPO / "docs" / "oscal-salesforce-poc" / "generated" / "audit-test-org" / run_date / "audit.jsonl"
+    audit_path = _REPO / ".saas-assurance" / "audit" / "audit-test-org" / run_date / "audit.jsonl"
     assert audit_path.exists(), f"audit.jsonl not created at {audit_path}"
 
     lines = [json.loads(row) for row in audit_path.read_text().strip().splitlines()]
