@@ -87,7 +87,7 @@ lbl(8, 13.77, "saas-assurance — Reference Architecture (2/3): Agent Architectu
 lbl(
     8,
     13.47,
-    "10 agents  ·  OpenAI gpt-5.3-chat-latest  ·  14-turn ReAct loop"
+    "10 agents  ·  OpenAI gpt-5.3-chat-latest  ·  18-turn ReAct loop"
     "  ·  STRICT_AGENTS fail-closed  ·  OWASP Agentic App Top 10",
     sz=7.5,
     c=C_GR,
@@ -105,7 +105,7 @@ lbl(8.0, 12.1, "agent-loop run --env dev --org <alias>", sz=6.5, c=C_GR)
 box(5.25, 10.45, 5.5, 1.2, "#BBDEFB", C_BD, lw=1.5, r=0.2)
 lbl(8.0, 11.28, "Orchestrator", sz=10, bold=True, c=C_BD)
 lbl(8.0, 10.97, "plans + dispatches  ·  quality gates  ·  finish() trigger", sz=7, c=C_GR)
-lbl(8.0, 10.68, "gpt-5.3-chat-latest  ·  all CLI tools  ·  _MAX_TURNS=14", sz=6.5, c=C_GR)
+lbl(8.0, 10.68, "gpt-5.3-chat-latest  ·  all CLI tools  ·  _MAX_TURNS=18", sz=6.5, c=C_GR)
 arr(8.0, 11.95, 8.0, 11.65, c="#3949AB", lw=1.3)  # Human → Orchestrator
 
 # ── Agent grid (3 × 3) ────────────────────────────────────────────────────────

@@ -45,7 +45,7 @@ python3 scripts/gen_arch_b3_pipeline.py   # Data Pipeline (diagrams lib)
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │         agent-loop  (gpt-5.3-chat-latest orchestrator)                      │
-│         OpenAI tool_use ReAct loop · max 14 turns · 10 agents · 7 tools     │
+│         OpenAI tool_use ReAct loop · max 18 turns · 10 agents · 7 tools     │
 │                                                                              │
 │  Security Harness (harness/loop.py · harness/tools.py)                      │
 │    _TOOL_REQUIRES sequencing gate · memory guard · audit.jsonl · path valid  │

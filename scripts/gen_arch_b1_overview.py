@@ -74,7 +74,7 @@ def main() -> None:
             sk_aicm = Python("gen_aicm_crosswalk")
 
         # ── Row 4: Agent Layer ────────────────────────────────────────────────
-        with Cluster("Agent Layer  (gpt-5.3-chat-latest · 10 agents · 14-turn ReAct)"):
+        with Cluster("Agent Layer  (gpt-5.3-chat-latest · 10 agents · 18-turn ReAct)"):
             orchestrator = Server("Orchestrator\nplans + dispatches")
             with Cluster("Assessment Agents"):
                 collector = Server("Collector")

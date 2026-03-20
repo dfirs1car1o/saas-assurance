@@ -120,7 +120,7 @@ sec(0.3, 1.1, 8.5, 4.55, "Agent Layer  (OpenAI API  ·  gpt-5.3-chat-latest)", C
 
 # Left summary box — agent roster
 box(0.5, 2.35, 3.9, 2.95, "#BBDEFB", C_BM, lw=0.9)
-lbl(2.45, 5.05, "10 Agents  ·  14-turn ReAct loop", sz=7.5, bold=True, c=C_BD)
+lbl(2.45, 5.05, "10 Agents  ·  18-turn ReAct loop", sz=7.5, bold=True, c=C_BD)
 for i, line in enumerate(
     [
         "Orchestrator  — plans + dispatches",

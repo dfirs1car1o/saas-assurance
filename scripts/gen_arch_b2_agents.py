@@ -30,7 +30,7 @@ _GRAPH = {
     "ranksep": "1.0",
     "label": (
         "saas-assurance — Reference Architecture (2/3): Agent Architecture\n"
-        "10 agents  ·  gpt-5.3-chat-latest  ·  14-turn ReAct  ·  STRICT_AGENTS fail-closed  "
+        "10 agents  ·  gpt-5.3-chat-latest  ·  18-turn ReAct  ·  STRICT_AGENTS fail-closed  "
         "·  OWASP Agentic App Top 10"
     ),
     "labelloc": "t",
@@ -64,7 +64,7 @@ def main() -> None:
 
         # ── Agent Layer ───────────────────────────────────────────────────────
         with Cluster("Agent Layer  (OpenAI API · gpt-5.3-chat-latest)"):
-            orchestrator = Server("Orchestrator\n14-turn ReAct · finish() trigger\nall CLI tools")
+            orchestrator = Server("Orchestrator\n18-turn ReAct · finish() trigger\nall CLI tools")
 
             # Pipeline agents (dispatched in sequence)
             with Cluster("Pipeline Agents  (dispatched by sequencing gate)"):
