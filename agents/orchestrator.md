@@ -261,7 +261,7 @@ Never write evidence to `/tmp` or outside the `generated/` directory.
 
 ## Agent Loop Parameters
 
-- `_MAX_TURNS = 14` — 7 pipeline steps + tool overhead + finish() headroom
+- `_MAX_TURNS = 18` — 7 pipeline steps + tool overhead + security review nudge + finish() headroom
 - `max_retries = 5` on OpenAI client — auto-retries 429 TPM limits
 - `max_completion_tokens` (not `max_tokens`) — required on all gpt-5.x models
 - Call `finish()` after the last pipeline step, not `sys.exit()`
