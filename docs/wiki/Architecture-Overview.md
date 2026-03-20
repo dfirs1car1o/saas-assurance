@@ -199,6 +199,8 @@ Full Control Matrix            ← complete sorted findings table               
 Plan of Action & Milestones    ← POAM-IDs, owners, due dates, status             [HARNESS]
 Not Assessed Controls          ← out-of-scope appendix for auditors              [HARNESS]
 NIST AI RMF Governance Review  ← function table + blockers + recs                [HARNESS]
+AICM Coverage Annex            ← CSA AICM v1.0.3 domain posture + gap analysis   [HARNESS]
+                                  (security audience only; 243 controls, 18 domains)
 ```
 
 ---
@@ -295,7 +297,7 @@ Before first user message:
     └──────────────────────────────────────────────────────────┘
 ```
 
-Full threat model: [`docs/security/threat-model.md`](../security/threat-model.md)
+Full threat model: [Security Model](Security-Model)
 
 ---
 
