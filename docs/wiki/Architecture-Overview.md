@@ -22,15 +22,21 @@ python3 scripts/gen_arch_b3_pipeline.py   # Data Pipeline (diagrams lib)
 
 ### System Overview (1/3)
 
-![System Overview](../arch-a1-overview.png)
+![System Overview — matplotlib](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/arch-a1-overview.png)
+
+![System Overview — diagrams-lib](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/arch-b1-overview.png)
 
 ### Agent Architecture (2/3)
 
-![Agent Architecture](../arch-a2-agents.png)
+![Agent Architecture — matplotlib](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/arch-a2-agents.png)
+
+![Agent Architecture — diagrams-lib](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/arch-b2-agents.png)
 
 ### Data Pipeline (3/3)
 
-![Data Pipeline](../arch-a3-pipeline.png)
+![Data Pipeline — matplotlib](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/arch-a3-pipeline.png)
+
+![Data Pipeline — diagrams-lib](https://raw.githubusercontent.com/dfirs1car1o/saas-assurance/main/docs/arch-b3-pipeline.png)
 
 ---
 
