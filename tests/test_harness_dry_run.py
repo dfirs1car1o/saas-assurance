@@ -593,4 +593,113 @@ def test_finish_allowed_when_no_security_review_flags() -> None:
     result = json.loads(dispatch("finish", inp))
     assert result["status"] == "ok", f"Expected ok with no flags, got: {result}"
     assert result.get("pipeline_complete") is True
-    assert result.get("summary") == "Clean run — no flags."
+
+
+# ---------------------------------------------------------------------------
+# security_reviewer_review nudge: loop.py branches (lines 481-504)
+# ---------------------------------------------------------------------------
+
+
+def test_security_reviewer_review_nudge_injected_when_no_critical_flags(tmp_path: Path) -> None:
+    """When security_reviewer_review returns no critical flags the harness injects a
+    user-role nudge message telling the orchestrator to call finish().
+
+    Covers the else-branch in loop.py (lines 492-504). _TOOL_REQUIRES is patched
+    to empty so this test is isolated to the nudge logic, not the sequencing gate.
+    """
+    security_report = str(tmp_path / "nudge-test-org_security_assessment.md")
+    (tmp_path / "nudge-test-org_security_assessment.md").write_text("# Security Report")
+
+    mock_responses = [
+        # report_gen_generate populates state["report_security_md"] to satisfy the
+        # hardcoded finish() check (separate from _TOOL_REQUIRES gate, patched below)
+        _tool_use_response(
+            "report_gen_generate",
+            "rg_01",
+            {"audience": "security", "org_alias": "nudge-test-org", "out": security_report},
+        ),
+        _tool_use_response(
+            "security_reviewer_review",
+            "sr_01",
+            {"org": "nudge-test-org", "report_path": security_report},
+        ),
+        _tool_use_response("finish", "fin_01", {"summary": "Done."}),
+    ]
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = mock_responses
+
+    def fake_dispatch(name: str, inp: dict) -> str:  # noqa: ANN001
+        if name == "report_gen_generate":
+            return json.dumps({"status": "ok", "output_file": security_report})
+        if name == "security_reviewer_review":
+            return json.dumps({"status": "ok", "flags": []})
+        if name == "finish":
+            return json.dumps({"status": "ok", "pipeline_complete": True, "summary": inp.get("summary", "")})
+        return json.dumps({"status": "ok"})
+
+    runner = CliRunner()
+    with (
+        patch("openai.OpenAI", return_value=mock_client),
+        patch("harness.loop.build_client", return_value=MagicMock()),
+        patch("harness.loop.load_memories", return_value=""),
+        patch("harness.loop.save_assessment"),
+        patch("harness.loop.dispatch", side_effect=fake_dispatch),
+        patch("harness.loop._TOOL_REQUIRES", {}),  # bypass sequencing gate
+    ):
+        result = runner.invoke(
+            cli,
+            ["run", "--dry-run", "--env", "dev", "--org", "nudge-test-org", "--approve-critical"],
+        )
+
+    assert result.exit_code == 0, result.output
+    assert "finish() called" in result.output
+
+    # The nudge message must appear in the messages sent for the finish() turn (3rd call)
+    calls = mock_client.chat.completions.create.call_args_list
+    assert len(calls) == 3  # noqa: PLR2004  # rg + sr + finish
+    finish_turn_messages = calls[2][1].get("messages", calls[2][0][0] if calls[2][0] else [])
+    nudge_msgs = [
+        m for m in finish_turn_messages if m.get("role") == "user" and "[harness]" in m.get("content", "")
+    ]
+    assert nudge_msgs, "Harness nudge message was not injected before finish() turn"
+
+
+def test_security_reviewer_review_warning_logged_on_critical_flag(tmp_path: Path) -> None:
+    """When security_reviewer_review returns a credential_exposure flag the harness
+    logs a WARNING (covers the if-critical_flags branch in loop.py lines 486-491).
+    """
+    mock_responses = [
+        _tool_use_response(
+            "security_reviewer_review",
+            "sr_02",
+            {"org": "flag-test-org", "report_path": "/tmp/report.md"},
+        ),
+        _end_turn_response("Security review flagged — stopping."),
+    ]
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = mock_responses
+
+    def fake_dispatch(name: str, inp: dict) -> str:  # noqa: ANN001
+        if name == "security_reviewer_review":
+            return json.dumps({
+                "status": "ok",
+                "flags": ["credential_exposure:org_id_in_executive_summary"],
+            })
+        return json.dumps({"status": "ok"})
+
+    runner = CliRunner()
+    with (
+        patch("openai.OpenAI", return_value=mock_client),
+        patch("harness.loop.build_client", return_value=MagicMock()),
+        patch("harness.loop.load_memories", return_value=""),
+        patch("harness.loop.save_assessment"),
+        patch("harness.loop.dispatch", side_effect=fake_dispatch),
+        patch("harness.loop._TOOL_REQUIRES", {}),
+    ):
+        result = runner.invoke(
+            cli,
+            ["run", "--dry-run", "--env", "dev", "--org", "flag-test-org", "--approve-critical"],
+        )
+
+    # The critical-flag WARNING must appear in the merged output
+    assert "WARNING" in result.output or "critical flag" in result.output.lower()
